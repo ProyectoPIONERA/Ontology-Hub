@@ -1,0 +1,16 @@
+node_modules/
+.classpath
+.settings/
+versions/
+.classpath
+.project
+lovnode.zip
+modules.zip
+TODO.txt
+versions.zip
+public/lov.nq.gz
+public/lov.n3
+public/lov.n3.gz
+public/lov.nq
+config/config.js
+app.log
