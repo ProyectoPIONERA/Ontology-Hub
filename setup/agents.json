@@ -1,0 +1,10 @@
+  {
+    "_id": {
+      "$oid": "6655debc246d4eb07e1808fb"
+    },
+    "prefUri": "http://mydomain/yourUri",
+    "name": "yourName",
+    "altUris": [],
+    "type": "person",
+    "__v": 0
+  }

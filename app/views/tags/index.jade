@@ -1,0 +1,58 @@
+extends ../layout/layout
+block content
+      section#post.postBlue
+        article
+          header.wrpl.w-3-3
+            h1 Tags
+
+      section#featuresBanner
+        .featureWrapper
+          .suggest
+            a(href='/edition/lov/tags/new') Tag
+      
+      section#posts.default-area.postSearchResults
+        - if (typeof(tags) !== 'undefined' && tags.length>0)
+          #greenContainer.contents.clear.col-2.split.wrplGreen
+            .count-items
+                span.count #{tags.length}
+                .clear
+                .items
+                  | #{tags.length==1 ? 'tag' : 'tags'}
+              ul#SearchGrid
+                each tag, i in tags
+                  li(class="SearchBoxtag")
+                    .SearchContainer
+                      div.SearchInnerBox
+                        div.actionBar
+                          form(action='/edition/lov/tags/#{tag._id}' method='post' name='formEdit')
+                            input(type='hidden', name='_csrf', value="#{csrf_token}")
+                            input(type="hidden", name="_method", value="GET")
+                            img.changeUser.actionBarAction(src="/img/edit_small.png" onclick="submit();")
+                          form(action='/edition/lov/tags/#{tag._id}' method='post' name='formDelete')
+                            input(type='hidden', name='_csrf', value="#{csrf_token}")
+                            input(type="hidden", name="_method", value="DELETE")
+                            img.removeTag.actionBarAction(src="/img/remove.png")
+                        div.label !{tag.label}
+                        div.nbOccurrences Number of occurrences: !{tag.nbOccurrences}
+          #dialog(style='display:none;') Are you sure you want to delete this tag?
+          script.
+            $(document).ready(function () {
+              // delete a tag
+              $('.removeTag').click(function(){
+                var currentForm = $(this).parents('form:first');
+                  $('#dialog').dialog({
+                    resizable: false,
+                    height:200,
+                    modal: true,
+                    buttons: {
+                        'Confirm Deletion': function() {
+                            currentForm.submit();
+                        },
+                        Cancel: function() {
+                          currentForm=null;
+                          $(this).dialog('close');
+                        }
+                    }
+                  });
+              });
+            });

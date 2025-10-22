@@ -1,0 +1,57 @@
+extends ../layout/layout
+block content
+      - var action = '/edition/lov/users'
+      - action += user.isNew? '' : '/' + user.id
+      - var title = user.isNew? 'Sign up' : 'Edit your profile'
+      section#post.postBlue
+        article
+          header.wrpl.w-3-3
+            h1 #{user.agent.name}
+      section#posts.default-area
+          article
+            #greenContainer.contents.clear.col-2.split.wrplGreen
+              form(method="post" action=action name="TheForm")
+                input(type='hidden', name='_csrf', value="#{csrf_token}")
+                - if (!user.isNew)
+                  input(type="hidden", name="_method", value="PUT")
+                .metadataFrame
+                  #formErrors
+                  div(class='metadataContainerPerson')
+                    table.editionTable
+                      tbody
+                        tr
+                          td Email
+                          td
+                            input#email(type='email', name="email", placeholder='Email', value=user.email)
+                        tr
+                          td Password
+                          td
+                            input(type='password', name="password", placeholder='Password')
+                            input(type='password', name="password_confirm", placeholder='Confirm Password')
+                .editionActionBar
+                  input.editionSaveButtonRight(type='submit' name='submit' value='Save')
+                  a.editionCancelButtonRight(href="/dataset/lov/users", title="cancel") Cancel
+                  .clear
+      script.
+        //form validation before submit
+        new FormValidator('TheForm', [{
+            name: 'email',
+            rules: 'required|valid_email'
+        }, {
+            name: 'password',
+            rules: 'min_length[8]'
+        }, {
+            name: 'password_confirm',
+            display: 'password confirmation',
+            rules: 'matches[password]'
+        }], function(errors, event) {
+            if (errors.length > 0) {
+              var errorString = '';
+              for (var i = 0, errorLength = errors.length; i < errorLength; i++) {
+                  errorString += errors[i].message + '<br />';
+              }
+              document.getElementById('formErrors').style.display = 'block';
+              document.getElementById('formErrors').innerHTML = errorString;
+              event.returnValue=false;
+            }
+        });

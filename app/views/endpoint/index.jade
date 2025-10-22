@@ -1,0 +1,95 @@
+extends ../layout/layout
+block content
+      section#title.postBlue
+        h1 #{app_name_shorcut} SPARQL Endpoint 
+          span / Data Dump
+      section#posts.default-area
+          article
+            .contents.clear.col-2.split.wrplGreen
+              h2.aboutGroupName(style="padding: .5em;color: #FFFFFF;font-size: 24px;text-shadow: 1px 1px 5px #646464;") SPARQL
+              ul.aboutGroup
+                li.aboutTopic
+                  .aboutTopicHeading
+                    h2 Query Examples
+                  .aboutTopicContent
+                    .aboutTopicContentContainer
+                      - var queryIndex=1;
+                      - each queryExample in queryExamples
+                        .aboutDesc Query ##{queryIndex}
+                          //a.linkBox(href='/dataset/lov/sparql?query='+encodeURIComponent(queryExample.query)) #{queryExample.title}
+                          button.linkBox(type="button",value="#{queryExample.query}", onClick="newQuery.call(this)") #{queryExample.title}
+                        - queryIndex=queryIndex+1;
+              script.
+                $(".aboutTopicContent").hide()
+                $( ".aboutTopicHeading" ).click(function() {
+                  $(this).parent().find( ".aboutTopicContent" ).slideToggle( "slow", function() {
+                    // Animation complete.
+                  });
+                });
+              div#yasgui
+              link(rel='stylesheet', href='https://unpkg.com/@triply/yasgui/build/yasgui.min.css', type="text/css")
+              script(src='https://unpkg.com/@triply/yasgui/build/yasgui.min.js')
+              script.
+                const yasgui = new Yasgui(document.getElementById("yasgui"), {
+                  requestConfig: { endpoint: "#{lov}/dataset/lov/sparql" },
+                  copyEndpointOnNewTab: false,
+                  resizeable: true,
+                  yasqe: {value: "PREFIX vann:<http://purl.org/vocab/vann/>\n\PREFIX voaf:<http://purl.org/vocommons/voaf#>\n\ \n\### Vocabularies contained in #{app_name_shorcut} and their prefix\n\SELECT DISTINCT ?vocabPrefix ?vocabURI {\n\ \tGRAPH <#{lov}/dataset/lov>{\n\ \t \t?vocabURI a voaf:Vocabulary.\n\ \t \t?vocabURI vann:preferredNamespacePrefix ?vocabPrefix.\n\}} ORDER BY ?vocabPrefix"},
+                });
+                $(document).ready(function() {
+                  if(yasgui.getTab().yasr.results){
+                    deleteStyle(yasgui.getTab().yasr);
+                    yasgui.getTab().yasr.on("drawn", (instance, plugin) => {
+                        deleteStyle(instance);
+                    });
+                  }
+                });
+                /*yasgui.on("queryResponse", (instance, tab) => {
+                  tab.yasr.on("drawn", (instance, plugin) => {
+                    deleteStyle(instance);
+                  });
+                });*/
+                yasgui.on("tabChange", (instance, tab) => {
+                  if(tab.yasr && tab.yasr._eventsCount < 2){
+                    deleteStyle(tab.yasr);
+                    tab.yasr.on("drawn", (instance, plugin) => {
+                      deleteStyle(instance);
+                    });
+                  }
+                  
+                });
+                function deleteStyle(yasr){
+                  if(yasr.results) {
+                    var results = yasr.resultsEl;
+                    var table = results.getElementsByClassName("dataTable");
+                    table[0].removeAttribute("style");
+                  }
+                }
+                function newQuery(){
+                  var tab = yasgui.addTab(true);
+                  tab.setQuery(this.value);
+                }
+            aside.wrpl
+              .h-padding
+                h2 Data Dump
+                .line
+                .asideListFloat
+                  ul.dumps
+                    li
+                      a(href='/lov.n3.gz' target='_blank' style="display: table; ")
+                        img(src='/img/n3_small.gif' style="width:61px; height:38px")
+                        span(style="padding-left:.5em; display: table-cell; vertical-align: middle; ") #{app_name_shorcut}
+                    li
+                      a(href='/lov.nq.gz' target='_blank' style="display: table; ")
+                        img(src='/img/nq_small.gif' style="width:61px; height:38px")
+                        span(style="padding-left:.5em; display: table-cell;   vertical-align: middle; ") #{app_name_shorcut} + vocabs 
+                .clear
+              .h-padding
+                h2 APIs
+                .line
+                div 
+                  span Consider using 
+                  a(href="/dataset/lov/api")
+                    b #{app_name_shorcut} APIs 
+                  span when appropriate
+                .clear

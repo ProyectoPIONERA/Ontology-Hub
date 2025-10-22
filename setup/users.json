@@ -1,0 +1,14 @@
+{
+  "_id": {
+    "$oid": "6655df1c246d4eb07e1808fe"
+  },
+  "email": "admin@gmail.com",
+  "category": "admin",
+  "agent": {
+    "$oid": "6655debc246d4eb07e1808fb"
+  },
+  "hashed_password": "73b19d4b3978e5e3061ca636db24d06fbd22fcd9",
+  "salt": "f1nd1ngn3m0",
+  "activated": true,
+  "__v": 0
+}

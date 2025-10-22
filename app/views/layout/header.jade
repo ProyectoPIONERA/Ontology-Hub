@@ -1,0 +1,36 @@
+header
+        a#logo(title='#{app_name}', href='/dataset/lov')
+          img(itemprop="image" alt='#{app_name}', src='/img/icon-logo.png' height='86' width='86')
+        nav
+          ul
+            li.wrpl
+              a(title='', href='/dataset/lov/vocabs')
+                | Vocabs
+            li.wrpl
+              a(title='', href='/dataset/lov/terms')
+                | Terms
+            li.wrpl
+              a(title='', href='/dataset/lov/agents')
+                | Agents
+            li.wrpl
+              a(title='', href='/dataset/lov/sparql')
+                | SPARQL/Dump
+            li.wrpl
+              a(title='', href='/dataset/lov/patterns')
+                | Patterns
+            if (req.isAuthenticated() && req.user.category === "admin")
+              li.wrpl
+                a(title='', href='/edition/lov/users')
+                  | Users
+            if (req.isAuthenticated() && req.user.category === "admin")
+              li.wrpl
+                a(title='', href='/edition/lov/tags')
+                  | Tags
+        if (req.isAuthenticated())
+          ul.editionAuth(style='position:absolute; top:0; right:0;')
+            li
+              a(href="/edition/lov/", title="Edition") Edition
+            li
+              a(href="/edition/lov/users/"+req.user.id, title="Profile") Profile
+            li
+              a(href="/edition/lov/logout", title="logout") Logout

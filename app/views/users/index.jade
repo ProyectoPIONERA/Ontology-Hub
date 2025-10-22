@@ -1,0 +1,74 @@
+extends ../layout/layout
+block content
+      section#post.postBlue
+        article
+          header.wrpl.w-3-3
+            h1 Users
+      
+      section#posts.default-area.postSearchResults
+        - if (typeof(users) !== 'undefined' && users.length>0)
+          #greenContainer.contents.clear.col-2.split.wrplGreen
+            .count-items
+                span.count #{users.length}
+                .clear
+                .items
+                  | #{users.length==1 ? 'user' : 'users'}
+              ul#SearchGrid
+                each user, i in users
+                  li(class="SearchBoxperson")
+                    .SearchContainer
+                      div.SearchInnerBox
+                        div.actionBar
+                          form(action='/edition/lov/users/#{user._id}' method='post' name='formEdit')
+                            input(type='hidden', name='_csrf', value="#{csrf_token}")
+                            input(type="hidden", name="_method", value="GET")
+                            img.changeUser.actionBarAction(src="/img/edit_small.png" onclick="submit();")
+                          form(action='/edition/lov/users/#{user._id}' method='post' name='formDelete')
+                            input(type='hidden', name='_csrf', value="#{csrf_token}")
+                            input(type="hidden", name="_method", value="DELETE")
+                            img.removeUser.actionBarAction(src="/img/remove.png")
+                        a.prefix(href='/dataset/lov/agents/#{user.agent.name}') !{user.agent.name}
+                        div.uri 
+                          a(href="mailto:#{user.email}") !{user.email}
+                      div.hr
+                      div.SearchBody
+                        div(style="float:left")
+                          - if(user.category === "curator")
+                            .statusButton curator
+                          - else
+                            form.statusActionButton(action="/edition/lov/userChangeCategory", method="post")
+                              input.csrf(type='hidden', name='_csrf', value="#{csrf_token}")
+                              input(type='hidden', name='userId', value="#{user._id}")
+                              input(type='hidden', name='category', value="curator")
+                              input.statusSubmit(type='submit' name='submit' value='curator')
+                          - if(user.category === "admin")
+                            .statusButton admin
+                          - else
+                            form.statusActionButton(action="/edition/lov/userChangeCategory", method="post")
+                              input.csrf(type='hidden', name='_csrf', value="#{csrf_token}")
+                              input(type='hidden', name='userId', value="#{user._id}")
+                              input(type='hidden', name='category', value="admin")
+                              input.statusSubmit(type='submit' name='submit' value='admin')
+                        .clear
+          #dialog(style='display:none;') Are you sure you want to delete this user?
+          script.
+            $(document).ready(function () {
+              // delete a user
+              $('.removeUser').click(function(){
+                var currentForm = $(this).parents('form:first');
+                  $('#dialog').dialog({
+                    resizable: false,
+                    height:200,
+                    modal: true,
+                    buttons: {
+                        'Confirm Deletion': function() {
+                            currentForm.submit();
+                        },
+                        Cancel: function() {
+                          currentForm=null;
+                          $(this).dialog('close');
+                        }
+                    }
+                  });
+              });
+            });

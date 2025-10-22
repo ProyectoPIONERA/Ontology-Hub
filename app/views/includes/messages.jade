@@ -1,0 +1,25 @@
+- if (typeof info != 'undefined' && info.length)
+  .fade.in.alert.alert-block.alert-info.alert-dismissible
+    button.close(type='button', data-dismiss='alert') &times;
+    ul
+      - each inf in info
+        li!= inf
+
+- if (typeof errors != 'undefined' && JSON.stringify(errors).length>2)
+  .fade.in.alert.alert-block.alert-error
+      - each error in errors
+        div!= error
+
+- if (typeof success != 'undefined' && success.length)
+  .fade.in.alert.alert-block.alert-success.alert-dismissible
+    button.close(type='button', data-dismiss='alert') &times;
+    ul
+      - each succ in success
+        li!= succ
+
+- if (typeof warning != 'undefined' && warning.length)
+  .fade.in.alert.alert-block.alert-warning.alert-dismissible
+    button.close(type='button', data-dismiss='alert') &times;
+    ul
+      - each warn in warning
+        li!= warn

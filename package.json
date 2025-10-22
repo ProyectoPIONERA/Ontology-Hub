@@ -1,0 +1,66 @@
+{
+  "name": "nodejs-express-mongoose-demo",
+  "description": "A demo app illustrating the usage of express, mongoose, passportjs, jade and other modules in nodejs",
+  "keywords": [
+    "express",
+    "mongoose",
+    "mongodb",
+    "passport",
+    "demo"
+  ],
+  "version": "3.0.0",
+  "private": false,
+  "author": "Madhusudhan Srinivasa <madhums8@gmail.com> (http://madhums.github.com)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/madhums/node-express-mongoose-demo.git"
+  },
+  "engines": {
+    "node": "0.10.x",
+    "npm": "1.2.x"
+  },
+  "scripts": {
+    "start": "NODE_ENV=development ./node_modules/.bin/nodemon server.js",
+    "test": "NODE_ENV=test ./node_modules/.bin/mocha --reporter spec --timeout 10000 test/test-*.js"
+  },
+  "dependencies": {
+    "@elastic/elasticsearch": "^8.13.1",
+    "async": "^3.2.5",
+    "body-parser": "^1.20.2",
+    "compression": "^1.7.4",
+    "connect-flash": "^0.1.1",
+    "connect-mongo": "^5.1.0",
+    "connect-mongodb-session": "^5.0.0",
+    "cookie-parser": "^1.4.6",
+    "csurf": "^1.11.0",
+    "dagre": "^0.8.5",
+    "dagre-d3": "^0.6.4",
+    "elasticsearch": "^16.7.3",
+    "elasticsearchclient": "^0.5.3",
+    "express": "^4.19.2",
+    "express-negotiate": "^0.0.6",
+    "express-session": "^1.18.0",
+    "forever": "^4.0.3",
+    "jade": "^1.11.0",
+    "jszip": "^3.10.1",
+    "method-override": "^3.0.0",
+    "mongoose": "^8.4.0",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "nodejs-express-mongoose-demo": "file:",
+    "nodemailer": "^6.9.13",
+    "notifier": "^0.2.0",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0",
+    "serve-favicon": "^2.5.0",
+    "underscore": "^1.13.6",
+    "view-helpers": "^0.2.0",
+    "winston": "^3.13.0"
+  },
+  "devDependencies": {
+    "mocha": "latest",
+    "nodemon": "latest",
+    "should": "latest",
+    "supertest": "latest"
+  }
+}

@@ -1,0 +1,153 @@
+extends ./layout/layout
+block content
+      section#title.postBlue
+        h1(itemprop="name")
+          a(href='/dataset/lov') #{app_name}
+            span  (#{app_name_shorcut})
+      section#featuresBanner
+        if (req.isAuthenticated())
+          .featureWrapper
+            .contribute
+              a(href='/edition/lov') Edit
+        .featureWrapper
+          .suggest
+            a(href='/dataset/lov/suggest') Suggest
+        .featureWrapper
+          .documentation
+            a(href='/dataset/lov/about') Documentation
+        .featureWrapper
+          .search
+            form#searchForm(action='/dataset/lov/terms' method='get')
+              a(href='/dataset/lov/terms') &nbsp
+              input#searchInput(name='q', type='text', placeholder='', autocomplete='off')  
+          script.      
+            $(document).ready(function() {
+              $( "#searchInput" ).autocomplete({
+                  minLength: 1,
+                  source: function (request, response) {
+                   $.ajax({
+                     url: "/dataset/lov/api/v2/term/autocompleteLabels",
+                     data: { q: request.term },
+                     dataType: "json",
+                     success: function( data ) {
+                            response(jQuery.map(data, function(item) {
+                                return {
+                                    label: item.text
+                                }
+                            }))
+                        },
+                     error: function () {
+                         response([]);
+                     }
+                  });
+                 },
+                  position: {my : "left top",at: "left bottom"},
+                  messages: {noResults: '',results: function() {}},
+                  select : function(event, ui) {
+                      location.href = '/dataset/lov/terms?q=' + encodeURIComponent(ui.item.label);
+                  },
+                 open: function(event, ui) {$(".ui-autocomplete").css("z-index", 1000);}
+              }).data( "uiAutocomplete" )._renderItem = function( ul, item ) {
+               return $( "<li></li>" )
+                 .data( "item", item )
+                 .append( "<a>" + item.label+"</a>")
+                 .appendTo( ul );
+              };
+            });
+        .featureWrapper
+          .searchQA
+            a(href='/dataset/lov/qa' title='#{app_name_shorcut} Question Answering') &nbsp
+      section#posts.default-area
+          article
+            #greenContainer.contents.clear.col-2.split.wrplGreen
+              a#infoNbVocab(href='/dataset/lov/vocabs' style="margin-bottom: -2em") !{vocabs.length} Vocabularies in #{app_name_shorcut}    
+              #vis(style="margin: -3em 0 -3em 0")                    
+              script.   
+                var root={"name": "flare","children": [!{vocabsMostLOVIncomingLinks}]};
+                var boxWidth = 960,
+                    boxHeight = 900,
+                    format = d3.format(",d"),
+                    color = d3.scale.category20c();
+
+                var bubble = d3.layout.pack()
+                    .sort(null)
+                    .size([boxWidth, boxHeight])
+                    .padding(1.5);
+
+                var svg = d3.select("#vis").append("svg")
+                    .attr("viewBox","0 0 960 900")
+                    .attr("perserveAspectRatio","xMinYMin")
+                    .attr("width", boxWidth)
+                    .attr("height", boxHeight)
+                    .attr("class", "Limace");
+
+                  var node = svg.selectAll(".node")
+                      .data(bubble.nodes(classes(root))
+                      .filter(function(d) { return !d.children; }))
+                      .enter().append("g")
+                      .attr("class", "node")
+                      .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
+                      .on("click", function(d) { self.location= "/dataset/lov/vocabs/"+ d.className});
+
+                  node.append("title")
+                      .text(function(d) { return d.className+" - reused by " + ((d.value>=1)?format(d.value):'0')+ " vocabs"; });
+
+                  node.append("circle")
+                      .attr("r", function(d) { return d.r; })
+                      .style("fill", function(d) { return color(d.packageName); });
+
+                  node.append("text")
+                      .attr("dy", ".3em")
+                      .style("text-anchor", "middle")
+                      .text(function(d) { return d.className.substring(0, d.r / 3); })
+                      .style("font-size", function (d) { return ((d.r / 30)) + "em"; });
+                      
+                  
+                  
+
+                // Returns a flattened hierarchy containing all leaf nodes under the root.
+                function classes(root) {
+                  var classes = [];
+
+                  function recurse(name, node) {
+                    if (node.children) node.children.forEach(function(child) { recurse(node.name, child); });
+                    else classes.push({packageName: node.prefix, className: node.prefix, value: (node.nbIncomingLinks>0)?node.nbIncomingLinks:0.5});
+                  }
+
+                  recurse(null, root);
+                  return {children: classes};
+                }
+                  
+                 var chartVis = $(".Limace"),
+                    aspectVis = chartVis.width() / chartVis.height(),
+                    containerVis = chartVis.parent();
+                $(window).on("resize", function() {
+                    var targetWidthVis = containerVis.width();
+                    chartVis.attr("width", targetWidthVis);
+                    chartVis.attr("height", Math.round(targetWidthVis / aspectVis));
+                }).trigger("resize");
+                
+              .infoTags
+                #infoTagsTitle Category Tags
+                ul.tags
+                  - each tag in tagsMostPopular
+                    li
+                      a.tag(href='/dataset/lov/vocabs?tag='+encodeURIComponent(tag.label)) #{tag.label}
+            aside.wrpl
+              .h-padding
+                h2 Latest insertion
+                .line
+                div.asideEnum
+                  - each voc in vocabsLatestInsertion
+                    a.enum(href='/dataset/lov/vocabs/#{voc.prefix}')
+                      b #{voc.prefix} - 
+                      span #{voc.titles[0].value}
+                      .when #{utils.dateToYMD(voc.createdInLOVAt)}
+                h2(style='padding-top:2em;') Latest Updates
+                .line
+                div.asideEnum
+                  - each voc in vocabsLatestModification
+                    a.enum(href='/dataset/lov/vocabs/#{voc.prefix}')
+                      b #{voc.prefix} - 
+                      span #{voc.titles[0].value}
+                      .when #{utils.dateToYMD(voc.lastModifiedInLOVAt)}

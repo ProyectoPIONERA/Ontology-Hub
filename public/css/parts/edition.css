@@ -1,0 +1,382 @@
+.editionIndexBox{
+  padding:1em;
+  width:100%;
+  position:relative;
+  min-height: 8em;
+}
+.editionIndexBox h2{
+  padding-left:2em;
+  color: #FFFFFF;
+  font-size: 24px;
+  text-shadow: 1px 1px 5px #646464;
+}
+.editionIndexBox .countItems{
+  position:absolute;
+  background-color: #ffffff;
+  text-align: center;
+  width: 3em;
+  top:0.5em;
+  left:0.5em;
+  min-height: 2em;
+  padding-top:0.5em;
+border:1px solid #545454;
+}
+.editionIndexBox .countItems  .count {
+  font-weight: bold;
+  font-size: 22px;
+  text-align: center;
+  color: #3c3c3c;
+}
+.editionIndexBox .countItems .items {
+  font-weight: bold;
+  font-size: 12px;
+  line-height: 12px;
+  text-align: center;
+  color: #545454;
+}
+
+.editionIndexBoxHeader{
+  height:2em;
+}
+.editionIndexBoxHeader .title{
+  float:left;
+  color: #FFFFFF;
+  font-weight: bold;
+  /*text-shadow: 1px 1px 5px #646464;*/
+  text-transform: uppercase;
+}
+.editionIndexBoxHeader #submitUsers, .editionIndexBoxHeader #selectAllUsers, .editionIndexBoxHeader .statusAllActionButton, .editionInnerBox .suggestCreate{
+  float:right;
+  background:#A2DAD2;
+  margin: 0 .5em;
+  margin-top:-.5em;
+  border:0;
+  padding:.5em;
+  font-family:'Open Sans',sans-serif;
+  font-size:100%;
+  color:#000;
+  cursor:pointer;
+  transition:background .3s;
+  -webkit-transition:background .3s;
+}
+.editionInnerBox .suggestCreate{
+  margin-top:0;
+}
+.editionIndexBoxHeader #submitUsers:hover, .editionIndexBoxHeader #selectAllUsers:hover{
+  background:#ffffff;
+}
+.editionInnerBox .suggestCreate:hover{
+  background: #3d3d3d;
+  color:white;
+}
+.editionIndexBoxHeader .statusAllActionButton:hover{
+  background:#f57c20;
+  color:white;
+}
+
+
+/*
+ul.editionGrid > li.editionBoxperson > .editionContainer > .editionInnerBox|.hr
+
+*/
+
+.editionGrid li:first-child {
+  min-height: 3.2em;
+  margin-left: 4.7em;
+}
+.editionGrid li{
+  list-style: none;
+  padding: 0.4em;
+  background-color: #F6F6F6;
+  border-bottom: 0.4em solid #5E9B9B;
+  -webkit-transition: background 0.3s, box-shadow 0.3s;
+  -moz-transition: background 0.3s, box-shadow 0.3s;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.editionGrid li.inactive{
+  background-color: #444747;
+}
+
+.editionGrid li .hr {
+     background: #dddddd; 
+     width: 90%;
+     margin:auto;
+     height: 1px;
+}
+
+li.editionBoxperson .editionContainer{
+  border-left: 6px solid #82C836;
+  overflow:hidden;
+}
+li.editionBoxSugg .editionContainer{
+  border-left: 6px solid #9A69BD;
+  overflow:hidden;
+}
+li.editionBoxRev .editionContainer{
+  border-left: 6px solid #969696;
+  overflow:hidden;
+}
+
+
+.editionInnerBox{
+	padding:0.2em;
+  padding-left:0.6em;
+  overflow:visible;
+}
+.editionInnerBox .hr {
+     background: #dddddd; 
+     width: 90%;
+     margin:auto;
+     height: 1px;
+}
+.editionInnerBox .prefix { 
+  color:#232323; 
+  font-weight: bold;
+  font-size:110%;
+}
+li.inactive .editionInnerBox .prefix {
+  color:#FFFFFF;
+  text-decoration:line-through;
+}
+.editionInnerBox .uri{
+  color:#969696;
+  font-size:80%;
+}
+li.inactive .editionInnerBox span {
+  color:#E6E6E6;
+  text-decoration:line-through;
+}
+.editionInnerBox .remove{
+  float:right;
+  margin-right:.5em;
+  margin-top:0.5em;
+  cursor:pointer;
+  width:1em;
+  height:1em;
+}
+.editionInnerBox .checkbox{
+  float:right;
+  padding-right:.5em;
+  padding-top:0.6em;
+  width:1em;
+  height:1em;
+}
+
+.editionInnerBox #submitTakeAction{
+  float:right;
+  width:1em;
+  height:1.5em;
+  cursor:pointer;
+}
+
+
+.SearchBody .statusActionButton, .SearchBody .statusButton{
+  float:left;
+}
+.SearchBody .statusButton{
+  margin: .2em;
+  border:0;
+  padding:.2em .4em;
+  border-radius: 2px;
+  background: #f57c20;
+  color: white;
+  -webkit-transition: background 0.3s, box-shadow 0.3s;
+  -moz-transition: background 0.3s, box-shadow 0.3s;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.SearchBody .statusSubmit{
+  background:#D6D6D6;
+  margin: .2em;
+  border:0;
+  padding:.2em .4em;
+  border-radius: 2px;
+  cursor:pointer;
+  -webkit-transition: background 0.3s, box-shadow 0.3s;
+  -moz-transition: background 0.3s, box-shadow 0.3s;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.SearchBody .statusSubmit:hover{
+  background: #3d3d3d;
+  color:white;
+}
+
+.SearchInnerBox .actionBar{
+  float:right;
+}
+
+.SearchBoxtag .SearchInnerBox .actionBarAction{
+  margin-right:.5em;
+  margin-top: 0;
+  cursor:pointer;
+  width:1.2em;
+  height:1.2em;
+}
+.SearchInnerBox .actionBarAction{
+  margin-right:.5em;
+  margin-top:0.5em;
+  cursor:pointer;
+  width:1.2em;
+  height:1.2em;
+}
+
+.SearchInnerBox .inlineEdit{
+  width:.8em;
+  height:.8em;
+  margin-left:.5em;
+  cursor:pointer;
+}
+
+#title .editActionH1, #post .editActionH1{
+  float:right;
+  height:1em;
+  width:1em;
+  cursor:pointer;
+}
+
+
+/* Vocab edition */
+.fieldSuggestions{
+  padding: .3em 0em .3em 1em;
+  font-size:90%;
+  color:#5E9B9B;
+}
+.fieldSuggestions .fieldSug .fieldSugLabel{
+  font-style: italic;
+}
+.fieldSuggestions .fieldSug .fieldSugValue{
+  
+}
+.fieldSuggestions .fieldSug .fieldSugActionInput{
+  padding-left:.5em;
+  cursor:pointer;
+  height:1em;
+  width:1em;
+}
+.fieldSuggestions .fieldSug .fieldSugLang{
+  color:#426C6C;
+}
+.fieldWithLangAddAction, .fieldSugActionTextareaLangDescription, .fieldSugActionTextareaLangTitle, .fieldAgentAddAction, .fieldReviewAddAction, .fieldTagsAddAction, .fieldSugActionAgentComplete, .fieldSVGDiagramAction{
+  height:1em;
+  width:1em;
+  cursor:pointer;
+  padding-left:.5em;
+}
+.fieldSugHidden{
+  display:none;
+}
+.fieldPrecision{
+  color:#9E9E9E;
+  font-size:90%;
+}
+
+.AgentThumb{
+  float:left;
+  border-radius: 4px;
+  padding:.5em;
+  padding-right:1.5em;
+  margin:0 .4em .4em 0;
+  background-color: #444747;
+  color: #fbfbfb;
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3) inset;
+  -o-box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3) inset;
+  -moz-box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3) inset;
+  -webkit-box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3) inset;
+}
+.agentThumbInnerBodyperson{
+  position:relative;
+  border-left: 6px solid #82C836;
+  padding-left:.3em;
+}
+.agentThumbInnerBodyorganization{
+  position:relative;
+  border-left: 6px solid #4A8806;
+  padding-left:.3em;
+}
+.agentThumbInnerBodylanguage{
+  position:relative;
+  border-left: 6px solid #8c564b;
+  padding-left:.3em;
+}
+.agentThumbPrefUri{
+  color: #888888;
+  max-width:400px;
+  white-space: pre;           /* CSS 2.0 */
+	white-space: pre-wrap;      /* CSS 2.1 */
+	white-space: pre-line;      /* CSS 3.0 */
+	white-space: -pre-wrap;     /* Opera 4-6 */
+	white-space: -o-pre-wrap;   /* Opera 7 */
+	white-space: -moz-pre-wrap; /* Mozilla */
+	white-space: -hp-pre-wrap;  /* HP Printers */
+	word-wrap: break-word;      /* IE 5+ */
+}
+.agentThumbRemove{
+  position:absolute;
+  top:0;
+  right:-1.2em;
+  height:.8em;
+  width:.8em;
+  cursor:pointer;
+}
+.imageTagRemoveAction{
+  position:absolute;
+  top:.5em;
+  right:.2em;
+  height:.6em;
+  width:.6em;
+  cursor:pointer;
+}
+
+.imageVersionActionRemove, .imageVersionActionUpload, .imageVersionActionEdit{
+  height: 1.2em;
+  width: 1.2em;
+  cursor: pointer;
+  padding-left: .5em;
+  float:right;
+}
+
+.reviewProv{
+  color: #5E9B9B;
+  padding:.2em 0 .7em 1em;
+}
+.col-1.wrplGreen{
+  width:100%;
+}
+.tagFromList{
+  cursor:pointer;
+}
+.unmatchedRel{
+   list-style-type: none;
+   font-weight: bold;
+}
+
+.statusAllActionButton{
+  float:right;
+}
+
+#loading-div-background{
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:rgba(200, 200, 200, 0.5);
+}
+
+#loading-div{
+    width: 300px;
+    height: 150px;
+    background-color: #fff;
+    border: 5px solid #1468b3;
+    text-align: center;
+    color: #202020;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-left: -150px;
+    margin-top: -100px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    opacity: 1;
+}

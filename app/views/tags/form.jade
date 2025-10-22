@@ -1,0 +1,56 @@
+extends ../layout/layout
+block content
+      - var action = '/edition/lov/tags'
+      - action += tag.isNew? '' : '/' + tag.id
+      section#post.postBlue
+        article
+          header.wrpl.w-3-3
+            h1 #{tag.label?tag.label:'Create a new Tag'}
+      section#posts.default-area
+          article
+            #greenContainer.contents.clear.col-1.wrplGreen
+              form(method='post' action=action name='TheForm')
+                input(type='hidden', name='_csrf', value="#{csrf_token}")
+                - if (!tag.isNew)
+                  input(type="hidden", name="_method", value="PUT")
+                .metadataFrame
+                  #formErrors
+                  div(class='metadataContainerPerson')
+                    table.editionTable
+                      tbody
+                        tr
+                          td Label
+                          td
+                            input(type='text', name="label", value=tag.label, autocomplete='off')
+                        - if (!tag.isNew)
+                          tr
+                            td Number of occurrences
+                            td
+                              input(type='text', name="nbOccurrences", value=tag.nbOccurrences?tag.nbOccurrences : 0, autocomplete='off', readOnly='true')
+                        -else
+                          tr(style="display:none;")
+                            td Number of occurrences
+                            td
+                              input(type='text', name="nbOccurrences", value=tag.nbOccurrences?tag.nbOccurrences : 0, autocomplete='off', readOnly='true')
+                .editionActionBar
+                  input.editionSaveButtonRight(type='submit' name='submit' value='Save')
+                  a.editionCancelButtonRight(href="#{redirect}", title="cancel") Cancel
+                  .clear
+                  
+      script.
+        //form validation before submit
+        new FormValidator('TheForm', [{
+            name: 'label',
+            display: 'Label',
+            rules: 'required'
+        }], function(errors, event) {
+            if (errors.length > 0) {
+              var errorString = '';
+              for (var i = 0, errorLength = errors.length; i < errorLength; i++) {
+                  errorString += errors[i].message + '<br />';
+              }
+              document.getElementById('formErrors').style.display = 'block';
+              document.getElementById('formErrors').innerHTML = errorString;
+              event.returnValue=false;
+            }
+        });
