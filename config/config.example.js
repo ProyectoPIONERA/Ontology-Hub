@@ -22,7 +22,7 @@ module.exports = {
     },
     lov: 'http://localhost:3333',
     //Path to where the output of "lov_scripts" repository have been generated
-    scripts: '/home/sergio/scripts',
+    scripts: '/home/user/scripts',
     //Path to "Patrones" repository
     patterns: '/home/user/Patterns/Patrones',
     //Path to python environment
@@ -58,7 +58,7 @@ module.exports = {
     },
     lov: 'http://localhost:3333',
     //Path to where the output of "lov_scripts" repository have been generated
-    scripts: '/home/sergio/scripts',
+    scripts: '/home/user/scripts',
     //Path to "Patrones" repository
     patterns: '/home/user/Patterns/Patrones',
     //Path to python environment
