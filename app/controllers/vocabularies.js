@@ -13,6 +13,9 @@ var mongoose = require("mongoose"),
   JSZip = require("jszip"),
   path = require("path");
 
+const { Parser } = require('n3');
+const crypto = require('crypto');
+
 var app_name;
 var app_name_shorcut;
 
@@ -640,175 +643,23 @@ exports.create = function (req, res, scripts, lov, patterns, python_patterns) {
   vocab
     .save()
     .then(() => {
-      /* store version locally */
-      var command =
-        scripts +
-        "/bin/downloadVersion " +
-        (vocab.isDefinedBy ? vocab.isDefinedBy : vocab.uri) +
-        " " +
-        scripts +
-        "/lov.config";
-      var exec = require("child_process").exec;
-      child = exec(command, function (error, stdout, stderr) {
-        if (!stderr.startsWith("ERROR") && stdout && stdout.length > 0) {
-          stdout = stdout.split("\n")[0];
-          /* move file with its name */
-          var version = {};
-          var versionIssued = new Date();
-
-          var d = versionIssued.getDate();
-          var m = versionIssued.getMonth() + 1;
-          var y = versionIssued.getFullYear();
-          var issuedStr =
-            "" +
-            y +
-            "-" +
-            (m <= 9 ? "0" + m : m) +
-            "-" +
-            (d <= 9 ? "0" + d : d);
-          var versionName = "v" + issuedStr;
-
-          version.issued = versionIssued;
-          version.name = versionName;
-          version.isReviewed = true;
-
-          var dir = "./versions/" + vocab._id;
-          if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir);
-          }
-
-          var target_path =
-            "./versions/" +
-            vocab._id +
-            "/" +
-            vocab._id +
-            "_" +
-            issuedStr +
-            ".n3"; //req.files.file.name;
-          // move the file from the temporary location to the intended location
-          fs.rename(stdout, target_path, function (err) {
-            //windows command
-            //exec("move " + stdout + " " + target_path, function (err) {
-            if (err) {
-              return res
-                .status(500)
-                .send(
-                  "The ontology has not been downloaded. No version found."
-                );
-              //throw err
-            }
-            var versionPublicPath =
-              lov +
-              "/dataset/lov/vocabs/" +
-              vocab.prefix +
-              "/versions/" +
-              issuedStr +
-              ".n3";
-            /* run analytics on vocab */
-            var command2 =
-              scripts +
-              "/bin/versionAnalyser " +
-              versionPublicPath +
-              " " +
-              vocab.uri +
-              " " +
-              vocab.nsp +
-              " " +
-              scripts +
-              "/lov.config";
-            var exec2 = require("child_process").exec;
-            child = exec2(command2, function (error2, stdout2, stderr2) {
-              stdout2 = JSON.parse(stdout2);
-              stdout2 = _.extend(stdout2, version);
-
-              //Add diagram to version (if the diagram was uploaded) (to stdout2)
-              if (req.body.file) {
-                // Directory path to store the diagrams
-                dir = dir + "/diagrams";
-                // Diagram path
-                target_path = dir + "/" + vocab._id + "_" + issuedStr + ".svg";
-                //Indicate the path to the diagram
-                stdout2["diagramPath"] = target_path;
-                // Create directory to store the diagrams
-                if (!fs.existsSync(dir)) {
-                  fs.mkdirSync(dir);
-                }
-                // Store the diagram
-                fs.writeFile(target_path, req.body.file.fileContent, (err) => {
-                  if (err) {
-                    console.error(err);
-                  }
-                });
-              }
-
-              /* add version */
-              Vocabulary.addVersion(vocab.prefix, stdout2, function (err) {
-                if (err) {
-                  return res.send({
-                    redirect: "500",
-                  });
-                }
-                vocab.versions = stdout2;
-
-                //success generate first stats
-                var command3 =
-                  scripts +
-                  "/bin/statsonevocab " +
-                  scripts +
-                  "/lov.config " +
-                  vocab.uri;
-                var exec3 = require("child_process").exec;
-                child = exec3(command3, function (error3, stdout3, stderr3) {
-                  // Generate not flatten structures
-                  exports
-                    .generateStructures(
-                      vocab.prefix,
-                      vocab,
-                      "not_flatten",
-                      python_patterns,
-                      patterns,
-                      false
-                    )
-                    .then(
-                      ([
-                        versionPath,
-                        structuresTypePath,
-                        structuresNamePath,
-                      ]) => {
-                        exports.detectGlobalPatterns(
-                          patterns,
-                          python_patterns,
-                          (err) => {
-                            if (err)
-                              return res.send({
-                                redirect: "/dataset/lov/vocabs/" + vocab.prefix,
-                                err: err,
-                              });
-                            return res.send({
-                              redirect: "/dataset/lov/vocabs/" + vocab.prefix,
-                            });
-                          }
-                        );
-                      }
-                    )
-                    .catch((err) => {
-                      return res.send({
-                        redirect: "/dataset/lov/vocabs/" + vocab.prefix,
-                        err: err,
-                      });
-                    });
-                });
-              });
-            });
-          });
-        } else {
-          //no version found
-          res.send({
-            redirect: "/dataset/lov/vocabs/" + vocab.prefix,
-            err: "The ontology has not been downloaded. No version found.",
-          });
-        }
-      });
+      if(!req.body.ontologyPath){
+        /* store version locally */
+        var command =
+          scripts +
+          "/bin/downloadVersion " +
+          (vocab.isDefinedBy ? vocab.isDefinedBy : vocab.uri) +
+          " " +
+          scripts +
+          "/lov.config";
+        var exec = require("child_process").exec;
+        child = exec(command, (error, stdout, stderr) => {
+          createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, python_patterns, vocab);
+        });
+      }
+      else{
+        createVocab(req, res, null, req.body.ontologyPath, null, scripts, lov, patterns, python_patterns, vocab);
+      }
     })
     .catch((err) => {
       return res.send({
@@ -886,7 +737,9 @@ exports.generateStructures = function (
       //Llamar a la api para que generar el fichero con las estructuras
       var exec = require("child_process").exec;
       child = exec(command, function (error, stdout, stderr) {
-        if (error !== null) reject(new Error("exec1 error: " + error));
+        if (error !== null) {
+          reject(error);
+        }
         resolve([versionPath, structuresTypePath, structuresNamePath]);
       });
     } else {
@@ -1120,6 +973,168 @@ exports.new = function (req, res, scripts) {
   }
 };
 
+exports.newRepository = function (req, res, scripts) {
+  // Check that the ontology repository url is present
+  if (!req.body.repositoryUri) {
+    req.flash("error", "You must specify an ontology repository url");
+    res.redirect("/edition/lov");
+  } else {
+    const aux = new URL(req.body.repositoryUri);
+
+    // Check if the url is from github or gitlab
+    if(!isRepositoryUrl(req.body.repositoryUri)){
+      req.flash("error", "You must specify an url from github or gitlab");
+      res.redirect("/edition/lov");
+    }
+    else{
+      const { pathname } = new URL(req.body.repositoryUri);
+
+      // Get the default branch name
+      fetch(`https://api.github.com/repos${pathname}`)
+        .then(function(response) {
+          if (!response.ok) {
+            return Promise.reject();
+          }
+          else{
+            return response.json();
+          }
+        })
+        .then(function(data){
+          
+          // Get the .config file from the repository
+          fetch(`https://api.github.com/repos${pathname}/contents/.config`)
+            .then(function(response) {
+              if (!response.ok) {
+                return Promise.reject();
+              }
+              else{
+                return response.json();
+              }
+            })
+            .then(function(data){
+              if (data.encoding === 'base64') {
+                // Decode Base64 content
+                const content = Buffer.from(data.content, 'base64').toString('utf8');
+                // Parse the "implementation" path
+                var match = content.match(/implementation\s*=\s*(.+)/);
+                if (!match) {
+                  return Promise.reject(new Error('We can access the .config file but no implementation path was found in it'));
+                }
+                else{
+                  // Remove possible "./" and trim spaces/newlines
+                  let implementationPath = match[1].trim();
+                  implementationPath = implementationPath.replace(/^\.\//, ""); // remove leading './'
+
+                  //Get the ontology
+                  fetch(`https://api.github.com/repos${pathname}/contents/${implementationPath}`)
+                    .then(function(response){
+                      if (!response.ok) {
+                        return Promise.reject();
+                      }
+                      else{
+                        return response.json();
+                      }
+                    })
+                    .then(function (files){
+                      // The response will be an array of file objects if it's a directory
+                      if (!Array.isArray(files)) {
+                        return Promise.reject(new Error('The implementation path specified in the .config file is not a folder.'));
+                      }
+                      /*
+                      if (files.length !== 1) {
+                        return Promise.reject(new Error(`The implementation path specified in the .config file contains more than one file. It contains ${files.length} files.`));
+                      }
+                      */
+                      //Download the ontology
+                      fetch(files[1].download_url)
+                        .then(function(response){
+                          if (!response.ok) {
+                            return Promise.reject();
+                          }
+                          else{
+                            return response.text();
+                          }
+                        })
+                        .then(function(data) {
+                          // Get the path to the ontology artifacts
+                          match = content?.match(/requirements\s*=\s*(.+)/)?.[1]
+                            ?.trim()
+                            .replace(/^\.\//, "");
+                          let requirements = match
+                            ? `https://api.github.com/repos${pathname}/contents/${match}`
+                            : null;
+                          match = content?.match(/conceptualization\s*=\s*(.+)/)?.[1]
+                            ?.trim()
+                            .replace(/^\.\//, "");
+                          let conceptualization = match
+                            ? `https://api.github.com/repos${pathname}/contents/${match}`
+                            : null;
+                          match = content?.match(/shapes\s*=\s*(.+)/)?.[1]
+                            ?.trim()
+                            .replace(/^\.\//, "");
+                          let shapes = match
+                            ? `https://api.github.com/repos${pathname}/contents/${match}`
+                            : null;
+                          match = content?.match(/examples\s*=\s*(.+)/)?.[1]
+                            ?.trim()
+                            .replace(/^\.\//, "");
+                          let examples = match
+                            ? `https://api.github.com/repos${pathname}/contents/${match}`
+                            : null;
+                          match = content?.match(/tests\s*=\s*(.+)/)?.[1]
+                            ?.trim()
+                            .replace(/^\.\//, "");
+                          let tests = match
+                            ? `https://api.github.com/repos${pathname}/contents/${match}`
+                            : null;
+                          return parseOntology(req, res, scripts, data, path.extname(files[1].name), requirements, conceptualization, shapes, examples, tests);
+                        })
+                        .catch(function(err){
+                          if(err){
+                            req.flash("error", err.message);
+                            res.redirect("/edition/lov");
+                          }
+                          else{
+                            req.flash("error", "We can not download the ontology specified in the .config file.");
+                            res.redirect("/edition/lov");
+                          }
+                        });
+                    })
+                    .catch(function(err) {
+                      if(err){
+                        req.flash("error", err.message);
+                        res.redirect("/edition/lov");
+                      }
+                      else{
+                        req.flash("error", "We can not access the ontology specified in the .config file.");
+                        res.redirect("/edition/lov");
+                      }
+                    });
+                }
+              } else {
+                return Promise.reject(new Error(`We can access the .config file but the encoding is unexpected: ${data.encoding}`));
+              }
+            })
+            .catch(function(err) {
+              if(err){
+                req.flash("error", err.message);
+                res.redirect("/edition/lov");
+              }
+              else{
+                req.flash("error", "We can access the repository but there is not .config file located at the root.");
+                res.redirect("/edition/lov");
+              }
+            });
+        })
+        .catch(function(err) {
+          req.flash("error", "We can not access the repository. Check the if the url is correct and the repository is public.");
+          res.redirect("/edition/lov");
+        });
+    }
+    
+  }
+}
+
 exports.detectPatterns = function (req, res, patterns, python_patterns) {
   if (!req.query.vocs || req.query.vocs.length == 2) {
     //control that vocs param is present
@@ -1262,4 +1277,321 @@ function pushNodesLinks(vocabList, isFilterOut, group, nodes, links, cpt) {
     }
   }
   return cpt;
+}
+
+function isRepositoryUrl(url) {
+  try {
+    const { protocol, hostname } = new URL(url);
+    return (protocol === 'https:' || protocol === 'http:') && (hostname === 'github.com' || hostname === 'www.github.com' || hostname === 'gitlab.com' || hostname === 'www.gitlab.com');
+  } catch (err) {
+    return false; // Invalid URL format
+  }
+}
+
+function parseOntology(req, res, scripts, data, extension, requirements, conceptualization, shapes, examples, tests) {
+  
+  const parser = new Parser();
+  const quads = parser.parse(data);
+
+  const ontologyQuad = quads.find(q =>
+      q.predicate.value === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' &&
+      q.object.value === 'http://www.w3.org/2002/07/owl#Ontology'
+  );
+
+  if (!ontologyQuad) throw new Error("No ontology IRI found");
+
+  Vocabulary.findNspURI(ontologyQuad.subject.value, function (err, vocab) {
+    if (err)
+      return res.render("500", {
+        app_name_shorcut: app_name_shorcut,
+        app_name: app_name,
+      });
+    if (vocab) {
+      //vocab already exist
+      req.flash("error", "This vocabulary already exists");
+      res.redirect("/edition/lov");
+    } else {
+      // Store the ontology content in a file in the tmp folder
+      const randomName = crypto.randomBytes(16).toString('hex');
+      const fullPath = path.join("./versions/temp", `${randomName}${extension}`);
+
+      if (!fs.existsSync("./versions/temp")) {
+        fs.mkdirSync("./versions/temp");
+      }
+      fs.writeFileSync(fullPath, data, 'utf8');
+
+      //vocab does not exist yet*/
+      Language.listAll(function (err, langs) {
+        if (err)
+          return res.render("500", {
+            app_name_shorcut: app_name_shorcut,
+            app_name: app_name,
+          });
+        Stattag.list(function (err, listTags) {
+          if (err)
+            return res.render("500", {
+              app_name_shorcut: app_name_shorcut,
+              app_name: app_name,
+            });
+          var command =
+            scripts +
+            "/bin/suggest " +
+            ontologyQuad.subject.value +
+            " " +
+            scripts +
+            "/lov.config " +
+            fullPath;
+          var exec = require("child_process").exec;
+          child = exec(command, function (error, stdout, stderr) {
+            if (stderr.length < 4) {
+              if (stdout) stdout = JSON.parse(stdout);
+            } else if (stdout) {
+              stdout = JSON.parse(stdout);
+            } else {
+              req.flash("error", "The vocabulary URI is not available");
+            }
+            res.render("vocabularies/new", {
+              stdout: stdout,
+              vocab: new Vocabulary({}),
+              langs: langs,
+              listTags: listTags,
+              profile: req.user,
+              utils: utils,
+              errors: req.flash("error"),
+              app_name_shorcut: app_name_shorcut,
+              app_name: app_name,
+              ontologyPath: fullPath,
+              requirements: requirements,
+              conceptualization: conceptualization, 
+              shapes: shapes,
+              examples: examples,
+              tests: tests,
+            });
+          });
+        });
+      });
+    }
+  });
+}
+
+function createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, python_patterns, vocab) {
+  if ((!stderr || !stderr.startsWith("ERROR")) && stdout && stdout.length > 0) {
+    stdout = stdout.split("\n")[0];
+    /* move file with its name */
+    var version = {};
+    var versionIssued = new Date();
+
+    var d = versionIssued.getDate();
+    var m = versionIssued.getMonth() + 1;
+    var y = versionIssued.getFullYear();
+    var issuedStr =
+      "" +
+      y +
+      "-" +
+      (m <= 9 ? "0" + m : m) +
+      "-" +
+      (d <= 9 ? "0" + d : d);
+    var versionName = "v" + issuedStr;
+
+    version.issued = versionIssued;
+    version.name = versionName;
+    version.isReviewed = true;
+
+    var dir = "./versions/" + vocab._id;
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir);
+    }
+
+    var target_path =
+      "./versions/" +
+      vocab._id +
+      "/" +
+      vocab._id +
+      "_" +
+      issuedStr +
+      ".n3"; //req.files.file.name;
+    // move the file from the temporary location to the intended location
+    fs.rename(stdout, target_path, function (err) {
+      //windows command
+      //exec("move " + stdout + " " + target_path, function (err) {
+      if (err) {
+        return res
+          .status(500)
+          .send(
+            "The ontology has not been downloaded. No version found."
+          );
+        //throw err
+      }
+      if(req.body.requirements){
+        downloadArtifact(req.body.requirements);
+      }
+      var versionPublicPath =
+        lov +
+        "/dataset/lov/vocabs/" +
+        vocab.prefix +
+        "/versions/" +
+        issuedStr +
+        ".n3";
+      /* run analytics on vocab */
+      var command2 =
+        scripts +
+        "/bin/versionAnalyser " +
+        versionPublicPath +
+        " " +
+        vocab.uri +
+        " " +
+        vocab.nsp +
+        " " +
+        scripts +
+        "/lov.config";
+      var exec2 = require("child_process").exec;
+      child = exec2(command2, function (error2, stdout2, stderr2) {
+        stdout2 = JSON.parse(stdout2);
+        stdout2 = _.extend(stdout2, version);
+
+        //Add diagram to version (if the diagram was uploaded) (to stdout2)
+        if (req.body.file) {
+          // Directory path to store the diagrams
+          dir = dir + "/diagrams";
+          // Diagram path
+          target_path = dir + "/" + vocab._id + "_" + issuedStr + ".svg";
+          //Indicate the path to the diagram
+          stdout2["diagramPath"] = target_path;
+          // Create directory to store the diagrams
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir);
+          }
+          // Store the diagram
+          fs.writeFile(target_path, req.body.file.fileContent, (err) => {
+            if (err) {
+              console.error(err);
+            }
+          });
+        }
+
+        /* add version */
+        Vocabulary.addVersion(vocab.prefix, stdout2, function (err) {
+          if (err) {
+            return res.send({
+              redirect: "500",
+            });
+          }
+          vocab.versions = stdout2;
+
+          //success generate first stats
+          var command3 =
+            scripts +
+            "/bin/statsonevocab " +
+            scripts +
+            "/lov.config " +
+            vocab.uri;
+          var exec3 = require("child_process").exec;
+          child = exec3(command3, function (error3, stdout3, stderr3) {
+            // Generate not flatten structures
+            exports
+              .generateStructures(
+                vocab.prefix,
+                vocab,
+                "not_flatten",
+                python_patterns,
+                patterns,
+                false
+              )
+              .then(
+                ([
+                  versionPath,
+                  structuresTypePath,
+                  structuresNamePath,
+                ]) => {
+                  exports.detectGlobalPatterns(
+                    patterns,
+                    python_patterns,
+                    (err) => {
+                      if (err)
+                        return res.send({
+                          redirect: "/dataset/lov/vocabs/" + vocab.prefix,
+                          err: err,
+                        });
+                      return res.send({
+                        redirect: "/dataset/lov/vocabs/" + vocab.prefix,
+                      });
+                    }
+                  );
+                }
+              )
+              .catch((err) => {
+                return res.send({
+                  redirect: "/dataset/lov/vocabs/" + vocab.prefix,
+                  err: "The structures for this Ontology has not been detected.",
+                });
+              });
+          });
+        });
+      });
+    });
+  } else {
+    //no version found
+    res.send({
+      redirect: "/dataset/lov/vocabs/" + vocab.prefix,
+      err: "The ontology has not been downloaded. No version found.",
+    });
+  }
+}
+
+function downloadArtifact(artifactPath){
+  console.log("entro");
+  console.log(artifactPath);
+
+  //Get the artifact
+  fetch(artifactPath)
+    .then(function(response){
+      if (!response.ok) {
+        return Promise.reject();
+      }
+      else{
+        return response.json();
+      }
+    })
+    .then(function (files){
+      // The response will be an array of file objects if it's a directory
+      if (!Array.isArray(files)) {
+        return Promise.reject(new Error('The implementation path specified in the .config file is not a folder.'));
+      }
+      
+      const filesToDownload = files.filter(item => item.type === 'file');
+      const foldersIgnored = files.filter(item => item.type === 'dir');
+
+      if (filesToDownload.length === 0) {
+          return Promise.reject(new Error("No files found in the specified folder."));
+      }
+      /*
+      if (foldersIgnored.length > 0) {
+          console.log(`Ignoring ${foldersIgnored.length} subfolders.`);
+      }
+      */
+
+      //Download each file
+      for (const file of filesToDownload) {
+        fetch(file.download_url)
+        .then(function(response){
+          if (!response.ok) {
+            return Promise.reject();
+          }
+          else{
+            return response.text();
+          }
+        })
+        .then(function(data) {
+          // Store the artifact locally
+          console.log(data);
+          return true
+        })
+        .catch(function(err){
+          return false;
+        });
+      }
+    })
+    .catch(function(err) {
+      return false;
+    });
 }
