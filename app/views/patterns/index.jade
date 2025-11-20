@@ -96,17 +96,24 @@ block content
             }
             sessionStorage.setItem("autosave", JSON.stringify(Object.keys(vocabSelected)));
         }
-        function selectAll(){
+        function selectAll(uncheck = false){
+
+          checked = true;
+          if(uncheck){
+            checked = false;
+          }
+
           prefixes = document.getElementsByClassName("pattern-prefix");
           for (let i = 0; i < prefixes.length; i++) {
             voc = prefixes[i].textContent;
             if (!(voc in vocabSelected)) {
               createLi(voc);
-              document.getElementById("checkbox_" + voc).checked = true;
+              document.getElementById("checkbox_" + voc).checked = checked;
             }
           }
           sessionStorage.setItem("autosave", JSON.stringify(Object.keys(vocabSelected)));
         }
+        
         function selectFlatten(){
           flatten = !flatten;
         }
@@ -174,6 +181,10 @@ block content
                 .clear
                 .items
                   | #{results.total_results==1 ? 'result' : 'results'}
+              .howTo
+                button.editionHowToButton(type='button' onclick="showHowToPopUp()")How to    
+              .unselect-all 
+                button.editionUnSelectAllButton(type='button' onclick='selectAll(true)')Unselect All   
               .select-all
                 button.editionSelectAllButton(type='button' onclick='selectAll()') Select All
               ul#SearchGrid
@@ -226,10 +237,14 @@ block content
                       tr
                           td Patterns
                           td
-                            select#selectedPattern(name='patterns', onchange="selectPattern()")
-                              - var agentTypes = ['type','name','both'];
-                              each agentType in agentTypes
-                                option(value=agentType, selected= agentType == 'type')= agentType
+                            input#flatten-op1(type='radio', name="patterns", value="op1", onClick="selectPattern()")
+                            label(for='flatten-op1') op1
+                            input#flatten-no(type='radio', name="patterns", value="op2", checked="checked", onClick="selectPattern()")
+                            label(for='flatten-op2') op2
+                            // select#selectedPattern(name='patterns', onchange="selectPattern()")
+                            //  - var agentTypes = ['type','name','both'];
+                            //  each agentType in agentTypes
+                            //    option(value=agentType, selected= agentType == 'type')= agentType
                         tr
                           td Flatten
                           td
