@@ -113,6 +113,21 @@ block content
           }
           sessionStorage.setItem("autosave", JSON.stringify(Object.keys(vocabSelected)));
         }
+
+        function unselectAll(){
+          prefixes = document.getElementsByClassName("pattern-prefix");
+          for (let i = 0; i < prefixes.length; i++) {
+            voc = prefixes[i].textContent;
+            if (voc in vocabSelected) {
+                selectedVocabularies.removeChild(vocabSelected[voc]);
+                delete vocabSelected[voc];
+                //$("#" + checkbox_id).checked = false;
+                document.getElementById("checkbox_" + voc).checked = false;
+            }
+          }
+          sessionStorage.setItem("autosave", JSON.stringify(Object.keys(vocabSelected)));
+        
+        }
         
         function selectFlatten(){
           flatten = !flatten;
@@ -172,6 +187,26 @@ block content
                  }
               });
         }
+        function showHowToPopUp(){
+          document.getElementById("popupContainer").style.display = "flex";
+        }
+        function closePopup() {
+          document.getElementById("popupContainer").style.display = "none";
+        }
+
+      div#popupContainer.popup-container(style="display:none;")
+        div.popup-content
+          span.closePopup(onclick="closePopup()") ×
+          h2.popup-title How to
+          hr.popup-divider
+          p.popup-text 
+            strong Patterns: 
+            | t is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).
+          br
+          p.popup-text 
+            strong Flatten: 
+            | Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum
+
       section#posts.default-area.postSearchResults
         - if (typeof(results.results) !== 'undefined' && results.total_results>0)
           #greenContainer.contents.clear.col-2.split.wrplGreen
@@ -181,12 +216,13 @@ block content
                 .clear
                 .items
                   | #{results.total_results==1 ? 'result' : 'results'}
-              .howTo
-                button.editionHowToButton(type='button' onclick="showHowToPopUp()")How to    
-              .unselect-all 
-                button.editionUnSelectAllButton(type='button' onclick='selectAll(true)')Unselect All   
-              .select-all
-                button.editionSelectAllButton(type='button' onclick='selectAll()') Select All
+              .actions    
+                .howTo
+                  button.editionHowToButton(type='button' onclick='showHowToPopUp()') How to    
+                .unselect-all 
+                  button.editionUnSelectAllButton(type='button' onclick='unselectAll()') Unselect All   
+                .select-all
+                  button.editionSelectAllButton(type='button' onclick='selectAll()') Select All
               ul#SearchGrid
                 each result, i in results.results
                   li(class="SearchBox#{result._source.type}")
@@ -237,14 +273,12 @@ block content
                       tr
                           td Patterns
                           td
-                            input#flatten-op1(type='radio', name="patterns", value="op1", onClick="selectPattern()")
-                            label(for='flatten-op1') op1
-                            input#flatten-no(type='radio', name="patterns", value="op2", checked="checked", onClick="selectPattern()")
-                            label(for='flatten-op2') op2
-                            // select#selectedPattern(name='patterns', onchange="selectPattern()")
-                            //  - var agentTypes = ['type','name','both'];
-                            //  each agentType in agentTypes
-                            //    option(value=agentType, selected= agentType == 'type')= agentType
+                            input#patterns-type(type='radio', name="patterns", value="type", onClick="selectPattern()")
+                            label(for='flatten-name') type
+                            input#patterns-name(type='radio', name="patterns", value="name", onClick="selectPattern()")
+                            label(for='flatten-name') name
+                            input#patterns-both(type='radio', name="patterns", value="both", checked="checked", onClick="selectPattern()")
+                            label(for='flatten-both') both
                         tr
                           td Flatten
                           td
