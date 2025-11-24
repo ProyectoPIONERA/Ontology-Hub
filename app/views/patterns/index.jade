@@ -199,14 +199,61 @@ block content
           span.closePopup(onclick="closePopup()") ×
           h2.popup-title How to
           hr.popup-divider
-          p.popup-text 
-            strong Patterns: 
-            | t is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).
+          div.popup-text
+            ol
+              li Select the ontologies from which you want to extract patterns.
+              li Select patterns options:
+                ul
+                  li Name, Type or both:
+                    ol
+                      li Name: Ontology elements in the patterns represent specific classes and properties names.
+                        p For example:
+                        p ¿SERGIO TIENE UN EJEMPLO?
+                      li Type: Ontology elements in the patterns are generalized according to the OWL elements used.
+                        p No specific classes or properties are used, but OWL skeletons like:
+                        pre
+                          | owl:Class
+                          |   |rdfs:subClassOf
+                          |   |  |owl:Restriction
+                          |   |  |  |owl:onProperty
+                          |   |  |  |  |owl:DatatypeProperty, owl:FunctionalProperty
+                          |   |  |  |owl:someValuesFrom
+                          |   |  |  |  |rdfs:Datatype
+                  li Flatten or not:
+                    ol
+                      li Flatten: If there are collections of classes or individuals in the pattern, the full collection is not included.
+                        p ¿SERGIO esto aplica a los named? O solo a los que se generalizan como Type?
+                        p Otra cosa es que estaría bien indicar algunos ejemplos, pensaba que se incluían 3.
+                        pre
+                          | owl:Class
+                          |   |owl:equivalentClass
+                          |   |  |owl:Class
+                          |   |  |  |owl:oneOf
+              p Output: Tengo que ver el output final y definir esto en detalle
+              p The retrieved .zip file contains the following folders and documents:
+              ul
+                li “Data” folder. This folder contains the files:
+                  ul
+                    li A
+                    li B
+                    li C
+                li “flatten” folder (if selected): This folder contains the files:
+                  ul
+                    li A
+                    li B
+                    li C
+                li “not_flatten” folder (if selected): This folder contains the files:
+                  ul
+                    li A
+                    li B
+                    li C
+                li HTML folder. This folder contains the files:
+                  ul
+                    li A
+                    li B
+                    li C
           br
-          p.popup-text 
-            strong Flatten: 
-            | Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum
-
+          
       section#posts.default-area.postSearchResults
         - if (typeof(results.results) !== 'undefined' && results.total_results>0)
           #greenContainer.contents.clear.col-2.split.wrplGreen

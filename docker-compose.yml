@@ -18,7 +18,14 @@ services:
 
 
   lov_server:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile2
+      args:
+            REPO_URL: "https://github.com/ProyectoPIONERA/Ontology-Hub-Scripts.git"
+            BRANCH_NAME: "dockerizing"
+            REPO_NAME: "Ontology-Hub-Scripts"
+
     env_file:
       - .env
     container_name: lov_server
@@ -30,8 +37,9 @@ services:
     networks:
       - Ontology_groups
     volumes:
-      - ontology_hub_folder:/app
       - ./:/app
+      - ontology_hub_folder:/app
+      
 
 
   elasticsearch:

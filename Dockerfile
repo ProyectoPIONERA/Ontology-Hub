@@ -41,6 +41,7 @@ COPY . .
 
 RUN sed -i 's/\x0D$//' ./setup/*.sh && chmod +x setup/*.sh
 
+RUN pip install -r /app/Patterns/Patrones/requirements.txt
 
 
 EXPOSE 3000
