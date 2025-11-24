@@ -1423,7 +1423,16 @@ function createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, py
         //throw err
       }
       if(req.body.requirements){
-        downloadArtifact(req.body.requirements);
+        downloadArtifact(req.body.requirements, "./versions/" +  vocab.id + "/requirements");
+      }
+      if(req.body.conceptualization){
+        downloadArtifact(req.body.conceptualization, "./versions/" +  vocab.id + "/conceptualization");
+      }
+      if(req.body.shapes){
+        downloadArtifact(req.body.shapes, "./versions/" +  vocab.id + "/shapes");
+      }
+      if(req.body.requirements){
+        downloadArtifact(req.body.examples, "./versions/" +  vocab.id + "/examples");
       }
       var versionPublicPath =
         lov +
@@ -1538,9 +1547,10 @@ function createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, py
   }
 }
 
-function downloadArtifact(artifactPath){
-  console.log("entro");
-  console.log(artifactPath);
+function downloadArtifact(artifactPath, localPath){
+  if (!fs.existsSync(localPath)) {
+    fs.mkdirSync(localPath);
+  }
 
   //Get the artifact
   fetch(artifactPath)
@@ -1583,7 +1593,7 @@ function downloadArtifact(artifactPath){
         })
         .then(function(data) {
           // Store the artifact locally
-          console.log(data);
+           fs.writeFileSync(localPath + "/" + file.name, data, 'utf8');
           return true
         })
         .catch(function(err){
