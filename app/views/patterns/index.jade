@@ -208,17 +208,81 @@ block content
                     ol
                       li Name: Ontology elements in the patterns represent specific classes and properties names.
                         p For example:
-                        p ¿SERGIO TIENE UN EJEMPLO?
+
+                        pre
+                          code
+                            | # INPUT
+                            | s4bldg:BuildingSpace rdfs:subClassOf [
+                            |   rdf:type owl:Restriction ;
+                            |   owl:onProperty s4bldg:isSpaceOf ;
+                            |   owl:allValuesFrom [
+                            |     rdf:type owl:Class ;
+                            |     owl:unionOf (
+                            |       s4bldg:Building
+                            |       s4bldg:BuildingSpace
+                            |     )
+                            |   ]
+                            | ]
+                        br
+                        pre
+                          code.
+                            # OUTPUT
+                            Pattern 16
+                            owl:Class
+                            |rdfs:subClassOf
+                            | |owl:Restriction
+                            | | |owl:allValuesFrom
+                            | | | |owl:Class
+                            | | | | |owl:unionOf
+                            | | | | | |rdf:List
+                            | | | | | | |rdf:first
+                            | | | | | | | |owl:Class
+                            | | | | | | |rdf:rest
+                            | | | | | | | |rdf:List
+                            | | | | | | | | |rdf:first
+                            | | | | | | | | | |owl:Class
+                            | | | | | | | | |rdf:rest
+                            | | | | | | | | | |rdf:nil
+                            | | |owl:onProperty
+                        br                        
+                        pre
+                          code.
+                            # INPUT
+                            s4bldg:BuildingSpace rdfs:subClassOf [
+                              rdf:type owl:Restriction ;
+                              owl:onProperty s4bldg:isSpaceOf ;
+                              owl:allValuesFrom [
+                                rdf:type owl:Class ;
+                                owl:unionOf (
+                                  s4bldg:Building
+                                  s4bldg:BuildingSpace
+                                )
+                              ]
+                            ]
+                        br                        
+                        pre
+                          code.
+                            # OUTPUT
+                            Pattern 16
+                            owl:Class
+                            |rdfs:subClassOf
+                            | |owl:Restriction
+                            | | |owl:allValuesFrom
+                            | | | |owl:Class
+                            | | | | |owl:unionOf
+                            | | |owl:onProperty
+
                       li Type: Ontology elements in the patterns are generalized according to the OWL elements used.
                         p No specific classes or properties are used, but OWL skeletons like:
                         pre
-                          | owl:Class
-                          |   |rdfs:subClassOf
-                          |   |  |owl:Restriction
-                          |   |  |  |owl:onProperty
-                          |   |  |  |  |owl:DatatypeProperty, owl:FunctionalProperty
-                          |   |  |  |owl:someValuesFrom
-                          |   |  |  |  |rdfs:Datatype
+                          code
+                            | owl:Class
+                            |   |rdfs:subClassOf
+                            |   |  |owl:Restriction
+                            |   |  |  |owl:onProperty
+                            |   |  |  |  |owl:DatatypeProperty, owl:FunctionalProperty
+                            |   |  |  |owl:someValuesFrom
+                            |   |  |  |  |rdfs:Datatype
                   li Flatten or not:
                     ol
                       li Flatten: If there are collections of classes or individuals in the pattern, the full collection is not included.
@@ -263,13 +327,15 @@ block content
                 .clear
                 .items
                   | #{results.total_results==1 ? 'result' : 'results'}
-              .actions    
-                .howTo
-                  button.editionHowToButton(type='button' onclick='showHowToPopUp()') How to    
-                .unselect-all 
-                  button.editionUnSelectAllButton(type='button' onclick='unselectAll()') Unselect All   
-                .select-all
-                  button.editionSelectAllButton(type='button' onclick='selectAll()') Select All
+              .actions
+                .left-action    
+                  .howTo
+                    button.editionHowToButton(type='button' onclick='showHowToPopUp()') How to    
+                .right-action
+                  .unselect-all 
+                    button.editionUnSelectAllButton(type='button' onclick='unselectAll()') Unselect All   
+                  .select-all
+                    button.editionSelectAllButton(type='button' onclick='selectAll()') Select All
               ul#SearchGrid
                 each result, i in results.results
                   li(class="SearchBox#{result._source.type}")

@@ -1,6 +1,6 @@
 services:
   mongodb:
-    image: mongo:latest
+    image: jarueda/oeg_lov:mongodb
     container_name: mongodb_container
     restart: always
     ports:
@@ -9,7 +9,7 @@ services:
       - Ontology_group
     volumes:
       - mongodb_data:/data/db
-      - ./setup:/home/mongodb/setup
+    #  - ./setup:/home/mongodb/setup
     healthcheck:
         test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
         interval: 10s
@@ -18,14 +18,7 @@ services:
 
 
   lov_server:
-    build: 
-      context: .
-      dockerfile: Dockerfile2
-      args:
-            REPO_URL: "https://github.com/ProyectoPIONERA/Ontology-Hub-Scripts.git"
-            BRANCH_NAME: "dockerizing"
-            REPO_NAME: "Ontology-Hub-Scripts"
-
+    image: jarueda/oeg_lov:lov
     env_file:
       - .env
     container_name: lov_server
@@ -36,12 +29,12 @@ services:
       - "3333:3333"
     networks:
       - Ontology_group
-    volumes:
-      - ontology_hub_folder:/app
-      - ./:/app
+
+
+
 
   elasticsearch:
-    image: elasticsearch:2.4.2
+    image: jarueda/oeg_lov:elasticsearch
     container_name: elasticsearch_2_4_2
     ports:
       - "9200:9200"
@@ -63,9 +56,7 @@ services:
         hard: 65535
     networks:
       - Ontology_group
-    volumes:
-      - ./dockers/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
-      - ontology_hub_folder:/app
+
 
 networks:
   Ontology_group:
