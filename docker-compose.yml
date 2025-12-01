@@ -37,8 +37,9 @@ services:
     networks:
       - Ontology_group
     volumes:
+      - ./app:/app/app
+      - ./public:/app/public
       - ontology_hub_folder:/app
-      - ./:/app
 
   elasticsearch:
     image: elasticsearch:2.4.2

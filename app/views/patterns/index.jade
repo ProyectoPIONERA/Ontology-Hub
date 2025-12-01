@@ -330,7 +330,8 @@ block content
               .actions
                 .left-action    
                   .howTo
-                    button.editionHowToButton(type='button' onclick='showHowToPopUp()') How to    
+                    //button.editionHowToButton(type='button' onclick='showHowToPopUp()') How to   
+                    a.editionHowToButton(href='/dataset/lov/how-to' target='_blank') How to 
                 .right-action
                   .unselect-all 
                     button.editionUnSelectAllButton(type='button' onclick='unselectAll()') Unselect All   
@@ -383,8 +384,13 @@ block content
                 div
                     table
                       tbody
-                      tr
-                          td Patterns
+                        tr               
+                          td
+                            strong
+                              | Patterns
+                              span.tooltip-circle(onclick='event.preventDefault()' title='The options "type" generate generic patterns using OWL construct while "name" uses specific URIs') ?
+                              | :
+
                           td
                             input#patterns-type(type='radio', name="patterns", value="type", onClick="selectPattern()")
                             label(for='flatten-name') type
@@ -393,7 +399,11 @@ block content
                             input#patterns-both(type='radio', name="patterns", value="both", checked="checked", onClick="selectPattern()")
                             label(for='flatten-both') both
                         tr
-                          td Flatten
+                          td 
+                            strong
+                              | Flatten
+                              span.tooltip-circle(onclick='event.preventDefault()' title='The flatten option eliminate specific elements in collections or lists of classes or individuals.') ?
+                              | :
                           td
                             input#flatten-yes(type='radio', name="flatten", value="yes", onClick="selectFlatten()")
                             label(for='flatten-yes') yes

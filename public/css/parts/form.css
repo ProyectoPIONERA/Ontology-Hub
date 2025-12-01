@@ -612,43 +612,26 @@ margin-left: auto;
   margin-bottom: 1rem;
 }
 
-.popup-text {
-  text-align: justify;
-  font-size: 1rem;
-  color: #444;
-  line-height: 1.5;
+
+.tooltip-circle {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 18px;
+  height: 18px;
+  margin: 0 4px;
+  border-radius: 50%;
+  background-color: #5E9B9B; 
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: help;
+  text-decoration: none;
 }
 
-.popup-content .popup-text{
-  max-height: 30rem;
-  overflow: scroll;
-  padding-right: 1rem;
-}
-.popup-text ol {
-  list-style-type: decimal !important;
-  margin-left: 20px;
-  padding-left: 20px;
+.tooltip-circle:hover {
+  background-color: #5E9B9B;
 }
 
-.popup-text ul {
-  list-style-type: disc !important;
-  margin-left: 20px;
-  padding-left: 20px;
-}
-
-.popup-text ol li pre {
-  background-color: #1e1e1e !important; /* Dark background */
-  color: #dcdcdc;           /* Light text */
-  padding: 15px;
-  border-radius: 6px;
-  font-family: 'Fira Code', monospace;
-  font-size: 14px;
-  overflow-x: auto;
-  line-height: 1.5;
-}
-
-.popup-text code {
-  color: #dcdcdc;
-}
 
 
