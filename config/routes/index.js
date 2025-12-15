@@ -435,6 +435,10 @@ router.get("/dataset/lov/about", function (req, res) {
   });
 });
 
+router.get("/dataset/lov/how-to", function(req, res){
+  res.render('howto/index', { title: 'Home Page', message: 'Hello from Pug!' });
+});
+
 // search
 router.get("/dataset/lov/terms", function (req, res) {
   search.search(req, res, esclient);

@@ -476,12 +476,52 @@ margin-left: auto;
   float:left;
 }
 
+
+.actions {
+  display: inline-flex;
+  justify-content: space-between; /* Left and right groups */
+  align-items: center;
+  width: 100%;
+}
+
+.left-action{
+  margin-left: 5rem;
+  padding-bottom: 35px;
+}
+
+.right-action{
+  display: inline-flex;
+  align-items: center;
+  gap: 2rem;
+}
+
 .editionActionBar{
   padding-top:1em;
 }
+
+.howTo{
+  padding-bottom:43px;
+}
+
+.editionHowToButton{
+  float:right;
+  background:#9A69BD;
+  color: #fff;
+  border:0;
+  padding:.5em;
+  font-family:'Open Sans',sans-serif;
+  font-size:100%;
+  cursor:pointer;
+  transition:background .3s;
+  -webkit-transition:background .3s;
+}
+
+.unselect-all,
 .select-all{
   padding-bottom:43px;
 }
+
+.editionUnSelectAllButton,
 .editionSelectAllButton{
   float:right;
   background:#eeeeee;
@@ -523,4 +563,75 @@ margin-left: auto;
 .agentALtURI{
   float:left;
 }
+
+.popup-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.popup-content {
+  position: relative;
+  background: #fff;
+  padding: 20px 30px;
+  border-radius: 10px;
+  min-width: 550px;
+  max-width: 800px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.closePopup {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #666;
+}
+
+.popup-title {
+  text-align: left;
+  font-weight: bold;
+  font-size: 1.4rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.popup-divider {
+  border: none;
+  height: 3px;
+  background: linear-gradient(to right, #0077cc, #00aa55, #ff6600, #9933cc); /* LOV-inspired colors */
+  margin-bottom: 1rem;
+}
+
+
+.tooltip-circle {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 18px;
+  height: 18px;
+  margin: 0 4px;
+  border-radius: 50%;
+  background-color: #5E9B9B; 
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: help;
+  text-decoration: none;
+}
+
+.tooltip-circle:hover {
+  background-color: #5E9B9B;
+}
+
+
 

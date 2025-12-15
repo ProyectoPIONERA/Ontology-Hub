@@ -120,6 +120,10 @@
   border-left: 6px solid #9A69BD;
 }
 
+#SearchGrid.searchPattern li:first-child {
+  margin-left: 0 !important;
+}
+
 .SearchInnerBox .prefix { 
   color:#232323; 
   font-weight: bold;

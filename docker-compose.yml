@@ -1,0 +1,78 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_container
+    restart: always
+    ports:
+      - "27017:27017"
+    networks:
+      - Ontology_group
+    volumes:
+      - mongodb_data:/data/db
+      - ./setup:/home/mongodb/setup
+    healthcheck:
+        test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+
+  lov_server:
+    build: 
+      context: .
+      dockerfile: Dockerfile2
+      args:
+            REPO_URL: "https://github.com/ProyectoPIONERA/Ontology-Hub-Scripts.git"
+            BRANCH_NAME: "dockerizing"
+            REPO_NAME: "Ontology-Hub-Scripts"
+
+    env_file:
+      - .env
+    container_name: lov_server
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "3333:3333"
+    networks:
+      - Ontology_group
+    volumes:
+      - ./app:/app/app
+      - ./public:/app/public
+      - ontology_hub_folder:/app
+
+  elasticsearch:
+    image: elasticsearch:2.4.2
+    container_name: elasticsearch_2_4_2
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    user: root
+    command: > 
+      elasticsearch -Des.mapper.allow_dots_in_name=true
+    environment:
+      ES_JAVA_OPTS: "-Dmapper.allow_dots_in_name=true"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+      nproc:
+        soft: 65535
+        hard: 65535
+    networks:
+      - Ontology_group
+    volumes:
+      - ./dockers/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ontology_hub_folder:/app
+
+networks:
+  Ontology_group:
+    name: Ontology_group_network
+
+volumes:
+  ontology_hub_folder:
+    name: ontology_hub_folder
+  mongodb_data:

@@ -1435,21 +1435,84 @@ header .errorText{
 }
   
 
-	svg circle {
-		fill: rgba(225, 152, 53, 1.000);
-	}
-  
-  svg div.labelDiv {
-		padding: 0px;
-		margin: 0px;
-		display: table-cell;
-		vertical-align: middle;
-		text-align: center;
-	}
+svg circle {
+  fill: rgba(225, 152, 53, 1.000);
+}
 
-	svg .circleLabel {
-		font-weight: normal;
-		font-family: sans-serif;
-		font-size: 10pt;
-		color: rgba(255, 255, 255, 0.9);
-	}
+svg div.labelDiv {
+  padding: 0px;
+  margin: 0px;
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+}
+
+svg .circleLabel {
+  font-weight: normal;
+  font-family: sans-serif;
+  font-size: 10pt;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+
+ol.main-content, ol.main-content li ol, ol.main-content li ul{
+  padding-left: 1rem;
+}
+ol.main-content li{
+  margin-top: 1rem;
+}
+
+.examples{
+  display: flex;
+  width: 100%;
+  gap: .5rem;
+}
+
+.left-example, .right-example{
+  width: 45%;
+  margin-top: .5rem;
+}
+
+.popup-text {
+  text-align: justify;
+  font-size: 1rem;
+  color: #444;
+  line-height: 1.5;
+}
+
+.popup-text{
+  max-height: 30rem;
+  overflow: scroll;
+  padding-right: 1rem;
+}
+.popup-text ol {
+  list-style-type: decimal !important;
+  margin-left: 20px;
+  padding-left: 20px;
+}
+
+.popup-text ul {
+  list-style-type: disc !important;
+  margin-left: 20px;
+  padding-left: 20px;
+}
+
+div.code{
+  background-color: #1e1e1e !important; /* Dark background */
+  color: #dcdcdc;           /* Light text */
+  padding: 15px;
+  border-radius: 6px;
+  font-size: 14px;
+  overflow-x: auto;
+  line-height: 1.5;
+  margin: 1rem;
+  text-shadow: none !important;
+}
+
+pre code {
+  color: #dcdcdc;
+  font-family: 'Fira Code', monospace !important;
+}
+.title-example{
+  margin-top:0.5rem;
+}

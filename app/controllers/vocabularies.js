@@ -765,6 +765,7 @@ exports.create = function (req, res, scripts, lov, patterns, python_patterns) {
                       vocab.prefix,
                       vocab,
                       "not_flatten",
+                      "both",
                       python_patterns,
                       patterns,
                       false
@@ -821,6 +822,7 @@ exports.generateStructures = function (
   voc,
   vocab,
   flatten,
+  pattern, 
   python_patterns,
   patterns,
   regenerateStructures
@@ -862,27 +864,24 @@ exports.generateStructures = function (
         reject("Ontology " + voc + " has not an available version.");
       }
 
+      const has_flatten = flatten !== 'not_flatten' ? 'yes' : 'no';  
+
       var command =
         python_patterns +
         " " +
         patterns +
-        "/lov.py --type structure --flatten " +
-        flatten +
+        "/generate_web_page.py --flatten " +
+        has_flatten + 
+        " --patterns " + pattern +
         " --ontology_path " +
         path.resolve(
           __dirname +
             "/../../versions/" +
             vocab._id +
-            "/" +
-            vocab._id +
-            "_" +
-            lastVersion.name.slice(1) +
-            ".n3"
+            "/" 
         ) +
         " --output_path " +
-        versionPath +
-        " --preffix " +
-        voc;
+        versionPath ;
       //Llamar a la api para que generar el fichero con las estructuras
       var exec = require("child_process").exec;
       child = exec(command, function (error, stdout, stderr) {
@@ -1139,12 +1138,7 @@ exports.detectPatterns = function (req, res, patterns, python_patterns) {
     const zip = new JSZip();
     var type_path = "";
     var name_path = "";
-    var command =
-      python_patterns +
-      " " +
-      patterns +
-      "/lov.py --type pattern --patterns_type " +
-      pattern;
+    
     new Promise((resolve, reject) => {
       array.forEach((voc) => {
         Vocabulary.loadEdition(voc, function (err, vocab) {
@@ -1155,12 +1149,14 @@ exports.detectPatterns = function (req, res, patterns, python_patterns) {
               voc,
               vocab,
               flatten,
+              pattern,
               python_patterns,
               patterns,
               false
             )
             .then(([versionPath, structuresTypePath, structuresNamePath]) => {
               encodeToZip(zip, versionPath, voc);
+            
               type_path += " " + structuresTypePath;
               name_path += " " + structuresNamePath;
               itemsProcessed++;
@@ -1171,47 +1167,12 @@ exports.detectPatterns = function (req, res, patterns, python_patterns) {
             });
         });
       });
-    })
-      .then(() => {
-        if (pattern == "type" || pattern == "both") {
-          command += " --type_path " + type_path;
-        }
-        if (pattern == "name" || pattern == "both") {
-          command += " --name_path " + name_path;
-        }
-
-        var exec = require("child_process").exec;
-        // LLamar a la api para detectar los patrones a partir de los ficheros con las estructuras
-        child = exec(command, function (error, stdout, stderr) {
-          if (error !== null)
-            return standardCallback(
-              req,
-              res,
-              new Error("exec error: " + error),
-              null
-            );
-          if (stdout && stdout.length > 0) {
-            stdout = JSON.parse(stdout);
-            stdout.forEach((st) => {
-              if (st["pattern_type"]) {
-                zip.file("Patterns_type.txt", st["pattern_type"]);
-                zip.file("Patterns_type.csv", st["csv_type"]);
-              }
-              if (st["pattern_name"]) {
-                zip.file("Patterns_name.txt", st["pattern_name"]);
-                zip.file("Patterns_name.csv", st["csv_name"]);
-              }
-            });
-
-            zip.generateAsync({ type: "base64" }).then(function (content) {
+    }).then(() => {
+      zip.generateAsync({ type: "base64" }).then(function (content) {
               return standardCallback(req, res, null, content);
             });
-          } else {
-            //Error detecting the patterns
-            return standardCallback(req, res, stderr, null);
-          }
-        });
-      })
+    })
+    
       .catch((err) => {
         return standardCallback(req, res, err, null);
       });
@@ -1219,21 +1180,31 @@ exports.detectPatterns = function (req, res, patterns, python_patterns) {
 };
 
 function encodeToZip(zip, versionPath, voc) {
-  const array = [
-    "/error_log.txt",
-    "/Structure_term_inferred_blank_nodes.txt",
-    "/Structure_term_inferred_type.txt",
-    "/Structure_term_name.txt",
-    "/Structure_term_type.txt",
-    "/Structure.csv",
-  ];
-  array.forEach((file) => {
-    fs.readFile(path.resolve(versionPath + file), function (err, data) {
-      if (err) throw err;
-      zip.file(voc + file, data);
-    });
-  });
+
+  //const root = (voc || '').replace(/\/+$/, '');
+  const root = '';
+  const toZipPath = (...parts) => parts.filter(Boolean).join('/');
+
+  function addDir(currentFsPath, currentZipPath) {
+    const entries = fs.readdirSync(currentFsPath, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fsPath = path.join(currentFsPath, entry.name);
+      const zipPath = toZipPath(currentZipPath, entry.name);
+
+      if (entry.isDirectory()) {
+        zip.folder(zipPath);
+        addDir(fsPath, zipPath);
+      } else if (entry.isFile()) {
+        const data = fs.readFileSync(fsPath);
+        zip.file(zipPath, data);
+      }
+    }
+  }
+
+  addDir(versionPath, root);
 }
+
 
 /**
  * vocabList : The relation array containing vocab Objects

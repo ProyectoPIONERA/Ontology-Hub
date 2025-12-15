@@ -89,6 +89,15 @@
   display: block;
 }
 
+#posts_foops #greenContainer{
+  width: 100%;
+}
+
+#posts_foops #greenContainer h2{
+  color: #000000;
+  font-size: medium;
+}
+
 .row.w-100.pl-3.pt-2.caja-category {
   margin-left: 0.1px;
   background-color: #d7dede;
@@ -102,6 +111,12 @@
   width: 100%;
   max-width: 100%;
   min-width: auto;
+}
+
+.foops-result .row ul, .foops-result .row ol{
+  margin-left: 2rem;
+  font-weight: normal;
+  text-shadow: none;
 }
 
 #greenContainer {
@@ -208,7 +223,7 @@
 #posts_foops *,
 #posts_foops *::before,
 #posts_foops *::after {
-  box-sizing: border-box;
+  box-sizing: border-box !important;
 }
 
 /** Findable block--> class="row my-3 pl-3"s **/
