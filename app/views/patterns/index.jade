@@ -65,7 +65,7 @@ block content
       script.
         var vocabSelected = {};
         var flatten = false;
-        var pattern = "type";
+        var pattern = "both";
         var selectedVocabularies, selectedPattern;
         $(document).ready(function() {
             selectedVocabularies = document.getElementById("selectedVocabularies");
@@ -132,9 +132,12 @@ block content
         function selectFlatten(){
           flatten = !flatten;
         }
-        function selectPattern(){
-          pattern = selectedPattern.options[selectedPattern.selectedIndex].value;
+        
+        function selectPattern() {
+            const selected = document.querySelector('input[name="patterns"]:checked');
+            pattern = selected ? selected.value : 'both';
         }
+
         //<button type="button" data-dismiss="alert" class="close">×</button>
         function createLi(voc){
             var li = document.createElement('li');
@@ -337,7 +340,7 @@ block content
                     button.editionUnSelectAllButton(type='button' onclick='unselectAll()') Unselect All   
                   .select-all
                     button.editionSelectAllButton(type='button' onclick='selectAll()') Select All
-              ul#SearchGrid
+              ul#SearchGrid.searchPattern
                 each result, i in results.results
                   li(class="SearchBox#{result._source.type}")
                     .SearchContainer

@@ -1436,7 +1436,7 @@ exports.apiAutocompleteLabelsTerms = function (req, res, esclient) {
       },
     };
 
-    esclient.search(query).then(function (resp) {
+    esclient.suggest(query).then(function (resp) {
       var results = [];
       res.header("Content-type", "application/json; charset=utf-8");
       res.json(resp.autocomplete[0].options);

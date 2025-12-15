@@ -15,7 +15,7 @@ echo "Ejecutando scripts java"
 #/app/setup/lovInitialization.sh
 
 echo "Configurando Jena"
-#/app/setup/jena.sh
+/app/setup/jena.sh
 
 echo "Iniciando servidor Node..."
 exec node server.js
