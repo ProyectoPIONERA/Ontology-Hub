@@ -20,11 +20,12 @@ services:
   lov_server:
     build: 
       context: .
-      dockerfile: Dockerfile2
+      dockerfile: Dockerfile
       args:
             REPO_URL: "https://github.com/ProyectoPIONERA/Ontology-Hub-Scripts.git"
             BRANCH_NAME: "dockerizing"
             REPO_NAME: "Ontology-Hub-Scripts"
+            REPO_PATRONES: "https://github.com/oeg-upm/GrOwEr.git"
 
     env_file:
       - .env

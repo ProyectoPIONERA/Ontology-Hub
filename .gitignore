@@ -16,3 +16,4 @@ config/config.js
 app.log
 Patterns/*
 scripts/*
+public/backup/
