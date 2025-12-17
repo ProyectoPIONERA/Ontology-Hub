@@ -98,6 +98,8 @@ RUN git clone ${REPO_PATRONES} /app/Patterns/Patrones
 # Install Python dependencies
 RUN pip install -r /app/Patterns/Patrones/requirements.txt
 
+RUN cp /app/config/config.example.js /app/config/config.js
+
 # Expose port and set entrypoint
 EXPOSE 3000
 ENTRYPOINT ["bash","./setup/start.sh"]

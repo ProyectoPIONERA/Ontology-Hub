@@ -123,14 +123,17 @@ fi
 
 if [[ "${LOAD_NEEDED}" == "true" ]]; then
   step "Loading data into TDB with tdbloader2"
+
   if [[ ! -f "${LOV_NQ}" ]]; then
-    echo "ERROR: Input file not found: ${LOV_NQ}"
-    exit 1
+    echo "⚠️  Input file not found: ${LOV_NQ} — skipping load"
+  else
+    if ! "${JENA_HOME}/bin/tdbloader2" --loc "${TDB_DIR}" "${LOV_NQ}"; then
+      echo "⚠️  tdbloader2 failed — continuing"
+    fi
   fi
-  "${JENA_HOME}/bin/tdbloader2" --loc "${TDB_DIR}" "${LOV_NQ}"
 else
   step "TDB directory already has data — skipping load. (Set FORCE_RELOAD=true to rebuild)"
-fi
+fi   
 
 # -------------------------
 # 6) Stop any running Fuseki
@@ -149,7 +152,7 @@ cd "${FUSEKI_HOME}"
 
 UPDATE_FLAG="--update"  # change to "" if you want read-only
 # If you prefer to use your assembler config, swap --loc for: --desc "${FUSEKI_HOME}/config-lov.ttl"
-nohup java -jar "${FUSEKI_HOME}"/fuseki-server.jar -desc "${FUSEKI_HOME}"/config-lov.ttl /lov \
+nohup java -jar "${FUSEKI_HOME}/fuseki-server.jar" -desc "${FUSEKI_HOME}/config-lov.ttl" /lov \
   > "${FUSEKI_LOG}" 2>&1 &
 
 # -------------------------
@@ -164,6 +167,5 @@ for i in {1..20}; do
   sleep 1
 done
 
-echo "WARNING: Fuseki did not respond on http://localhost:3030 after 20s."
+echoecho "WARNING: Fuseki did not respond on http://localhost:3030 after 20s."
 echo "Check logs at ${FUSEKI_LOG}"
-exit 0
