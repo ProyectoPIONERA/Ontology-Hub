@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set +e
 
 # /app/scripts/bin/aggregator /app/scripts/lov.config
 echo "Corriendo create-index"
