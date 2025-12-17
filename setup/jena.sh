@@ -149,7 +149,7 @@ cd "${FUSEKI_HOME}"
 
 UPDATE_FLAG="--update"  # change to "" if you want read-only
 # If you prefer to use your assembler config, swap --loc for: --desc "${FUSEKI_HOME}/config-lov.ttl"
-nohup ./fuseki-server --tdb1 --loc "${TDB_DIR}" ${UPDATE_FLAG} "${DATASET_NAME}" \
+nohup java -jar "${FUSEKI_HOME}"/fuseki-server.jar -desc "${FUSEKI_HOME}"/config-lov.ttl /lov \
   > "${FUSEKI_LOG}" 2>&1 &
 
 # -------------------------
