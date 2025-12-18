@@ -1,0 +1,35 @@
+# Usamos una versión de Ubuntu que era común en la época de Elasticsearch 2.x
+FROM ubuntu:16.04
+
+# Para asegurar que la imagen se construya como amd64, lo cual es crucial en un Mac M1/M2/M3
+ARG TARGETARCH=amd64
+
+# Configurar el entorno
+ENV ES_HOME /usr/share/elasticsearch
+ENV PATH $ES_HOME/bin:$PATH
+
+# Instalar Java 8 (requerido por Elasticsearch 2.x) y dependencias
+RUN apt-get update && apt-get install -y \
+    openjdk-8-jre-headless \
+    wget \
+    curl \
+    # Limpiar
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Descargar e instalar Elasticsearch 2.4.2
+RUN wget https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.4.2/elasticsearch-2.4.2.deb -O elasticsearch.deb \
+    && dpkg -i elasticsearch.deb \
+    && rm elasticsearch.deb \
+    && mkdir -p /usr/share/elasticsearch/config \
+    && chown -R elasticsearch:elasticsearch /usr/share/elasticsearch
+
+# Exponer puertos
+EXPOSE 9200 9300
+
+# Usuario y Directorio
+USER elasticsearch
+WORKDIR $ES_HOME
+
+# Definir el punto de entrada
+CMD ["/usr/share/elasticsearch/bin/elasticsearch"]

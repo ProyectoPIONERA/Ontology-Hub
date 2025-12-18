@@ -1,0 +1,134 @@
+extends ../layout/layout
+block content
+    section#post.postBlue.postSearch
+        h1 #{app_name_shorcut} How  
+          span to
+    section#posts.default-area
+        article
+            h1 How to use it
+            ol.main-content
+                li
+                    | Select the ontologies from which you want to extract patterns.
+                    ol(type="a")
+                        li
+                            | Patterns Info
+                            ul
+                                li Type: the patterns are going to be created from the type of the terms.
+                                li Name: the patterns are going to be created from the name of the terms.
+                                li Both: created from both.
+                        li
+                            | Flatten Info
+                            ul
+                                li Yes: the collections are going to be flattened.
+                                li No: the collections are not going to be flattened.
+                li
+                    | Select patterns options:
+                    ol(type="a")
+                        li
+                            | Name, Type or both:
+                            ul
+                                li
+                                    | Name: Ontology elements in the patterns represent specific classes and properties names. For example:
+                                    h3.title-example 
+                                        | Fragmento de codigo owl en serializacion turtle
+                                    p.example-description
+                                                | Example with Name and Not flatten selected
+                                        div.code
+                                            pre
+                                                code.
+                                                    |s4bldg:BuildingSpace
+                                                    |rdfs:subClassOf
+                                                    | |owl:Restriction
+                                                    | | |owl:allValuesFrom
+                                                    | | | |owl:Class
+                                                    | | | | |owl:unionOf
+                                                    | | | | | |rdf:List
+                                                    | | | | | | |rdf:first
+                                                    | | | | | | | |s4bldg:Building
+                                                    | | | | | | |rdf:rest
+                                                    | | | | | | | |rdf:List
+                                                    | | | | | | | | |rdf:first
+                                                    | | | | | | | | | |s4bldg:BuildingSpace
+                                                    | | | | | | | | |rdf:rest
+                                                    | | | | | | | | | |rdf:nil
+                                                    | | |owl:onProperty
+                                                    | | | |s4bldg:isSpaceOf
+                                li
+                                    | Type: Ontology elements in the patterns are generalized according to the OWL elements used, that is, no specific classes or properties are used, but OWL skeletons like:
+                                    div.code
+                                        pre
+                                            code.
+                                                | owl:Class
+                                                |   |rdfs:subClassOf
+                                                |   |  |owl:Restriction
+                                                |   |  |  |owl:onProperty
+                                                |   |  |  |  |owl:DatatypeProperty, owl:FunctionalProperty
+                                                |   |  |owl:someValuesFrom
+                                                |   |  |  |rdfs:Datatype
+                        li
+                            | Flatten or not:
+                            ol
+                                li
+                                    | Flatten: If there are collections of classes or individuals in the pattern it is not included the full collection.
+                                   
+                                    h3.title-example 
+                                        | Fragmento de codigo owl en serializacion turtle
+                                    p.example-description
+                                                | Example with Type and Not flatten selected                                 
+                                        div.code
+                                            pre
+                                                code.
+                                                    | owl:Class
+                                                    |rdfs:subClassOf
+                                                    | |owl:Restriction
+                                                    | | |owl:allValuesFrom
+                                                    | | | |owl:Class
+                                                    | | | | |owl:unionOf
+                                                    | | | | | |rdf:List
+                                                    | | | | | | |rdf:first
+                                                    | | | | | | | |owl:Class
+                                                    | | | | | | |rdf:rest
+                                                    | | | | | | | |rdf:List
+                                                    | | | | | | | | |rdf:first
+                                                    | | | | | | | | | |owl:Class
+                                                    | | | | | | | | |rdf:rest
+                                                    | | | | | | | | | |rdf:nil
+                                                    | | |owl:onProperty
+                                                    | | | |owl:ObjectProperty, owl:TransitiveProperty
+                                    br.
+                                    p.example-description
+                                                | Example with Type and flatten selected                                      
+                                    div.code
+                                        pre
+                                            code.
+                                                |owl:Class
+                                                |rdfs:subClassOf
+                                                | |owl:Restriction
+                                                | | |owl:allValuesFrom
+                                                | | | |owl:Class
+                                                | | | | |owl:unionOf
+                                                | | |owl:onProperty
+                                                | | | |owl:ObjectProperty, owl:TransitiveProperty
+            h2 Output
+            p Tengo que ver el output final y definir esto en detalle
+            ol.main-content 
+                li “Data” folder. This folder contains the files:
+                    ul
+                        li A
+                        li B
+                        li C
+                li “flatten” folder (if selected): This folder contains the files:
+                    ul
+                        li A
+                        li B
+                        li C
+                li “not_flatten” folder (if selected): This folder contains the files:
+                    ul
+                        li A
+                        li B
+                        li C
+                li HTML folder This folder contains the files:
+                    ul
+                        li A
+                        li B
+                        li C

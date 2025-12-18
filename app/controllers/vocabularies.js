@@ -643,23 +643,176 @@ exports.create = function (req, res, scripts, lov, patterns, python_patterns) {
   vocab
     .save()
     .then(() => {
-      if(!req.body.ontologyPath){
-        /* store version locally */
-        var command =
-          scripts +
-          "/bin/downloadVersion " +
-          (vocab.isDefinedBy ? vocab.isDefinedBy : vocab.uri) +
-          " " +
-          scripts +
-          "/lov.config";
-        var exec = require("child_process").exec;
-        child = exec(command, (error, stdout, stderr) => {
-          createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, python_patterns, vocab);
-        });
-      }
-      else{
-        createVocab(req, res, null, req.body.ontologyPath, null, scripts, lov, patterns, python_patterns, vocab);
-      }
+      /* store version locally */
+      var command =
+        scripts +
+        "/bin/downloadVersion " +
+        (vocab.isDefinedBy ? vocab.isDefinedBy : vocab.uri) +
+        " " +
+        scripts +
+        "/lov.config";
+      var exec = require("child_process").exec;
+      child = exec(command, function (error, stdout, stderr) {
+        if (!stderr.startsWith("ERROR") && stdout && stdout.length > 0) {
+          stdout = stdout.split("\n")[0];
+          /* move file with its name */
+          var version = {};
+          var versionIssued = new Date();
+
+          var d = versionIssued.getDate();
+          var m = versionIssued.getMonth() + 1;
+          var y = versionIssued.getFullYear();
+          var issuedStr =
+            "" +
+            y +
+            "-" +
+            (m <= 9 ? "0" + m : m) +
+            "-" +
+            (d <= 9 ? "0" + d : d);
+          var versionName = "v" + issuedStr;
+
+          version.issued = versionIssued;
+          version.name = versionName;
+          version.isReviewed = true;
+
+          var dir = "./versions/" + vocab._id;
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir);
+          }
+
+          var target_path =
+            "./versions/" +
+            vocab._id +
+            "/" +
+            vocab._id +
+            "_" +
+            issuedStr +
+            ".n3"; //req.files.file.name;
+          // move the file from the temporary location to the intended location
+          fs.rename(stdout, target_path, function (err) {
+            //windows command
+            //exec("move " + stdout + " " + target_path, function (err) {
+            if (err) {
+              return res
+                .status(500)
+                .send(
+                  "The ontology has not been downloaded. No version found."
+                );
+              //throw err
+            }
+            var versionPublicPath =
+              lov +
+              "/dataset/lov/vocabs/" +
+              vocab.prefix +
+              "/versions/" +
+              issuedStr +
+              ".n3";
+            /* run analytics on vocab */
+            var command2 =
+              scripts +
+              "/bin/versionAnalyser " +
+              versionPublicPath +
+              " " +
+              vocab.uri +
+              " " +
+              vocab.nsp +
+              " " +
+              scripts +
+              "/lov.config";
+            var exec2 = require("child_process").exec;
+            child = exec2(command2, function (error2, stdout2, stderr2) {
+              stdout2 = JSON.parse(stdout2);
+              stdout2 = _.extend(stdout2, version);
+
+              //Add diagram to version (if the diagram was uploaded) (to stdout2)
+              if (req.body.file) {
+                // Directory path to store the diagrams
+                dir = dir + "/diagrams";
+                // Diagram path
+                target_path = dir + "/" + vocab._id + "_" + issuedStr + ".svg";
+                //Indicate the path to the diagram
+                stdout2["diagramPath"] = target_path;
+                // Create directory to store the diagrams
+                if (!fs.existsSync(dir)) {
+                  fs.mkdirSync(dir);
+                }
+                // Store the diagram
+                fs.writeFile(target_path, req.body.file.fileContent, (err) => {
+                  if (err) {
+                    console.error(err);
+                  }
+                });
+              }
+
+              /* add version */
+              Vocabulary.addVersion(vocab.prefix, stdout2, function (err) {
+                if (err) {
+                  return res.send({
+                    redirect: "500",
+                  });
+                }
+                vocab.versions = stdout2;
+
+                //success generate first stats
+                var command3 =
+                  scripts +
+                  "/bin/statsonevocab " +
+                  scripts +
+                  "/lov.config " +
+                  vocab.uri;
+                var exec3 = require("child_process").exec;
+                child = exec3(command3, function (error3, stdout3, stderr3) {
+                  // Generate not flatten structures
+                  exports
+                    .generateStructures(
+                      vocab.prefix,
+                      vocab,
+                      "not_flatten",
+                      "both",
+                      python_patterns,
+                      patterns,
+                      false
+                    )
+                    .then(
+                      ([
+                        versionPath,
+                        structuresTypePath,
+                        structuresNamePath,
+                      ]) => {
+                        exports.detectGlobalPatterns(
+                          patterns,
+                          python_patterns,
+                          (err) => {
+                            if (err)
+                              return res.send({
+                                redirect: "/dataset/lov/vocabs/" + vocab.prefix,
+                                err: err,
+                              });
+                            return res.send({
+                              redirect: "/dataset/lov/vocabs/" + vocab.prefix,
+                            });
+                          }
+                        );
+                      }
+                    )
+                    .catch((err) => {
+                      return res.send({
+                        redirect: "/dataset/lov/vocabs/" + vocab.prefix,
+                        err: err,
+                      });
+                    });
+                });
+              });
+            });
+          });
+        } else {
+          //no version found
+          res.send({
+            redirect: "/dataset/lov/vocabs/" + vocab.prefix,
+            err: "The ontology has not been downloaded. No version found.",
+          });
+        }
+      });
     })
     .catch((err) => {
       return res.send({
@@ -672,6 +825,7 @@ exports.generateStructures = function (
   voc,
   vocab,
   flatten,
+  pattern, 
   python_patterns,
   patterns,
   regenerateStructures
@@ -713,27 +867,24 @@ exports.generateStructures = function (
         reject("Ontology " + voc + " has not an available version.");
       }
 
+      const has_flatten = flatten !== 'not_flatten' ? 'yes' : 'no';  
+
       var command =
         python_patterns +
         " " +
         patterns +
-        "/lov.py --type structure --flatten " +
-        flatten +
+        "/generate_web_page.py --flatten " +
+        has_flatten + 
+        " --patterns " + pattern +
         " --ontology_path " +
         path.resolve(
           __dirname +
             "/../../versions/" +
             vocab._id +
-            "/" +
-            vocab._id +
-            "_" +
-            lastVersion.name.slice(1) +
-            ".n3"
+            "/" 
         ) +
         " --output_path " +
-        versionPath +
-        " --preffix " +
-        voc;
+        versionPath ;
       //Llamar a la api para que generar el fichero con las estructuras
       var exec = require("child_process").exec;
       child = exec(command, function (error, stdout, stderr) {
@@ -1154,12 +1305,7 @@ exports.detectPatterns = function (req, res, patterns, python_patterns) {
     const zip = new JSZip();
     var type_path = "";
     var name_path = "";
-    var command =
-      python_patterns +
-      " " +
-      patterns +
-      "/lov.py --type pattern --patterns_type " +
-      pattern;
+    
     new Promise((resolve, reject) => {
       array.forEach((voc) => {
         Vocabulary.loadEdition(voc, function (err, vocab) {
@@ -1170,12 +1316,14 @@ exports.detectPatterns = function (req, res, patterns, python_patterns) {
               voc,
               vocab,
               flatten,
+              pattern,
               python_patterns,
               patterns,
               false
             )
             .then(([versionPath, structuresTypePath, structuresNamePath]) => {
               encodeToZip(zip, versionPath, voc);
+            
               type_path += " " + structuresTypePath;
               name_path += " " + structuresNamePath;
               itemsProcessed++;
@@ -1186,47 +1334,12 @@ exports.detectPatterns = function (req, res, patterns, python_patterns) {
             });
         });
       });
-    })
-      .then(() => {
-        if (pattern == "type" || pattern == "both") {
-          command += " --type_path " + type_path;
-        }
-        if (pattern == "name" || pattern == "both") {
-          command += " --name_path " + name_path;
-        }
-
-        var exec = require("child_process").exec;
-        // LLamar a la api para detectar los patrones a partir de los ficheros con las estructuras
-        child = exec(command, function (error, stdout, stderr) {
-          if (error !== null)
-            return standardCallback(
-              req,
-              res,
-              new Error("exec error: " + error),
-              null
-            );
-          if (stdout && stdout.length > 0) {
-            stdout = JSON.parse(stdout);
-            stdout.forEach((st) => {
-              if (st["pattern_type"]) {
-                zip.file("Patterns_type.txt", st["pattern_type"]);
-                zip.file("Patterns_type.csv", st["csv_type"]);
-              }
-              if (st["pattern_name"]) {
-                zip.file("Patterns_name.txt", st["pattern_name"]);
-                zip.file("Patterns_name.csv", st["csv_name"]);
-              }
-            });
-
-            zip.generateAsync({ type: "base64" }).then(function (content) {
+    }).then(() => {
+      zip.generateAsync({ type: "base64" }).then(function (content) {
               return standardCallback(req, res, null, content);
             });
-          } else {
-            //Error detecting the patterns
-            return standardCallback(req, res, stderr, null);
-          }
-        });
-      })
+    })
+    
       .catch((err) => {
         return standardCallback(req, res, err, null);
       });
@@ -1234,21 +1347,31 @@ exports.detectPatterns = function (req, res, patterns, python_patterns) {
 };
 
 function encodeToZip(zip, versionPath, voc) {
-  const array = [
-    "/error_log.txt",
-    "/Structure_term_inferred_blank_nodes.txt",
-    "/Structure_term_inferred_type.txt",
-    "/Structure_term_name.txt",
-    "/Structure_term_type.txt",
-    "/Structure.csv",
-  ];
-  array.forEach((file) => {
-    fs.readFile(path.resolve(versionPath + file), function (err, data) {
-      if (err) throw err;
-      zip.file(voc + file, data);
-    });
-  });
+
+  //const root = (voc || '').replace(/\/+$/, '');
+  const root = '';
+  const toZipPath = (...parts) => parts.filter(Boolean).join('/');
+
+  function addDir(currentFsPath, currentZipPath) {
+    const entries = fs.readdirSync(currentFsPath, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fsPath = path.join(currentFsPath, entry.name);
+      const zipPath = toZipPath(currentZipPath, entry.name);
+
+      if (entry.isDirectory()) {
+        zip.folder(zipPath);
+        addDir(fsPath, zipPath);
+      } else if (entry.isFile()) {
+        const data = fs.readFileSync(fsPath);
+        zip.file(zipPath, data);
+      }
+    }
+  }
+
+  addDir(versionPath, root);
 }
+
 
 /**
  * vocabList : The relation array containing vocab Objects
