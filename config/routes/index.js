@@ -242,6 +242,14 @@ router.post(
   }
 );
 
+router.post(
+  "/edition/lov/vocabs/new/repository",
+  auth.requiresLogin,
+  (req, res) => {
+    vocabularies.newRepository(req, res, config.scripts);
+  }
+);
+
 //create the vocab
 router.get(
   "/edition/lov/vocabs/:vocabPxEdition",

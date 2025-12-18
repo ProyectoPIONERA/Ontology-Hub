@@ -309,7 +309,7 @@ block content
                   span 
                 .clear
 
-            - if(lastVersion.diagramPath)
+            - if(lastVersion && lastVersion.diagramPath)
               div#editor-diagram.nanocms-diagram
                 !{svgDiagram}
               link(rel='stylesheet', type='text/css', media='all', href='/css/editor.css')
