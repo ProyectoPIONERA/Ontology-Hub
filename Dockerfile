@@ -80,6 +80,7 @@ WORKDIR /app
 # Install Node dependencies
 COPY package*.json ./
 RUN npm install
+RUN npm install n3
 
 # Copy application files
 COPY . .
