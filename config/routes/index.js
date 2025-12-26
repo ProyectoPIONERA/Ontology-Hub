@@ -242,6 +242,14 @@ router.post(
   }
 );
 
+router.post(
+  "/edition/lov/vocabs/new/repository",
+  auth.requiresLogin,
+  (req, res) => {
+    vocabularies.newRepository(req, res, config.scripts);
+  }
+);
+
 //create the vocab
 router.get(
   "/edition/lov/vocabs/:vocabPxEdition",
@@ -433,6 +441,10 @@ router.get("/dataset/lov/about", function (req, res) {
     app_name_shorcut: config.app_name_shorcut,
     app_name: config.app_name,
   });
+});
+
+router.get("/dataset/lov/how-to", function(req, res){
+  res.render('howto/index', { title: 'Home Page', message: 'Hello from Pug!' });
 });
 
 // search

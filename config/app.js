@@ -128,11 +128,12 @@ app.use(methodOverride(function (req, res) {
 }));
 
 // express/mongo session storage
+console.log('Session store URI:', process.env.MONGO_DB_CONNECTION_STRING);
 app.use(
   session({
     secret: pkg.name,
     store: new mongoStore({
-      url: config.db,
+      uri: process.env.MONGO_DB_CONNECTION_URI,
       collection: "sessions",
     }),
   })

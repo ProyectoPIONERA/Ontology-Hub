@@ -21,7 +21,18 @@ block content
           article
             form(method='post' action=action name='TheForm' id='TheForm')
               #greenContainer.contents.clear.col-1.wrplGreen
-                
+                - if (ontologyPath)
+                  input(type='hidden', name='ontologyPath', id='ontologyPath', value="#{ontologyPath}")
+                - if (requirements)
+                  input(type='hidden', name='requirements', id='requirements', value="#{requirements}")
+                - if (conceptualization)
+                  input(type='hidden', name='conceptualization', id='conceptualization', value="#{conceptualization}")
+                - if (shapes)
+                  input(type='hidden', name='shapes', id='shapes', value="#{shapes}")
+                - if (examples)
+                  input(type='hidden', name='examples', id='examples', value="#{examples}")
+                - if (tests)
+                  input(type='hidden', name='tests', id='tests', value="#{tests}")
                 input(type='hidden', name='_csrf', value="#{csrf_token}")
                 input(type='hidden', value="1000" disabled="disabled", id='cptOverall')
                 input(type="hidden", name="lastModifiedInLOVAt", value="#{utils.dateToYMD(new Date())}")

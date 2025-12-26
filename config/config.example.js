@@ -1,4 +1,3 @@
-
 var path = require('path')
   , rootPath = path.normalize(__dirname + '/..')
   , templatePath = path.normalize(__dirname + '/../app/mailer/templates')
@@ -15,19 +14,19 @@ var path = require('path')
 
 module.exports = {
   development: {
-    db: 'mongodb://localhost/lov',
+    db: process.env.MONGO_DB_CONNECTION_STRING || 'mongodb://localhost/lov',
     es: {
-      host: 'localhost',
+      host: process.env.ELASTIC_SEARCH_HOST,
       port: 9200,
     },
-    lov: 'http://localhost:3333',
+    lov: process.env.SELF_HOST_URL || 'http://localhost:3333',
     //Path to where the output of "lov_scripts" repository have been generated
-    scripts: '/home/user/scripts',
+    scripts: process.env.SCRIPTS_PATH || '/share/scripts',
     //Path to "Patrones" repository
-    patterns: '/home/user/Patterns/Patrones',
+    patterns: process.env.PATTERN_PATHS || '/home/user/Patterns/Patrones',
     //Path to python environment
-    python_patterns: '/home/user/Patterns/env/bin/python',
-    app_name: 'Example Application Name',
+    python_patterns: process.env.PYTHON_PATTERNS_PATH || '/home/user/Patterns/env/bin/python',
+    app_name: 'OEG | LOV',
     app_name_shorcut: 'EAN',
     root: rootPath,
     notifier: notifier,
@@ -40,7 +39,7 @@ module.exports = {
     }
   },
   test: {
-    db: 'mongodb://localhost/lov',
+    db: process.env.MONGO_DB_CONNECTION_STRING || 'mongodb://localhost/lov',
     es: {host: 'localhost',port: 9200},
     email: {
       service: 'Gmail',
@@ -51,7 +50,7 @@ module.exports = {
     }
   },
   production: {
-    db: 'mongodb://localhost/lov',
+    db: process.env.MONGO_DB_CONNECTION_STRING || 'mongodb://localhost/lov',
     es: {
       host: 'localhost',
       port: 9200,

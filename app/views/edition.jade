@@ -148,12 +148,27 @@ block content
                               span - !{usr.category}
                               div.uri !{usr.email}
                             div.hr
-          #dialogCreateVocab(title="Enter the URI for the vocabulary to create" style='display:none') 
+          #dialogCreateVocab(title="Select Vocabulary Creation Method" style='display:none') 
             #dialogCreateVocabError
-            form(action="/edition/lov/vocabs/new", method="post" name="formDialogCreateVocab" id="formDialogCreateVocab")
+
+            // --- Form 1: Vocabulary URI ---
+            p
+              strong Create Vocabulary by URI
+
+            form(action="/edition/lov/vocabs/new", method="post" name="formDialogCreateVocabFromURI" id="formDialogCreateVocabFromURI")
               fieldset.editionTable
                 input(type='hidden', name='_csrf', value="#{csrf_token}")
                 input(type="text" name="uri" placeholder="vocabulary URI")
+            
+            // --- Form 2: Ontology Development Repository ---
+            p
+              strong Create Vocabulary from Ontology Repository
+
+            form(action="/edition/lov/vocabs/new/repository", method="post" name="formDialogCreateVocabFromOntologyDevelopmentRepository" id="formDialogCreateVocabFromOntologyDevelopmentRepository")
+              fieldset.editionTable
+                input(type='hidden', name='_csrf', value="#{csrf_token}")
+                input(type="text" name="repositoryUri" placeholder="ontology development repository")
+
           #dialog(style='display:none;') Are you sure you want to update the status? This will remove the vocabulary from this view.
           script.
             function changeClassRemove() {
@@ -211,6 +226,36 @@ block content
               return true;
             });
             $(document).ready(function () {
+
+              const vocabUriValidator = new FormValidator('formDialogCreateVocabFromURI', [{
+                  name: 'uri',
+                  rules: 'required|valid_url'
+              }], check_form);
+
+              const repoValidator = new FormValidator('formDialogCreateVocabFromOntologyDevelopmentRepository', [{
+                  name: 'repositoryUri',
+                  rules: 'required|valid_url'
+              }], check_form);
+
+              //form validation before submit
+              function check_form(errors, event) {
+                const $errorDiv = $('#dialogCreateVocabError');
+
+                // Clear previous state
+                $errorDiv.css('display', 'none');
+                $errorDiv.html('');
+
+                if (errors.length > 0) {
+                  var errorString = '';
+                  for (var i = 0, errorLength = errors.length; i < errorLength; i++) {
+                      errorString += errors[i].message + '<br />';
+                  }
+                  $errorDiv.css('display', 'block');
+                  $errorDiv.html(errorString);
+                  if (event) event.returnValue=false;
+                }
+              }
+
               // get confirmation
               $('.statusSubmit').click(function(e){
                 e.preventDefault();
@@ -235,37 +280,46 @@ block content
               //add a new vocab form
               $('.createVocab').click(function(e){
                 e.preventDefault();
-                  $('#dialogCreateVocab').dialog({
+                const $uriForm = $('#formDialogCreateVocabFromURI');
+                const $repoForm = $('#formDialogCreateVocabFromOntologyDevelopmentRepository');
+                const $errorDiv = $('#dialogCreateVocabError');
+
+                $('#dialogCreateVocab').dialog({
                     resizable: false,
-                    height:250,
+                    height:350,
                     width:600,
                     modal: true,
                     buttons: {
                         'Confirm': function() {
-                            $('#formDialogCreateVocab').submit();
+                            // Clear previous errors
+                            $errorDiv.empty().hide();
+
+                            const uriValue = $uriForm.find('input[name="uri"]').val().trim();
+                            const repoValue = $repoForm.find('input[name="repositoryUri"]').val().trim();
+
+                            if (uriValue && repoValue){
+                              $errorDiv.css('display', 'block');
+                              $errorDiv.html("Please use only one creation method (URI OR Repository).");
+                            }
+                            else if (uriValue) {
+                              $uriForm.submit();
+                            } else if (repoValue) {
+                              $repoForm.submit();
+                            } else {
+                              $errorDiv.css('display', 'block');
+                              $errorDiv.html("Please enter either a Vocabulary URI or an Ontology Repository URI.");
+                            }
                         },
                         Cancel: function() {
                           $(this).dialog('close');
                         }
+                    },
+                    close: function() {
+                        $uriForm.find('input[type="text"]').val('');
+                        $repoForm.find('input[type="text"]').val('');
+                        $errorDiv.empty();
                     }
                   });
                 return false;
-              });
-              
-              
-              //form validation before submit
-              new FormValidator('formDialogCreateVocab', [{
-                  name: 'uri',
-                  rules: 'required|valid_url'
-              }], function(errors, event) {
-                  if (errors.length > 0) {
-                    var errorString = '';
-                    for (var i = 0, errorLength = errors.length; i < errorLength; i++) {
-                        errorString += errors[i].message + '<br />';
-                    }
-                    document.getElementById('dialogCreateVocabError').style.display = 'block';
-                    document.getElementById('dialogCreateVocabError').innerHTML = errorString;
-                    event.returnValue=false;
-                  }
               });
             });
