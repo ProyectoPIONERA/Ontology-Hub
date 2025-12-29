@@ -1,98 +1,95 @@
 # Ontology Hub
 
-Aplicación web para **explorar, buscar y reutilizar ontologías y vocabularios RDF** (inspirada en LOV), desarrollada en **Node.js**. Proporciona catálogo, búsqueda avanzada e integración con procesos de ingesta y validación de metadatos.
+A web application to **explore, search, and reuse RDF ontologies and vocabularies** (inspired by LOV), built with **Node.js**. It provides a catalog, advanced search, and integration with ingestion and metadata validation processes.
 
-## 🚧 Estado del Proyecto
+## 🚧 Project Status
 
-Activamente en desarrollo. La API y los comandos pueden cambiar entre versiones menores.
-
----
-
-## Tabla de Contenidos
-
-- [Contexto y Propósito](#contexto-y-propósito)
-- [Características Principales](#características-principales)
-- [Arquitectura](#arquitectura)
-- [Requisitos](#requisitos)
-- [Instalación](#instalación)
-- [Configuración](#configuración)
-- [Ejecución](#ejecución)
-- [Frontend con Pug (SSR)](#frontend-con-pug-ssr)
-- [Scripts NPM](#scripts-npm)
-- [API (ejemplos)](#api-ejemplos)
-- [Estructura del Repositorio](#estructura-del-repositorio)
-- [Ingesta e Indexación](#ingesta-e-indexación)
-- [Docker (opcional)](#docker-opcional)
-- [Pruebas](#pruebas)
-- [Cómo Contribuir](#cómo-contribuir)
-- [Hoja de Ruta](#hoja-de-ruta)
-- [Agradecimientos y Financiación](#agradecimientos-y-financiación)
-- [Autores y Contacto](#autores-y-contacto)
-- [Licencia](#licencia)
+Actively under development. The API and commands may change between minor versions.
 
 ---
 
-## Contexto y Propósito
+## Table of Contents
 
-**Ontology Hub** centraliza metadatos de ontologías y vocabularios (RDF/OWL/RDFS/SKOS), facilita su descubrimiento y promueve su reutilización. Incluye catálogo, facetas de búsqueda, vistas por versión y endpoints API para integraciones.
-
----
-
-## Características Principales
-
-- 🔎 **Búsqueda y facetas** por nombre, prefijo, términos, autor, licencia, temas (SKOS), etc.
-- 📚 **Catálogo** de ontologías con versiones, cambios y enlaces a documentación.
-- 🧩 **Resolución de prefijos** y URIs.
-- 🛠️ **Ingesta** de metadatos desde archivos RDF/JSON/TTL o endpoints SPARQL.
-- ⚡ **Indexación** en Elasticsearch para respuestas rápidas.
-- 🔐 **API REST** para consultar y exportar resultados (JSON/CSV/NDJSON).
-- 📈 **Estadísticas** (uso de vocabularios, clases/propiedades, popularidad).
-
----
-
-## Arquitectura
-
-- **Backend:** Node.js + Express.
-- **Frontend:** Pug (SSR con Express).
-- **Base de datos:** MongoDB.
-- **Búsquedas:** Elasticsearch.
+- [Context and Purpose](#context-and-purpose)
+- [Key Features](#key-features)
+- [Architecture](#architecture)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Running the Application](#running-the-application)
+- [Frontend with Pug (SSR)](#frontend-with-pug-ssr)
+- [NPM Scripts](#npm-scripts)
+- [API Examples](#api-examples)
+- [Repository Structure](#repository-structure)
+- [Ingestion and Indexing](#ingestion-and-indexing)
+- [Docker Usage](#docker-usage)
+- [Testing](#testing)
+- [How to Contribute](#how-to-contribute)
+- [Roadmap](#roadmap)
+- [Acknowledgments and Funding](#acknowledgments-and-funding)
+- [Authors and Contact](#authors-and-contact)
+- [License](#license)
 
 ---
 
-## Requisitos
+## Context and Purpose
 
-- **Node.js 18+** (recomendado 20 LTS)
-- **npm** o **pnpm**
+**Ontology Hub** centralizes metadata for ontologies and vocabularies (RDF/OWL/RDFS/SKOS), making them easier to discover and reuse. It includes a catalog, faceted search, version views, and API endpoints for integration.
+
+---
+
+## Key Features
+
+- 🔎 **Search and facets** by name, prefix, terms, author, license, topics (SKOS), etc.
+- 📚 **Ontology catalog** with versions, changes, and documentation links.
+- 🧩 **Prefix and URI resolution**.
+- 🛠️ **Metadata ingestion** from RDF/JSON/TTL files.
+- ⚡ **Indexing** in Elasticsearch for fast responses.
+- 🔐 **REST API** for querying and exporting results (JSON/CSV/NDJSON).
+- 📈 **Statistics** (vocabulary usage, classes/properties, popularity).
+
+---
+
+## Architecture
+
+- **Backend:** Node.js + Express
+- **Frontend:** Pug (SSR with Express)
+- **Database:** MongoDB
+- **Search Engine:** Elasticsearch
+
+---
+
+## Requirements
+
+- **Node.js 18+** (20 LTS recommended)
+- **npm** or **pnpm**
 - **MongoDB 6+**
 - **Elasticsearch 2.4+**
 - **Apache Jena**
 - **Python 3**
 
-
 ---
 
-## Instalación
+## Installation
 
-1. Clona el repositorio:
+1. Clone the repository:
 
    ```bash
    git clone https://github.com/ProyectoPIONERA/Ontology-Hub.git
    cd Ontology-Hub
    ```
 
-2. Instala dependencias:
+2. Install dependencies:
 
    ```bash
    npm install
-   # o
-   pnpm install
    ```
 
 ---
 
-## Configuración
+## Configuration
 
-Crea un archivo `.env` en la raíz con variables como:
+Create a `.env` file in the root directory with variables like:
 
 ```env
 NODE_ENV=development
@@ -110,46 +107,55 @@ ALLOW_ORIGIN=*
 
 ---
 
-## Ejecución
+## Running the Application
 
 ```bash
-npm run dev
-npm run build
 npm start
 ```
 
 ---
 
-## API (ejemplos)
-
-```http
-GET /api/v1/vocabs?q=geo&license=cc-by
-GET /api/v1/vocabs/:prefix
-GET /api/v1/resolve?uri=http://schema.org/Person
-```
-
----
-
-## Estructura del Repositorio
+## Repository Structure
 
 ```text
 ontology-hub-node/
-├── src/
-│   ├── server.js
-│   ├── routes/
-│   ├── controllers/
-│   ├── services/
-│   └── web/
-│       ├── views/
-│       └── public/
+├── app/
+│   ├── views/        # Pug templates
+│   ├── public/       # Static assets
+├── config/
 ├── scripts/
-├── tests/
-├── docker/
-└── package.json
+├── dockers/
+├── jena/
+├── lib/
+├── setup/
+├── versions/
+├── vocommons/
+├── server.js
+├── Dockerfile
+├── DockerfileELS
+├── docker-compose.yml
+├── package.json
+└── README.md
 ```
 
 ---
 
-## Licencia
+## Docker Usage
 
-Distribuido bajo **Apache License 2.0**.
+This project includes **Docker support** for quick setup and deployment.
+
+### **1. Build and Run with Docker Compose**
+```bash
+docker-compose up --build
+```
+This will start:
+- **Node.js app**
+- **MongoDB**
+- **Elasticsearch**
+- Optional services like **Jena** if configured.
+
+---
+
+## License
+
+Distributed under **Apache License 2.0**.
