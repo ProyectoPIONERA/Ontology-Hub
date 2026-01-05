@@ -67,12 +67,12 @@ exports.remove = function (req, res) {
         fs.unlink(versionFile, function (err) {
           if (err) throw err;
           return res.redirect(
-            "/edition/lov/vocabs/" + vocab.prefix + "/versions"
+            "/edition/vocabs/" + vocab.prefix + "/versions"
           );
         });
       } else {
         return res.redirect(
-          "/edition/lov/vocabs/" + vocab.prefix + "/versions"
+          "/edition/vocabs/" + vocab.prefix + "/versions"
         );
       }
     })
@@ -109,7 +109,7 @@ exports.changeStatusReviewed = function (req, res) {
         app_name: app_name,
       });
     }
-    return res.redirect("/edition/lov/vocabs/" + vocab.prefix + "/versions");
+    return res.redirect("/edition/vocabs/" + vocab.prefix + "/versions");
   });
 };
 
@@ -124,7 +124,7 @@ exports.changeStatusReviewedAll = function (req, res) {
   vocab
     .save()
     .then(() => {
-      res.redirect("/edition/lov/vocabs/" + vocab.prefix + "/versions");
+      res.redirect("/edition/vocabs/" + vocab.prefix + "/versions");
     })
     .catch((err) => {
       return res.render("500", {
@@ -168,7 +168,7 @@ exports.edit = function (req, res, lov) {
       if (vocab.versions[i].fileURL)
         vocab.versions[i].fileURL =
           lov +
-          "/dataset/lov/vocabs/" +
+          "/dataset/vocabs/" +
           vocab.prefix +
           "/versions/" +
           targetDateStr +
@@ -182,7 +182,7 @@ exports.edit = function (req, res, lov) {
       //change version file name if date has changed
       if (sourceDateStr === targetDateStr) {
         return res.redirect(
-          "/edition/lov/vocabs/" + vocab.prefix + "/versions"
+          "/edition/vocabs/" + vocab.prefix + "/versions"
         );
       } else {
         var source_path =
@@ -207,7 +207,7 @@ exports.edit = function (req, res, lov) {
           fs.unlink(source_path, function (err) {
             if (err) throw err;
             return res.redirect(
-              "/edition/lov/vocabs/" + vocab.prefix + "/versions"
+              "/edition/vocabs/" + vocab.prefix + "/versions"
             );
           });
         });
@@ -256,7 +256,7 @@ exports.new = function (req, res, scripts, lov, patterns, python_patterns) {
 
       var versionPublicPath =
         lov +
-        "/dataset/lov/vocabs/" +
+        "/dataset/vocabs/" +
         req.vocab.prefix +
         "/versions/" +
         issuedStr +
@@ -306,14 +306,14 @@ exports.new = function (req, res, scripts, lov, patterns, python_patterns) {
                 (err) => {
                   if (err) console.log(err);
                   return res.redirect(
-                    "/edition/lov/vocabs/" + vocab.prefix + "/versions"
+                    "/edition/vocabs/" + vocab.prefix + "/versions"
                   );
                 }
               );
             })
             .catch((err) => {
               return res.redirect(
-                "/edition/lov/vocabs/" + vocab.prefix + "/versions"
+                "/edition/vocabs/" + vocab.prefix + "/versions"
               );
             });
         });
@@ -328,7 +328,7 @@ exports.new = function (req, res, scripts, lov, patterns, python_patterns) {
           app_name: app_name,
         });
       }
-      return res.redirect("/edition/lov/vocabs/" + vocab.prefix + "/versions");
+      return res.redirect("/edition/vocabs/" + vocab.prefix + "/versions");
     });
   }
 };

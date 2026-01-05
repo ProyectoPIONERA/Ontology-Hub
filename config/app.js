@@ -143,7 +143,7 @@ app.use(
 if (process.env.NODE_ENV !== "test") {
   //app.use(express.csrf())
   var conditionalCSRF = function (req, res, next) {
-    if (req.path != "/dataset/lov/sparql") {
+    if (req.path != "/dataset/sparql") {
       //don't check the csrf if sent to sparql as it is not supported by yasgui
       csrf(req, res, next);
     } else {
@@ -165,7 +165,7 @@ if (process.env.NODE_ENV !== "test") {
 if (env !== "test") {
   //app.use(express.csrf())
   var conditionalCSRF = function (req, res, next) {
-    if (req.path != "/dataset/lov/sparql") {
+    if (req.path != "/dataset/sparql") {
       //don't check the csrf if sent to sparql as it is not supported by yasgui
       app.use(csrf());
       next();

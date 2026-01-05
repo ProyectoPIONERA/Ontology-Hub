@@ -91,7 +91,7 @@ exports.update = function (req, res) {
     .save()
     .then(() => {
       req.flash("info", "User updated successfully");
-      return res.redirect("/edition/lov");
+      return res.redirect("/edition");
     })
     .catch((err) => {
       res.render("users/edit", {
@@ -115,7 +115,7 @@ exports.update = function (req, res) {
           User.find({_id:id}).remove().exec(cb);
       }, function(err, result) {
           if( err ) { return console.log(err); }
-          res.redirect('/edition/lov/');
+          res.redirect('/edition/');
       });
   });
 }*/
@@ -131,7 +131,7 @@ exports.logout = function (req, res) {
         app_name_shorcut: app_name_shorcut,
         app_name: app_name,
       });
-    res.redirect("/edition/lov/login");
+    res.redirect("/edition/login");
   });
 };
 
@@ -156,7 +156,7 @@ exports.create = function (req, res) {
     user
       .save()
       .then(() => {
-        res.redirect("/edition/lov/login");
+        res.redirect("/edition/login");
       })
       .catch((err) => {
         return res.render("users/signup", {
@@ -201,11 +201,11 @@ exports.destroy = function (req, res) {
   User.findOneAndDelete(user)
   .then(() => {
     req.flash("info", "Deleted successfully");
-    res.redirect("/edition/lov/users");
+    res.redirect("/edition/users");
   })
   .catch((err) => {
     req.flash("info", err);
-    res.redirect("/edition/lov/users");
+    res.redirect("/edition/users");
   });
 };
 
@@ -232,7 +232,7 @@ exports.userChangeCategory = function (req, res) {
     { $set: { category: req.body.category } }
   )
     .then(() => {
-      res.redirect("/edition/lov/users");
+      res.redirect("/edition/users");
     })
     .catch((err) => {
       return res.render("500", {

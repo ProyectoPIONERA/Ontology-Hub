@@ -58,15 +58,15 @@ exports.destroy = function (req, res) {
   Agent.findOneAndDelete(agent)
     .then(() => {
       req.flash("info", "Deleted successfully");
-      res.redirect("/dataset/lov/agents");
+      res.redirect("/dataset/agents");
     })
     .catch((err) => {
       req.flash("info", err);
-      res.redirect("/dataset/lov/agents");
+      res.redirect("/dataset/agents");
     });
   /*agent.remove(function (err) {
     req.flash("info", "Deleted successfully");
-    res.redirect("/dataset/lov/agents");
+    res.redirect("/dataset/agents");
   });*/
 };
 
@@ -78,7 +78,7 @@ exports.create = function (req, res) {
   agent
     .save()
     .then(() => {
-      return res.redirect("/dataset/lov/agents/" + agent.name);
+      return res.redirect("/dataset/agents/" + agent.name);
     })
     .catch((err) => {
       return res.render("500", {
@@ -121,7 +121,7 @@ exports.update = function (req, res) {
   agent
     .save()
     .then(() => {
-      res.redirect("/dataset/lov/agents/" + agent.name);
+      res.redirect("/dataset/agents/" + agent.name);
     })
     .catch((err) => {
       return res.render("500", {

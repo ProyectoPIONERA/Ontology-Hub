@@ -18,6 +18,9 @@ RUN git clone --branch ${BRANCH_NAME} ${REPO_URL} ${REPO_NAME}
 # Set working directory to the cloned repo
 WORKDIR /usr/src/app/${REPO_NAME}
 
+RUN mkdir -p src/main/resources/queries/rdf2es
+
+
 COPY dockers/scripts/lov.config .
 
 # Run custom script

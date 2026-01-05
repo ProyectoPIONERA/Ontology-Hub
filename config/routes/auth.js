@@ -77,12 +77,12 @@ passport.deserializeUser(function (id, done) {
 var router = express.Router();
 
 router.post(
-  "/edition/lov/session",
+  "/edition/session",
   (req, res, next) => {
     next();
   },
   passport.authenticate("local", {
-    failureRedirect: "/edition/lov/login",
+    failureRedirect: "/edition/login",
     failureFlash: true,
   }),
   users.session

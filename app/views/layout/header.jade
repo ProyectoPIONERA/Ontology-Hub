@@ -1,36 +1,36 @@
 header
-        a#logo(title='#{app_name}', href='/dataset/lov')
+        a#logo(title='#{app_name}', href='/dataset')
           img(itemprop="image" alt='#{app_name}', src='/img/icon-logo.png' height='86' width='86')
         nav
           ul
             li.wrpl
-              a(title='', href='/dataset/lov/vocabs')
+              a(title='', href='/dataset/vocabs')
                 | Vocabs
             li.wrpl
-              a(title='', href='/dataset/lov/terms')
+              a(title='', href='/dataset/terms')
                 | Terms
             li.wrpl
-              a(title='', href='/dataset/lov/agents')
+              a(title='', href='/dataset/agents')
                 | Agents
             li.wrpl
-              a(title='', href='/dataset/lov/sparql')
+              a(title='', href='/dataset/sparql')
                 | SPARQL/Dump
             li.wrpl
-              a(title='', href='/dataset/lov/patterns')
+              a(title='', href='/dataset/patterns')
                 | Patterns
             if (req.isAuthenticated() && req.user.category === "admin")
               li.wrpl
-                a(title='', href='/edition/lov/users')
+                a(title='', href='/edition/users')
                   | Users
             if (req.isAuthenticated() && req.user.category === "admin")
               li.wrpl
-                a(title='', href='/edition/lov/tags')
+                a(title='', href='/edition/tags')
                   | Tags
         if (req.isAuthenticated())
           ul.editionAuth(style='position:absolute; top:0; right:0;')
             li
-              a(href="/edition/lov/", title="Edition") Edition
+              a(href="/edition/", title="Edition") Edition
             li
-              a(href="/edition/lov/users/"+req.user.id, title="Profile") Profile
+              a(href="/edition/users/"+req.user.id, title="Profile") Profile
             li
-              a(href="/edition/lov/logout", title="logout") Logout
+              a(href="/edition/logout", title="logout") Logout
