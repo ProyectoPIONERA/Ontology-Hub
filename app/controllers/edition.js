@@ -53,7 +53,7 @@ exports.reviewUsersBatch = function (req, res) {
           if (err) {
             return console.log(err);
           }
-          res.redirect("/edition/lov/");
+          res.redirect("/edition/");
         }
       );
     }
@@ -66,7 +66,7 @@ exports.suggestTakeAction = function (req, res) {
     { $set: { reviewedBy: req.user.agent } }
   )
     .then(() => {
-      res.redirect("/edition/lov/");
+      res.redirect("/edition/");
     })
     .catch((err) => {
       return res.render("500", {
@@ -82,7 +82,7 @@ exports.suggestUpdateStatus = function (req, res) {
     { $set: { status: req.body.status } }
   )
     .then(() => {
-      res.redirect("/edition/lov/");
+      res.redirect("/edition/");
     })
     .catch((err) => {
       return res.render("500", {

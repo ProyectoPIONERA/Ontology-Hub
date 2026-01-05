@@ -72,83 +72,83 @@ var emailTransporter = nodemailer.createTransport(config.email);
 
 /* ########### Edition ########### */
 //root and authentication
-router.get("/edition", function (req, res) {
-  res.redirect("/edition/lov/");
-});
+/*router.get("/edition", function (req, res) {
+  res.redirect("/edition");
+});*/
 
 router.get(
-  "/edition/lov",
+  "/edition",
   auth.requiresLogin,
   edition.index
 );
 
 router.get(
-  "/edition/lov/signup",
+  "/edition/signup",
   auth.requiresAdmin,
   users.signup
 );
 
 router.get(
-  "/edition/lov/login",
+  "/edition/login",
   users.login
 );
 
 router.get(
-  "/edition/lov/logout",
+  "/edition/logout",
   users.logout
 );
 
 router.post(
-  "/edition/lov/users",
+  "/edition/users",
   users.create
 );
 
 //global actions
 router.post(
-  "/edition/lov/usersReview",
+  "/edition/usersReview",
   auth.requiresLogin,
   edition.reviewUsersBatch
 );
 
 router.post(
-  "/edition/lov/suggestTakeAction",
+  "/edition/suggestTakeAction",
   auth.requiresLogin,
   edition.suggestTakeAction
 );
 
 router.post(
-  "/edition/lov/suggestUpdateStatus",
+  "/edition/suggestUpdateStatus",
   auth.requiresLogin,
   edition.suggestUpdateStatus
 );
 
 //users
 router.get(
-  "/edition/lov/users",
+  "/edition/users",
   auth.requiresAdmin,
   users.index
 );
 
 router.post(
-  "/edition/lov/userChangeCategory",
+  "/edition/userChangeCategory",
   auth.requiresAdmin,
   users.userChangeCategory
 );
 
 router.delete(
-  "/edition/lov/users/:userId",
+  "/edition/users/:userId",
   auth.requiresAdmin,
   users.destroy
 );
 
 router.get(
-  "/edition/lov/users/:userId",
+  "/edition/users/:userId",
   auth.requiresAdminOrUser,
   users.edit
 );
 
 router.put(
-  "/edition/lov/users/:userId",
+  "/edition/users/:userId",
   auth.requiresAdminOrUser,
   users.update
 );
@@ -157,37 +157,37 @@ router.param("userId", users.load);
 
 //tags
 router.get(
-  "/edition/lov/tags/new",
+  "/edition/tags/new",
   auth.requiresAdmin,
   tags.new
 );
 
 router.post(
-  "/edition/lov/tags",
+  "/edition/tags",
   auth.requiresAdmin,
   tags.create
 );
 
 router.get(
-  "/edition/lov/tags",
+  "/edition/tags",
   auth.requiresAdmin,
   tags.index
 );
 
 router.delete(
-  "/edition/lov/tags/:tagId",
+  "/edition/tags/:tagId",
   auth.requiresAdmin,
   tags.destroy
 );
 
 router.get(
-  "/edition/lov/tags/:tagId",
+  "/edition/tags/:tagId",
   auth.requiresAdmin,
   tags.edit
 );
 
 router.put(
-  "/edition/lov/tags/:tagId",
+  "/edition/tags/:tagId",
   auth.requiresAdmin,
   tags.update
 );
@@ -196,37 +196,37 @@ router.param("tagId", tags.load);
 
 //agents
 router.get(
-  "/edition/lov/agents/new",
+  "/edition/agents/new",
   auth.requiresLogin,
   agents.new
 );
 
 router.post(
-  "/edition/lov/agents",
+  "/edition/agents",
   auth.requiresLogin,
   agents.create
 );
 
 router.post(
-  "/edition/lov/agents/creationOnTheFly",
+  "/edition/agents/creationOnTheFly",
   auth.requiresLogin,
   agents.createOnTheFly
 );
 
 router.get(
-  "/edition/lov/agents/:agentId",
+  "/edition/agents/:agentId",
   auth.requiresLogin,
   agents.edit
 );
 
 router.put(
-  "/edition/lov/agents/:agentId",
+  "/edition/agents/:agentId",
   auth.requiresLogin,
   agents.update
 );
 
 router.delete(
-  "/edition/lov/agents/:agentId",
+  "/edition/agents/:agentId",
   auth.requiresLogin,
   agents.destroy
 );
@@ -235,7 +235,7 @@ router.param("agentId", agents.load);
 
 //vocabs
 router.post(
-  "/edition/lov/vocabs/new",
+  "/edition/vocabs/new",
   auth.requiresLogin,
   (req, res) => {
     vocabularies.new(req, res, config.scripts);
@@ -243,7 +243,7 @@ router.post(
 );
 
 router.post(
-  "/edition/lov/vocabs/new/repository",
+  "/edition/vocabs/new/repository",
   auth.requiresLogin,
   (req, res) => {
     vocabularies.newRepository(req, res, config.scripts);
@@ -252,7 +252,7 @@ router.post(
 
 //create the vocab
 router.get(
-  "/edition/lov/vocabs/:vocabPxEdition",
+  "/edition/vocabs/:vocabPxEdition",
   auth.requiresLogin,
   (req, res) => {
     vocabularies.edit(req, res, config.scripts);
@@ -260,7 +260,7 @@ router.get(
 );
 
 router.post(
-  "/edition/lov/vocabs",
+  "/edition/vocabs",
   auth.requiresLogin,
   (req, res) => {
     vocabularies.create(
@@ -276,38 +276,38 @@ router.post(
 
 //save initial metadata + version
 router.put(
-  "/edition/lov/vocabs/:vocabPxEdition",
+  "/edition/vocabs/:vocabPxEdition",
   auth.requiresLogin,
   vocabularies.update
 );
 
 //versions
 router.get(
-  "/edition/lov/vocabs/:vocabPxEdition/versions",
+  "/edition/vocabs/:vocabPxEdition/versions",
   auth.requiresLogin,
   versions.list
 );
 
 router.delete(
-  "/edition/lov/vocabs/:vocabPxEdition/versions",
+  "/edition/vocabs/:vocabPxEdition/versions",
   auth.requiresLogin,
   versions.remove
 );
 
 router.post(
-  "/edition/lov/vocabs/:vocabPxEdition/versions/review",
+  "/edition/vocabs/:vocabPxEdition/versions/review",
   auth.requiresLogin,
   versions.changeStatusReviewed
 );
 
 router.post(
-  "/edition/lov/vocabs/:vocabPxEdition/versions/reviewAll",
+  "/edition/vocabs/:vocabPxEdition/versions/reviewAll",
   auth.requiresLogin,
   versions.changeStatusReviewedAll
 );
 
 router.post(
-  "/edition/lov/vocabs/:vocabPxEdition/versions/edit",
+  "/edition/vocabs/:vocabPxEdition/versions/edit",
   auth.requiresLogin,
   (req, res) => {
     versions.edit(req, res, config.lov);
@@ -315,7 +315,7 @@ router.post(
 );
 
 router.post(
-  "/edition/lov/vocabs/:vocabPxEdition/versions/new",
+  "/edition/vocabs/:vocabPxEdition/versions/new",
   upload.single("file"),
   auth.requiresLogin,
   (req, res) => {
@@ -331,12 +331,12 @@ router.post(
 );
 
 // agent
-router.get("/dataset/lov/agents", function (req, res) {
+router.get("/dataset/agents", function (req, res) {
   search.searchAgent(req, res, esclient);
 });
 
 router.get(
-  "/dataset/lov/agents/:agentName",
+  "/dataset/agents/:agentName",
   agents.show
 );
 
@@ -344,28 +344,24 @@ router.param("agentName", agents.loadFromName);
 
 // vocabs routes
 router.get("/", function (req, res) {
-  res.redirect("/dataset/lov/");
-});
-
-router.get("/dataset", function (req, res) {
-  res.redirect("/dataset/lov/");
+  res.redirect("/dataset");
 });
 
 router.get(
-  "/dataset/lov",
+  "/dataset",
   vocabularies.index
 );
 
-router.get("/dataset/lov/patterns", function (req, res) {
+router.get("/dataset/patterns", function (req, res) {
   search.searchVocabularyPatterns(req, res, esclient);
 });
 
-router.get("/dataset/lov/vocabs", function (req, res) {
+router.get("/dataset/vocabs", function (req, res) {
   search.searchVocabulary(req, res, esclient);
 });
 
 router.get(
-  "/dataset/lov/vocabs/:vocabPx/versions/:date.n3",
+  "/dataset/vocabs/:vocabPx/versions/:date.n3",
   function (req, res) {
     res.set("Content-Type", "text/n3");
     res.download(
@@ -385,7 +381,7 @@ router.get(
 );
 
 router.get(
-  "/dataset/lov/vocabs/versions/:identifier/diagrams/:fileName.svg",
+  "/dataset/vocabs/versions/:identifier/diagrams/:fileName.svg",
   function (req, res) {
     res.set("Content-Type", "text/n3");
     res.download(
@@ -412,16 +408,16 @@ router.get(
   }
 );
 
-router.get("/dataset/lov/vocabs/:vocabPx", (req, res) => {
+router.get("/dataset/vocabs/:vocabPx", (req, res) => {
   vocabularies.show(req, res, config.lov);
 });
 
-router.get("/dataset/lov/details/vocabulary:vocabularyid", function (req, res) {
+router.get("/dataset/details/vocabulary:vocabularyid", function (req, res) {
   var vocabularyId = req.param("vocabularyid");
   if (vocabularyId) {
     var prefix = vocabularyId.substring(1, vocabularyId.indexOf(".html"));
-    res.redirect("/dataset/lov/vocabs/" + prefix);
-  } else res.redirect("/dataset/lov/");
+    res.redirect("/dataset/vocabs/" + prefix);
+  } else res.redirect("/dataset/");
 });
 
 router.param("vocabPx", vocabularies.load);
@@ -430,204 +426,204 @@ router.param("vocabPxEdition", vocabularies.loadEdition);
 
 // languages routes
 router.get(
-  "/dataset/lov/languages/:langIso639P3PCode",
+  "/dataset/languages/:langIso639P3PCode",
   languages.show
 );
 
 router.param("langIso639P3PCode", languages.load);
 
-router.get("/dataset/lov/about", function (req, res) {
+router.get("/dataset/about", function (req, res) {
   res.render("about", {
     app_name_shorcut: config.app_name_shorcut,
     app_name: config.app_name,
   });
 });
 
-router.get("/dataset/lov/how-to", function(req, res){
+router.get("/dataset/how-to", function(req, res){
   res.render('howto/index', { title: 'Home Page', message: 'Hello from Pug!' });
 });
 
 // search
-router.get("/dataset/lov/terms", function (req, res) {
+router.get("/dataset/terms", function (req, res) {
   search.search(req, res, esclient);
 });
 
-router.get("/dataset/lov/searchMulti", function (req, res) {
+router.get("/dataset/searchMulti", function (req, res) {
   searchMulti.search(req, res, esclient);
 });
 
-router.get("/dataset/lov/qa", function (req, res) {
+router.get("/dataset/qa", function (req, res) {
   qa.search(req, res);
 });
 
 //Bot
-router.get("/dataset/lov/suggest", function (req, res) {
+router.get("/dataset/suggest", function (req, res) {
   bot.isInLOV(req, res, config.scripts);
 });
 
-router.post("/dataset/lov/suggest", function (req, res) {
+router.post("/dataset/suggest", function (req, res) {
   bot.submit(req, res, emailTransporter);
 });
 
 //APIs
-router.get("/dataset/lov/context", function (req, res) {
+router.get("/dataset/context", function (req, res) {
   vocabularies.jsonLDListVocabs(req, res);
 });
 
-router.get("/dataset/lov/api/v2/term/suggest", function (req, res) {
+router.get("/dataset/api/v2/term/suggest", function (req, res) {
   search.apiSuggestTerms(req, res, esclient);
 });
 
-router.get("/dataset/lov/api/v2/term/autocomplete", function (req, res) {
+router.get("/dataset/api/v2/term/autocomplete", function (req, res) {
   search.apiAutocompleteTerms(req, res, esclient);
 });
 
-router.get("/dataset/lov/api/v2/autocomplete/terms", function (req, res) {
+router.get("/dataset/api/v2/autocomplete/terms", function (req, res) {
   search.apiAutocompleteTerms(req, res, esclient);
 });
 
-router.get("/dataset/lov/api/v2/term/autocompleteLabels", function (req, res) {
+router.get("/dataset/api/v2/term/autocompleteLabels", function (req, res) {
   //search.apiAutocompleteLabelsTerms(req, res, elasticsearchClient);
   search.apiAutocompleteLabelsTerms(req, res, esclient);
 });
 
-router.get("/dataset/lov/api/v2/term/searchScoreExplain", function (req, res) {
+router.get("/dataset/api/v2/term/searchScoreExplain", function (req, res) {
   search.apiSearchScoreExplain(req, res, esclient);
 });
 
-router.get("/dataset/lov/api/v2/term/search", function (req, res) {
+router.get("/dataset/api/v2/term/search", function (req, res) {
   search.apiSearch(req, res, esclient);
 });
 
-router.get("/dataset/lov/api/v2/search", function (req, res) {
+router.get("/dataset/api/v2/search", function (req, res) {
   search.apiSearch(req, res, esclient);
 });
 
-router.get("/dataset/lov/api/v2/searchMulti", function (req, res) {
+router.get("/dataset/api/v2/searchMulti", function (req, res) {
   searchMulti.apiSearch(req, res, esclient);
 });
 
 router.get(
-  "/dataset/lov/api/v2/agent/autocomplete",
+  "/dataset/api/v2/agent/autocomplete",
   agents.autoComplete
 );
 
 router.get(
-  "/dataset/lov/api/v2/agent/autocompleteFull",
+  "/dataset/api/v2/agent/autocompleteFull",
   agents.autoCompleteFull
 );
 
-router.get("/dataset/lov/api/v2/agent/search", function (req, res) {
+router.get("/dataset/api/v2/agent/search", function (req, res) {
   search.apiSearchAgent(req, res, esclient);
 });
 
-router.get("/dataset/lov/api/v2/agent/list", function (req, res) {
+router.get("/dataset/api/v2/agent/list", function (req, res) {
   agents.apiListAgents(req, res);
 });
 
-router.get("/dataset/lov/api/v2/agent/info", function (req, res) {
+router.get("/dataset/api/v2/agent/info", function (req, res) {
   agents.apiInfoAgent(req, res);
 });
 
-router.get("/dataset/lov/api/v2/vocabulary/autocomplete", function (req, res) {
+router.get("/dataset/api/v2/vocabulary/autocomplete", function (req, res) {
   search.apiAutocompleteVocabs(req, res, esclient);
 });
 
 router.get(
-  "/dataset/lov/api/v2/autocomplete/vocabularies",
+  "/dataset/api/v2/autocomplete/vocabularies",
   function (req, res) {
     search.apiAutocompleteVocabs(req, res, esclient);
   }
 );
 
-router.get("/dataset/lov/api/v2/vocabulary/list", function (req, res) {
+router.get("/dataset/api/v2/vocabulary/list", function (req, res) {
   vocabularies.apiListVocabs(req, res);
 });
 
-router.get("/dataset/lov/api/v2/vocabulary/search", function (req, res) {
+router.get("/dataset/api/v2/vocabulary/search", function (req, res) {
   search.apiSearchVocabs(req, res, esclient);
 });
 
-router.get("/dataset/lov/api/v2/vocabulary/info", function (req, res) {
+router.get("/dataset/api/v2/vocabulary/info", function (req, res) {
   vocabularies.apiInfoVocab(req, res);
 });
 
 //MOD API UPDATE
-router.get("/dataset/lov/api/v2/vocabulary/distributions", function (req, res) {
+router.get("/dataset/api/v2/vocabulary/distributions", function (req, res) {
   vocabularies.apiDistributionsVocab(req, res);
 });
 
 router.get(
-  "/dataset/lov/api/v2/vocabulary/distributions_all",
+  "/dataset/api/v2/vocabulary/distributions_all",
   function (req, res) {
     vocabularies.apiAllDistributions(req, res);
   }
 );
 
 router.get(
-  "/dataset/lov/api/v2/vocabulary/distributions/latest",
+  "/dataset/api/v2/vocabulary/distributions/latest",
   function (req, res) {
     vocabularies.apiLatestDistribution(req, res);
   }
 );
 
 router.get(
-  "/dataset/lov/api/v2/vocabulary/:artefactID/distributions/:distributionID",
+  "/dataset/api/v2/vocabulary/:artefactID/distributions/:distributionID",
   function (req, res) {
     vocabularies.apiDistributionDetails(req, res);
   }
 );
 
 router.get(
-  "/dataset/lov/api/v2/vocabulary/:artefact/resources",
+  "/dataset/api/v2/vocabulary/:artefact/resources",
   function (req, res) {
     search.apiResources(req, res, esclient);
   }
 );
 
 router.get(
-  "/dataset/lov/api/v2/vocabulary/:artefact/resources/:resource",
+  "/dataset/api/v2/vocabulary/:artefact/resources/:resource",
   function (req, res) {
     search.apiSingleResource(req, res, esclient);
   }
 );
 
 router.get(
-  "/dataset/lov/api/v2/vocabulary/:vocab/resources/type/:type",
+  "/dataset/api/v2/vocabulary/:vocab/resources/type/:type",
   function (req, res) {
     search.apiResourcesByType(req, res, esclient);
   }
 );
 
-router.get("/dataset/lov/api/v2/term/search/metadata", function (req, res) {
+router.get("/dataset/api/v2/term/search/metadata", function (req, res) {
   search.apiSearchMetadata(req, res, esclient);
 });
 
-router.get("/dataset/lov/api/v2/vocabulary/prefix/exists", function (req, res) {
+router.get("/dataset/api/v2/vocabulary/prefix/exists", function (req, res) {
   vocabularies.apiPrefixExists(req, res);
 });
 
-router.get("/dataset/lov/api/v2/log/sparql", function (req, res) {
+router.get("/dataset/api/v2/log/sparql", function (req, res) {
   logs.apiSPARQL(req, res);
 });
 
-router.get("/dataset/lov/api/v2/log/clickEvent", function (req, res) {
+router.get("/dataset/api/v2/log/clickEvent", function (req, res) {
   logs.clickEvent(req, res);
 });
 
-router.get("/dataset/lov/api/v2/log/queryEvent", function (req, res) {
+router.get("/dataset/api/v2/log/queryEvent", function (req, res) {
   logs.queryEvent(req, res);
 });
 
-router.get("/dataset/lov/api/v2/log/clickVocEvent", function (req, res) {
+router.get("/dataset/api/v2/log/clickVocEvent", function (req, res) {
   logs.clickVocEvent(req, res);
 });
 
-router.get("/dataset/lov/api/v2/log/queryVocEvent", function (req, res) {
+router.get("/dataset/api/v2/log/queryVocEvent", function (req, res) {
   logs.queryVocEvent(req, res);
 });
 
-router.get("/dataset/lov/api/v2/patterns", function (req, res) {
+router.get("/dataset/api/v2/patterns", function (req, res) {
   vocabularies.detectPatterns(
     req,
     res,
@@ -636,7 +632,7 @@ router.get("/dataset/lov/api/v2/patterns", function (req, res) {
   );
 });
 
-router.get("/dataset/lov/api", function (req, res) {
+router.get("/dataset/api", function (req, res) {
   res.render("api", {
     lov: config.lov,
     app_name_shorcut: config.app_name_shorcut,
@@ -644,7 +640,7 @@ router.get("/dataset/lov/api", function (req, res) {
   });
 });
 
-router.get("/dataset/lov/api/v1", function (req, res) {
+router.get("/dataset/api/v1", function (req, res) {
   res.render("api", {
     lov: config.lov,
     app_name_shorcut: config.app_name_shorcut,
@@ -652,7 +648,7 @@ router.get("/dataset/lov/api/v1", function (req, res) {
   });
 });
 
-router.get("/dataset/lov/api/v2", function (req, res) {
+router.get("/dataset/api/v2", function (req, res) {
   res.render("api", {
     lov: config.lov,
     app_name_shorcut: config.app_name_shorcut,
@@ -660,7 +656,7 @@ router.get("/dataset/lov/api/v2", function (req, res) {
   });
 });
 
-router.get("/dataset/lov/apidoc", function (req, res) {
+router.get("/dataset/apidoc", function (req, res) {
   res.render("api", {
     lov: config.lov,
     app_name_shorcut: config.app_name_shorcut,
@@ -689,11 +685,11 @@ router.get("/vocommons/voaf", function (req, res, next) {
   });
 });
 
-router.get("/endpoint/lov", function (req, res) {
-  res.redirect("/dataset/lov/sparql");
+router.get("/endpoint", function (req, res) {
+  res.redirect("/dataset/sparql");
 });
 
-router.get("/dataset/lov/sparql", function (req, res, next) {
+router.get("/dataset/sparql", function (req, res, next) {
   //TODO log SPARQL Queries using the logSearch object ??
 
   req.negotiate({
@@ -727,7 +723,7 @@ router.get("/dataset/lov/sparql", function (req, res, next) {
   });
 });
 
-router.post("/dataset/lov/sparql", function (req, res, next) {
+router.post("/dataset/sparql", function (req, res, next) {
   executeSPARQLQuery(
     res,
     req.headers,
@@ -745,7 +741,7 @@ function executeSPARQLQuery(
   namedGraphUri
 ) {
   var sparqlExecTime = Date.now();
-  path = "/lov/sparql?query=" + encodeURIComponent(query);
+  path = "/sparql?query=" + encodeURIComponent(query);
   if (defaultGraphUri)
     path += "&default-graph-uri=" + encodeURIComponent(defaultGraphUri);
   if (namedGraphUri)

@@ -16,7 +16,7 @@ block content
                       - var queryIndex=1;
                       - each queryExample in queryExamples
                         .aboutDesc Query ##{queryIndex}
-                          //a.linkBox(href='/dataset/lov/sparql?query='+encodeURIComponent(queryExample.query)) #{queryExample.title}
+                          //a.linkBox(href='/dataset/sparql?query='+encodeURIComponent(queryExample.query)) #{queryExample.title}
                           button.linkBox(type="button",value="#{queryExample.query}", onClick="newQuery.call(this)") #{queryExample.title}
                         - queryIndex=queryIndex+1;
               script.
@@ -31,10 +31,10 @@ block content
               script(src='https://unpkg.com/@triply/yasgui/build/yasgui.min.js')
               script.
                 const yasgui = new Yasgui(document.getElementById("yasgui"), {
-                  requestConfig: { endpoint: "#{lov}/dataset/lov/sparql" },
+                  requestConfig: { endpoint: "#{lov}/dataset/sparql" },
                   copyEndpointOnNewTab: false,
                   resizeable: true,
-                  yasqe: {value: "PREFIX vann:<http://purl.org/vocab/vann/>\n\PREFIX voaf:<http://purl.org/vocommons/voaf#>\n\ \n\### Vocabularies contained in #{app_name_shorcut} and their prefix\n\SELECT DISTINCT ?vocabPrefix ?vocabURI {\n\ \tGRAPH <#{lov}/dataset/lov>{\n\ \t \t?vocabURI a voaf:Vocabulary.\n\ \t \t?vocabURI vann:preferredNamespacePrefix ?vocabPrefix.\n\}} ORDER BY ?vocabPrefix"},
+                  yasqe: {value: "PREFIX vann:<http://purl.org/vocab/vann/>\n\PREFIX voaf:<http://purl.org/vocommons/voaf#>\n\ \n\### Vocabularies contained in #{app_name_shorcut} and their prefix\n\SELECT DISTINCT ?vocabPrefix ?vocabURI {\n\ \tGRAPH <#{lov}/dataset>{\n\ \t \t?vocabURI a voaf:Vocabulary.\n\ \t \t?vocabURI vann:preferredNamespacePrefix ?vocabPrefix.\n\}} ORDER BY ?vocabPrefix"},
                 });
                 $(document).ready(function() {
                   if(yasgui.getTab().yasr.results){
@@ -89,7 +89,7 @@ block content
                 .line
                 div 
                   span Consider using 
-                  a(href="/dataset/lov/api")
+                  a(href="/dataset/api")
                     b #{app_name_shorcut} APIs 
                   span when appropriate
                 .clear

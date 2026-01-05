@@ -23,7 +23,7 @@ services:
       dockerfile: Dockerfile
       args:
             REPO_URL: "https://github.com/ProyectoPIONERA/Ontology-Hub-Scripts.git"
-            BRANCH_NAME: "dockerizing"
+            BRANCH_NAME: "dev"
             REPO_NAME: "Ontology-Hub-Scripts"
             REPO_PATRONES: "https://github.com/oeg-upm/GrOwEr.git"
 

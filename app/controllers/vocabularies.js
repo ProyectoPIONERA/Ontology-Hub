@@ -634,6 +634,7 @@ exports.show = function (req, res, lov) {
   });
 };
 
+
 exports.create = function (req, res, scripts, lov, patterns, python_patterns) {
   var vocab = new Vocabulary(req.body);
   if (!fs.existsSync("./versions/")) {
@@ -643,7 +644,25 @@ exports.create = function (req, res, scripts, lov, patterns, python_patterns) {
   vocab
     .save()
     .then(() => {
-      /* store version locally */
+      // Si viene la ruta local (oculta en el form), saltamos la descarga
+      const ontologyPath = req.body.ontology_path || req.body.ontologyPath; // soporta ambos nombres
+      if (ontologyPath) {
+        // Usamos la ruta proporcionada como "stdout" y vaciamos "stderr"
+        return createVocab(
+          req,
+          res,
+          null,              // error
+          ontologyPath,      // stdout: la ruta al archivo en tmp
+          "",                // stderr
+          scripts,
+          lov,
+          patterns,
+          python_patterns,
+          vocab
+        );
+      }
+
+      // Fallback: descargar desde la URI
       var command =
         scripts +
         "/bin/downloadVersion " +
@@ -651,167 +670,22 @@ exports.create = function (req, res, scripts, lov, patterns, python_patterns) {
         " " +
         scripts +
         "/lov.config";
+
       var exec = require("child_process").exec;
-      child = exec(command, function (error, stdout, stderr) {
-        if (!stderr.startsWith("ERROR") && stdout && stdout.length > 0) {
-          stdout = stdout.split("\n")[0];
-          /* move file with its name */
-          var version = {};
-          var versionIssued = new Date();
-
-          var d = versionIssued.getDate();
-          var m = versionIssued.getMonth() + 1;
-          var y = versionIssued.getFullYear();
-          var issuedStr =
-            "" +
-            y +
-            "-" +
-            (m <= 9 ? "0" + m : m) +
-            "-" +
-            (d <= 9 ? "0" + d : d);
-          var versionName = "v" + issuedStr;
-
-          version.issued = versionIssued;
-          version.name = versionName;
-          version.isReviewed = true;
-
-          var dir = "./versions/" + vocab._id;
-          if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir);
-          }
-
-          var target_path =
-            "./versions/" +
-            vocab._id +
-            "/" +
-            vocab._id +
-            "_" +
-            issuedStr +
-            ".n3"; //req.files.file.name;
-          // move the file from the temporary location to the intended location
-          fs.rename(stdout, target_path, function (err) {
-            //windows command
-            //exec("move " + stdout + " " + target_path, function (err) {
-            if (err) {
-              return res
-                .status(500)
-                .send(
-                  "The ontology has not been downloaded. No version found."
-                );
-              //throw err
-            }
-            var versionPublicPath =
-              lov +
-              "/dataset/lov/vocabs/" +
-              vocab.prefix +
-              "/versions/" +
-              issuedStr +
-              ".n3";
-            /* run analytics on vocab */
-            var command2 =
-              scripts +
-              "/bin/versionAnalyser " +
-              versionPublicPath +
-              " " +
-              vocab.uri +
-              " " +
-              vocab.nsp +
-              " " +
-              scripts +
-              "/lov.config";
-            var exec2 = require("child_process").exec;
-            child = exec2(command2, function (error2, stdout2, stderr2) {
-              stdout2 = JSON.parse(stdout2);
-              stdout2 = _.extend(stdout2, version);
-
-              //Add diagram to version (if the diagram was uploaded) (to stdout2)
-              if (req.body.file) {
-                // Directory path to store the diagrams
-                dir = dir + "/diagrams";
-                // Diagram path
-                target_path = dir + "/" + vocab._id + "_" + issuedStr + ".svg";
-                //Indicate the path to the diagram
-                stdout2["diagramPath"] = target_path;
-                // Create directory to store the diagrams
-                if (!fs.existsSync(dir)) {
-                  fs.mkdirSync(dir);
-                }
-                // Store the diagram
-                fs.writeFile(target_path, req.body.file.fileContent, (err) => {
-                  if (err) {
-                    console.error(err);
-                  }
-                });
-              }
-
-              /* add version */
-              Vocabulary.addVersion(vocab.prefix, stdout2, function (err) {
-                if (err) {
-                  return res.send({
-                    redirect: "500",
-                  });
-                }
-                vocab.versions = stdout2;
-
-                //success generate first stats
-                var command3 =
-                  scripts +
-                  "/bin/statsonevocab " +
-                  scripts +
-                  "/lov.config " +
-                  vocab.uri;
-                var exec3 = require("child_process").exec;
-                child = exec3(command3, function (error3, stdout3, stderr3) {
-                  // Generate not flatten structures
-                  exports
-                    .generateStructures(
-                      vocab.prefix,
-                      vocab,
-                      "not_flatten",
-                      "both",
-                      python_patterns,
-                      patterns,
-                      false
-                    )
-                    .then(
-                      ([
-                        versionPath,
-                        structuresTypePath,
-                        structuresNamePath,
-                      ]) => {
-                        exports.detectGlobalPatterns(
-                          patterns,
-                          python_patterns,
-                          (err) => {
-                            if (err)
-                              return res.send({
-                                redirect: "/dataset/lov/vocabs/" + vocab.prefix,
-                                err: err,
-                              });
-                            return res.send({
-                              redirect: "/dataset/lov/vocabs/" + vocab.prefix,
-                            });
-                          }
-                        );
-                      }
-                    )
-                    .catch((err) => {
-                      return res.send({
-                        redirect: "/dataset/lov/vocabs/" + vocab.prefix,
-                        err: err,
-                      });
-                    });
-                });
-              });
-            });
-          });
-        } else {
-          //no version found
-          res.send({
-            redirect: "/dataset/lov/vocabs/" + vocab.prefix,
-            err: "The ontology has not been downloaded. No version found.",
-          });
-        }
+      exec(command, function (error, stdout, stderr) {
+        // Delegamos el resto del flujo a la función auxiliar
+        return createVocab(
+          req,
+          res,
+          error,
+          stdout,
+          stderr,
+          scripts,
+          lov,
+          patterns,
+          python_patterns,
+          vocab
+        );
       });
     })
     .catch((err) => {
@@ -820,6 +694,7 @@ exports.create = function (req, res, scripts, lov, patterns, python_patterns) {
       });
     });
 };
+
 
 exports.generateStructures = function (
   voc,
@@ -1003,7 +878,7 @@ exports.update = function (req, res) {
   vocab
     .save()
     .then(() => {
-      res.send({ redirect: "/dataset/lov/vocabs/" + vocab.prefix });
+      res.send({ redirect: "/dataset/vocabs/" + vocab.prefix });
     })
     .catch((err) => {
       return res.render("500", {
@@ -1063,7 +938,7 @@ exports.new = function (req, res, scripts) {
   if (!req.body.uri) {
     //control that q param is present
     req.flash("error", "You must specify a vocabulary URI");
-    res.redirect("/edition/lov");
+    res.redirect("/edition");
   } else {
     Vocabulary.findNspURI(req.body.uri, function (err, vocab) {
       if (err)
@@ -1074,7 +949,7 @@ exports.new = function (req, res, scripts) {
       if (vocab) {
         //vocab already exist
         req.flash("error", "This vocabulary already exists");
-        res.redirect("/edition/lov");
+        res.redirect("/edition");
       } else {
         //vocab does not exist yet*/
         Language.listAll(function (err, langs) {
@@ -1128,14 +1003,14 @@ exports.newRepository = function (req, res, scripts) {
   // Check that the ontology repository url is present
   if (!req.body.repositoryUri) {
     req.flash("error", "You must specify an ontology repository url");
-    res.redirect("/edition/lov");
+    res.redirect("/edition");
   } else {
     const aux = new URL(req.body.repositoryUri);
 
     // Check if the url is from github or gitlab
     if(!isRepositoryUrl(req.body.repositoryUri)){
       req.flash("error", "You must specify an url from github or gitlab");
-      res.redirect("/edition/lov");
+      res.redirect("/edition");
     }
     else{
       const { pathname } = new URL(req.body.repositoryUri);
@@ -1243,22 +1118,22 @@ exports.newRepository = function (req, res, scripts) {
                         .catch(function(err){
                           if(err){
                             req.flash("error", err.message);
-                            res.redirect("/edition/lov");
+                            res.redirect("/edition");
                           }
                           else{
                             req.flash("error", "We can not download the ontology specified in the .config file.");
-                            res.redirect("/edition/lov");
+                            res.redirect("/edition");
                           }
                         });
                     })
                     .catch(function(err) {
                       if(err){
                         req.flash("error", err.message);
-                        res.redirect("/edition/lov");
+                        res.redirect("/edition");
                       }
                       else{
                         req.flash("error", "We can not access the ontology specified in the .config file.");
-                        res.redirect("/edition/lov");
+                        res.redirect("/edition");
                       }
                     });
                 }
@@ -1269,17 +1144,17 @@ exports.newRepository = function (req, res, scripts) {
             .catch(function(err) {
               if(err){
                 req.flash("error", err.message);
-                res.redirect("/edition/lov");
+                res.redirect("/edition");
               }
               else{
                 req.flash("error", "We can access the repository but there is not .config file located at the root.");
-                res.redirect("/edition/lov");
+                res.redirect("/edition");
               }
             });
         })
         .catch(function(err) {
           req.flash("error", "We can not access the repository. Check the if the url is correct and the repository is public.");
-          res.redirect("/edition/lov");
+          res.redirect("/edition");
         });
     }
     
@@ -1432,7 +1307,7 @@ function parseOntology(req, res, scripts, data, extension, requirements, concept
     if (vocab) {
       //vocab already exist
       req.flash("error", "This vocabulary already exists");
-      res.redirect("/edition/lov");
+      res.redirect("/edition");
     } else {
       // Store the ontology content in a file in the tmp folder
       const randomName = crypto.randomBytes(16).toString('hex');
@@ -1497,9 +1372,15 @@ function parseOntology(req, res, scripts, data, extension, requirements, concept
   });
 }
 
+
 function createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, python_patterns, vocab) {
   if ((!stderr || !stderr.startsWith("ERROR")) && stdout && stdout.length > 0) {
-    stdout = stdout.split("\n")[0];
+    // Asegurar que stdout es la ruta y existe (cuando viene de downloadVersion o del form ontology_path)
+    stdout = (stdout || "").toString().split("\n")[0].trim();
+    if (!fs.existsSync(stdout)) {
+      return res.status(500).send("Provided ontology path not found: " + stdout);
+    }
+
     /* move file with its name */
     var version = {};
     var versionIssued = new Date();
@@ -1507,13 +1388,7 @@ function createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, py
     var d = versionIssued.getDate();
     var m = versionIssued.getMonth() + 1;
     var y = versionIssued.getFullYear();
-    var issuedStr =
-      "" +
-      y +
-      "-" +
-      (m <= 9 ? "0" + m : m) +
-      "-" +
-      (d <= 9 ? "0" + d : d);
+    var issuedStr = "" + y + "-" + (m <= 9 ? "0" + m : m) + "-" + (d <= 9 ? "0" + d : d);
     var versionName = "v" + issuedStr;
 
     version.issued = versionIssued;
@@ -1525,45 +1400,36 @@ function createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, py
       fs.mkdirSync(dir);
     }
 
-    var target_path =
-      "./versions/" +
-      vocab._id +
-      "/" +
-      vocab._id +
-      "_" +
-      issuedStr +
-      ".n3"; //req.files.file.name;
-    // move the file from the temporary location to the intended location
+    // Si quisieras conservar la extensión original:
+    // const origExt = path.extname(stdout) || ".n3";
+    // Aquí dejamos ".n3" para mantener compatibilidad con tu pipeline actual
+    var target_path = "./versions/" + vocab._id + "/" + vocab._id + "_" + issuedStr + ".n3";
+
+    // Mover el archivo desde tmp (o ruta de downloadVersion) al destino definitivo
     fs.rename(stdout, target_path, function (err) {
-      //windows command
-      //exec("move " + stdout + " " + target_path, function (err) {
       if (err) {
-        return res
-          .status(500)
-          .send(
-            "The ontology has not been downloaded. No version found."
-          );
-        //throw err
+        return res.status(500).send("The ontology has not been downloaded. No version found.");
       }
-      if(req.body.requirements){
-        downloadArtifact(req.body.requirements, "./versions/" +  vocab.id + "/requirements");
+
+      // Descarga opcional de artefactos (GitHub/GitLab) si vienen en el form
+      if (req.body.requirements) {
+        downloadArtifact(req.body.requirements, "./versions/" + vocab._id + "/requirements");
       }
-      if(req.body.conceptualization){
-        downloadArtifact(req.body.conceptualization, "./versions/" +  vocab.id + "/conceptualization");
+      if (req.body.conceptualization) {
+        downloadArtifact(req.body.conceptualization, "./versions/" + vocab._id + "/conceptualization");
       }
-      if(req.body.shapes){
-        downloadArtifact(req.body.shapes, "./versions/" +  vocab.id + "/shapes");
+      if (req.body.shapes) {
+        downloadArtifact(req.body.shapes, "./versions/" + vocab._id + "/shapes");
       }
-      if(req.body.requirements){
-        downloadArtifact(req.body.examples, "./versions/" +  vocab.id + "/examples");
+      if (req.body.examples) {
+        downloadArtifact(req.body.examples, "./versions/" + vocab._id + "/examples");
       }
-      var versionPublicPath =
-        lov +
-        "/dataset/lov/vocabs/" +
-        vocab.prefix +
-        "/versions/" +
-        issuedStr +
-        ".n3";
+      if (req.body.tests) {
+        downloadArtifact(req.body.tests, "./versions/" + vocab._id + "/tests");
+      }
+
+      var versionPublicPath = lov + "/dataset/vocabs/" + vocab.prefix + "/versions/" + issuedStr + ".n3";
+
       /* run analytics on vocab */
       var command2 =
         scripts +
@@ -1576,25 +1442,22 @@ function createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, py
         " " +
         scripts +
         "/lov.config";
+
       var exec2 = require("child_process").exec;
       child = exec2(command2, function (error2, stdout2, stderr2) {
         stdout2 = JSON.parse(stdout2);
         stdout2 = _.extend(stdout2, version);
 
-        //Add diagram to version (if the diagram was uploaded) (to stdout2)
+        // Add diagram to version (si se subió un diagrama)
         if (req.body.file) {
-          // Directory path to store the diagrams
-          dir = dir + "/diagrams";
-          // Diagram path
-          target_path = dir + "/" + vocab._id + "_" + issuedStr + ".svg";
-          //Indicate the path to the diagram
-          stdout2["diagramPath"] = target_path;
-          // Create directory to store the diagrams
-          if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir);
+          var diagramsDir = dir + "/diagrams";
+          var diagramPath = diagramsDir + "/" + vocab._id + "_" + issuedStr + ".svg";
+          stdout2["diagramPath"] = diagramPath;
+
+          if (!fs.existsSync(diagramsDir)) {
+            fs.mkdirSync(diagramsDir);
           }
-          // Store the diagram
-          fs.writeFile(target_path, req.body.file.fileContent, (err) => {
+          fs.writeFile(diagramPath, req.body.file.fileContent, (err) => {
             if (err) {
               console.error(err);
             }
@@ -1604,56 +1467,40 @@ function createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, py
         /* add version */
         Vocabulary.addVersion(vocab.prefix, stdout2, function (err) {
           if (err) {
-            return res.send({
-              redirect: "500",
-            });
+            return res.send({ redirect: "500" });
           }
           vocab.versions = stdout2;
 
-          //success generate first stats
-          var command3 =
-            scripts +
-            "/bin/statsonevocab " +
-            scripts +
-            "/lov.config " +
-            vocab.uri;
+          // success generate first stats
+          var command3 = scripts + "/bin/statsonevocab " + scripts + "/lov.config " + vocab.uri;
+
           var exec3 = require("child_process").exec;
           child = exec3(command3, function (error3, stdout3, stderr3) {
-            // Generate not flatten structures
+            // Generar estructuras (not_flatten) y detectar patrones globales
             exports
               .generateStructures(
-                vocab.prefix,
-                vocab,
-                "not_flatten",
-                python_patterns,
-                patterns,
-                false
+                vocab.prefix,     // voc
+                vocab,            // vocab
+                "not_flatten",    // flatten
+                "both",           // pattern: "type" | "name" | "both"
+                python_patterns,  // python scripts path
+                patterns,         // patterns path
+                false             // regenerateStructures
               )
-              .then(
-                ([
-                  versionPath,
-                  structuresTypePath,
-                  structuresNamePath,
-                ]) => {
-                  exports.detectGlobalPatterns(
-                    patterns,
-                    python_patterns,
-                    (err) => {
-                      if (err)
-                        return res.send({
-                          redirect: "/dataset/lov/vocabs/" + vocab.prefix,
-                          err: err,
-                        });
-                      return res.send({
-                        redirect: "/dataset/lov/vocabs/" + vocab.prefix,
-                      });
-                    }
-                  );
-                }
-              )
+              .then(([versionPath, structuresTypePath, structuresNamePath]) => {
+                exports.detectGlobalPatterns(patterns, python_patterns, (err) => {
+                  if (err) {
+                    return res.send({
+                      redirect: "/dataset/vocabs/" + vocab.prefix,
+                      err: err,
+                    });
+                  }
+                  return res.send({ redirect: "/dataset/vocabs/" + vocab.prefix });
+                });
+              })
               .catch((err) => {
                 return res.send({
-                  redirect: "/dataset/lov/vocabs/" + vocab.prefix,
+                  redirect: "/dataset/vocabs/" + vocab.prefix,
                   err: "The structures for this Ontology has not been detected.",
                 });
               });
@@ -1662,13 +1509,14 @@ function createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, py
       });
     });
   } else {
-    //no version found
+    // no version found
     res.send({
-      redirect: "/dataset/lov/vocabs/" + vocab.prefix,
+      redirect: "/dataset/vocabs/" + vocab.prefix,
       err: "The ontology has not been downloaded. No version found.",
     });
   }
 }
+
 
 function downloadArtifact(artifactPath, localPath){
   if (!fs.existsSync(localPath)) {
