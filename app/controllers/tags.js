@@ -59,7 +59,7 @@ exports.load = function (req, res, next, id) {
 exports.edit = function (req, res) {
   res.render("tags/edit", {
     tag: req.tagObj,
-    redirect: "/edition/lov/tags",
+    redirect: "/edition/tags",
     app_name_shorcut: app_name_shorcut,
     app_name: app_name,
   });
@@ -73,7 +73,7 @@ exports.destroy = function (req, res) {
   Tag.delete(tag, function (err) {
     if (err) {
       req.flash("error", "Tag not removed " + err);
-      res.redirect("/edition/lov/tags");
+      res.redirect("/edition/tags");
     } else {
       req.flash("info", "Tag deleted successfully");
       // Delete the label of the tag in the vocabularies
@@ -83,9 +83,9 @@ exports.destroy = function (req, res) {
             "error",
             "Error deleting the tag in the vocabularies " + err
           );
-          res.redirect("/edition/lov/tags");
+          res.redirect("/edition/tags");
         } else {
-          return res.redirect("/edition/lov/tags");
+          return res.redirect("/edition/tags");
         }
       });
     }
@@ -107,7 +107,7 @@ exports.update = function (req, res) {
     if (label) {
       //tag already exist
       req.flash("error", "This tag already exists");
-      res.redirect("/edition/lov/tags/" + tag.id);
+      res.redirect("/edition/tags/" + tag.id);
     } else {
       var label = tag.label;
       tag.label = req.body.label;
@@ -122,10 +122,10 @@ exports.update = function (req, res) {
                 "error",
                 "Error updating the tag in the vocabularies " + err
               );
-              res.redirect("/edition/lov/tags");
+              res.redirect("/edition/tags");
             } else {
               req.flash("info", "Tag updated successfully");
-              return res.redirect("/edition/lov/tags");
+              return res.redirect("/edition/tags");
             }
           });
         })
@@ -155,14 +155,14 @@ exports.create = function (req, res) {
     if (label) {
       //tag already exist
       req.flash("error", "This tag already exists");
-      res.redirect("/edition/lov/tags/new");
+      res.redirect("/edition/tags/new");
     } else {
       var tag = new Tag(req.body);
       tag
         .save()
         .then(() => {
           req.flash("success", "Tag created successfully");
-          return res.redirect(req.session.backURL || "/edition/lov/");
+          return res.redirect(req.session.backURL || "/edition/");
         })
         .catch((err) => {
           return res.render("500", {

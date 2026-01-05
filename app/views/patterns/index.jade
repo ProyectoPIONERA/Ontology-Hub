@@ -9,14 +9,14 @@ block content
                   .suggestions
                     span Do you mean: 
                     each suggestion, i in suggestions
-                      a(href="/dataset/lov/vocabs?q=#{suggestion.text}") #{suggestion.text} 
+                      a(href="/dataset/vocabs?q=#{suggestion.text}") #{suggestion.text} 
       script.      
         $(document).ready(function() {
           $( "#searchInput" ).autocomplete({
               minLength: 1,
               source: function (request, response) {
                $.ajax({
-                 url: "/dataset/lov/api/v2/vocabulary/autocomplete",
+                 url: "/dataset/api/v2/vocabulary/autocomplete",
                  data: { q: request.term },
                  dataType: "json",
                  success: function( data ) {
@@ -35,7 +35,7 @@ block content
               position: {my : "left top",at: "left bottom"},
               messages: {noResults: '',results: function() {}},
               select : function(event, ui) {
-                  location.href = '/dataset/lov/vocabs/' + encodeURIComponent(ui.item.label);
+                  location.href = '/dataset/vocabs/' + encodeURIComponent(ui.item.label);
               },
              open: function(event, ui) {$(".ui-autocomplete").css("z-index", 1000);}
           }).data( "uiAutocomplete" )._renderItem = function( ul, item ) {
@@ -46,7 +46,7 @@ block content
           };
 
           $.ajax({
-                  url: '/dataset/lov/api/v2/log/queryVocEvent',
+                  url: '/dataset/api/v2/log/queryVocEvent',
                   data: {
                     date: new Date().toISOString(),
                     sessionId: '#{req.sessionID}',
@@ -177,7 +177,7 @@ block content
         }
         function detectPatterns(){
             $.ajax({
-                 url: "/dataset/lov/api/v2/patterns",
+                 url: "/dataset/api/v2/patterns",
                  data: { vocs: JSON.stringify(Object.keys(vocabSelected)),
                       pattern: pattern,
                       flatten: flatten },
@@ -334,7 +334,7 @@ block content
                 .left-action    
                   .howTo
                     //button.editionHowToButton(type='button' onclick='showHowToPopUp()') How to   
-                    a.editionHowToButton(href='/dataset/lov/how-to' target='_blank') How to 
+                    a.editionHowToButton(href='/dataset/how-to' target='_blank') How to 
                 .right-action
                   .unselect-all 
                     button.editionUnSelectAllButton(type='button' onclick='unselectAll()') Unselect All   
@@ -425,9 +425,9 @@ block content
                     li.nav-item(class="nav-item-vocabulary") 
                       span vocabulary  (#{results.total_results})
                     li.nav-item-inactive(class="nav-item-propertyclass hover")
-                      a(href='/dataset/lov/terms') property/class >
+                      a(href='/dataset/terms') property/class >
                     li.nav-item-inactive(class="nav-item-agent hover")
-                      a(href='/dataset/lov/agents') agent >
+                      a(href='/dataset/agents') agent >
               .facet
                 h2.facet-heading Tag
                 // | !{JSON.stringify(results.aggregations)}

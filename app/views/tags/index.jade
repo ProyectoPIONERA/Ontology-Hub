@@ -8,7 +8,7 @@ block content
       section#featuresBanner
         .featureWrapper
           .suggest
-            a(href='/edition/lov/tags/new') Tag
+            a(href='/edition/tags/new') Tag
       
       section#posts.default-area.postSearchResults
         - if (typeof(tags) !== 'undefined' && tags.length>0)
@@ -24,11 +24,11 @@ block content
                     .SearchContainer
                       div.SearchInnerBox
                         div.actionBar
-                          form(action='/edition/lov/tags/#{tag._id}' method='post' name='formEdit')
+                          form(action='/edition/tags/#{tag._id}' method='post' name='formEdit')
                             input(type='hidden', name='_csrf', value="#{csrf_token}")
                             input(type="hidden", name="_method", value="GET")
                             img.changeUser.actionBarAction(src="/img/edit_small.png" onclick="submit();")
-                          form(action='/edition/lov/tags/#{tag._id}' method='post' name='formDelete')
+                          form(action='/edition/tags/#{tag._id}' method='post' name='formDelete')
                             input(type='hidden', name='_csrf', value="#{csrf_token}")
                             input(type="hidden", name="_method", value="DELETE")
                             img.removeTag.actionBarAction(src="/img/remove.png")

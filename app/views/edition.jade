@@ -2,7 +2,7 @@ extends ./layout/layout
 block content
       section#title.postBlue
         h1(itemprop="name")
-          a(href='/edition/lov') #{app_name_shorcut} Edition 
+          a(href='/edition') #{app_name_shorcut} Edition 
             span (#{app_name_shorcut})
             
       section#featuresBanner
@@ -11,14 +11,14 @@ block content
             a.createVocab(href='#') Vocab
         .featureWrapper
           .suggest
-            a(href='/edition/lov/agents/new') Agent
+            a(href='/edition/agents/new') Agent
         - if(auth.category === "admin")
           .featureWrapper
             .suggest
-              a(href='/edition/lov/tags/new') Tag  
+              a(href='/edition/tags/new') Tag  
           .featureWrapper
             .suggest
-              a(href='/edition/lov/signup') User
+              a(href='/edition/signup') User
       
       section#posts.default-area
         div.clear.col-2
@@ -39,13 +39,13 @@ block content
                           div.editionInnerBox
                             - if(typeof sugg.reviewedBy =="undefined" || !sugg.reviewedBy)
                               .takeAction
-                                form(action="/edition/lov/suggestTakeAction", method="post")
+                                form(action="/edition/suggestTakeAction", method="post")
                                   img#submitTakeAction(src="/img/take_action.png" title="I'll review it!" onclick="submit();")                 
                                   input.csrf(type='hidden', name='_csrf', value="#{csrf_token}")
                                   input(type='hidden', name='suggId', value="#{sugg._id}")
                             - else
                               - if(""+sugg.reviewedBy._id === ""+auth.agent)
-                                form(action="/edition/lov/vocabs/new", method="post")
+                                form(action="/edition/vocabs/new", method="post")
                                   input.csrf(type='hidden', name='_csrf', value="#{csrf_token}")
                                   input(type='hidden', name='uri', value="#{sugg.uri}")
                                   input.suggestCreate(type='submit' name='submit' value='Create')
@@ -56,12 +56,12 @@ block content
                             div.SearchBody
                               - if(""+sugg.reviewedBy._id === ""+auth.agent)
                                 .statusButton suggested
-                                form.statusActionButton(action="/edition/lov/suggestUpdateStatus", method="post")
+                                form.statusActionButton(action="/edition/suggestUpdateStatus", method="post")
                                   input.csrf(type='hidden', name='_csrf', value="#{csrf_token}")
                                   input(type='hidden', name='suggId', value="#{sugg._id}")
                                   input(type='hidden', name='status', value="discarded")
                                   .statusSubmit discarded
-                                form.statusActionButton(action="/edition/lov/suggestUpdateStatus", method="post")
+                                form.statusActionButton(action="/edition/suggestUpdateStatus", method="post")
                                   input.csrf(type='hidden', name='_csrf', value="#{csrf_token}")
                                   input(type='hidden', name='suggId', value="#{sugg._id}")
                                   input(type='hidden', name='status', value="created")
@@ -88,7 +88,7 @@ block content
                       li(class="editionBoxRev")
                         .editionContainer
                           div.editionInnerBox
-                            a.prefix(href='/dataset/lov/vocabs/#{vocab.prefix}') #{vocab.prefix}
+                            a.prefix(href='/dataset/vocabs/#{vocab.prefix}') #{vocab.prefix}
                             - if(typeof vocab.latestReviewDate != "undefined")
                               div.uri Last reviewed on #{utils.dateToYMD(vocab.latestReviewDate)}
                             - else
@@ -110,7 +110,7 @@ block content
                     li(class="editionBoxRev")
                       .editionContainer
                         div.editionInnerBox
-                          a.prefix(href='/dataset/lov/vocabs/#{vocab.prefix}') #{vocab.prefix}
+                          a.prefix(href='/dataset/vocabs/#{vocab.prefix}') #{vocab.prefix}
                           - if(typeof vocab.lastModifiedInLOVAt != "undefined")
                             div.uri Last Modified on #{utils.dateToYMD(vocab.lastModifiedInLOVAt)}
                           - else
@@ -122,7 +122,7 @@ block content
           - if(auth.category === "admin")          
             article.wrpl
               .wrplGreen.editionIndexBox
-                form(action="/edition/lov/usersReview", method="post" id="formUsers")
+                form(action="/edition/usersReview", method="post" id="formUsers")
                   .editionIndexBoxHeader
                     .title User Review
                     - if(users && users.length>0)
@@ -144,7 +144,7 @@ block content
                               .checkbox
                                 input.checkboxUser(type="checkbox" value="#{usr._id}")
                               img.remove(src="/img/remove.png")
-                              a.prefix(href='/dataset/lov/agents/#{usr.agent.name}') !{usr.agent.name} 
+                              a.prefix(href='/dataset/agents/#{usr.agent.name}') !{usr.agent.name} 
                               span - !{usr.category}
                               div.uri !{usr.email}
                             div.hr
@@ -155,7 +155,7 @@ block content
             p
               strong Create Vocabulary by URI
 
-            form(action="/edition/lov/vocabs/new", method="post" name="formDialogCreateVocabFromURI" id="formDialogCreateVocabFromURI")
+            form(action="/edition/vocabs/new", method="post" name="formDialogCreateVocabFromURI" id="formDialogCreateVocabFromURI")
               fieldset.editionTable
                 input(type='hidden', name='_csrf', value="#{csrf_token}")
                 input(type="text" name="uri" placeholder="vocabulary URI")
@@ -164,7 +164,7 @@ block content
             p
               strong Create Vocabulary from Ontology Repository
 
-            form(action="/edition/lov/vocabs/new/repository", method="post" name="formDialogCreateVocabFromOntologyDevelopmentRepository" id="formDialogCreateVocabFromOntologyDevelopmentRepository")
+            form(action="/edition/vocabs/new/repository", method="post" name="formDialogCreateVocabFromOntologyDevelopmentRepository" id="formDialogCreateVocabFromOntologyDevelopmentRepository")
               fieldset.editionTable
                 input(type='hidden', name='_csrf', value="#{csrf_token}")
                 input(type="text" name="repositoryUri" placeholder="ontology development repository")

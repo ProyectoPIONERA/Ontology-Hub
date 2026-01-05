@@ -152,6 +152,16 @@ cd "${FUSEKI_HOME}"
 
 UPDATE_FLAG="--update"  # change to "" if you want read-only
 # If you prefer to use your assembler config, swap --loc for: --desc "${FUSEKI_HOME}/config-lov.ttl"
+
+
+#!/bin/bash
+LOCK_FILE="/app/jena/tdb_lov_db/tdb.lock"
+if [ -f "$LOCK_FILE" ]; then
+  echo "Eliminando lock huérfano..."
+  rm -f "$LOCK_FILE"
+fi
+
+
 nohup java -jar "${FUSEKI_HOME}/fuseki-server.jar" -desc "${FUSEKI_HOME}/config-lov.ttl" /lov \
   > "${FUSEKI_LOG}" 2>&1 &
 

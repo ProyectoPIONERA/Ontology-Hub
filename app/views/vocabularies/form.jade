@@ -1,7 +1,7 @@
 extends ../layout/layout
 block content
       //- used to extract information form in JSON: https://github.com/maxatwork/form2js
-      - var action = '/edition/lov/vocabs'
+      - var action = '/edition/vocabs'
       - action += vocab.isNew? '' : '/' + vocab.prefix
       #loading-div-background
         #loading-div
@@ -354,7 +354,7 @@ block content
               #greenContainer.contents.clear.col-1.wrplGreen
                 .editionActionBar
                   input.editionSaveButtonRight(type='button' name='submit' value='Save')
-                  a.editionCancelButtonRight(href="/edition/lov", title="cancel") Cancel
+                  a.editionCancelButtonRight(href="/edition", title="cancel") Cancel
                   .clear
                 #jsonResult
             #listOfTags(title='Select a Tag' style='display:none;')
@@ -363,7 +363,7 @@ block content
                   li
                     span.tag.tagFromList #{tag.label}
                                 
-            form(method='post' action='/edition/lov/agents/creationOnTheFly' name='agentCreationOnTheFlyForm' id='agentCreationOnTheFlyForm' title='Get Or Create an Agent' style='display:none;')
+            form(method='post' action='/edition/agents/creationOnTheFly' name='agentCreationOnTheFlyForm' id='agentCreationOnTheFlyForm' title='Get Or Create an Agent' style='display:none;')
               input(type='hidden', name='_csrf', value="#{csrf_token}")
               #agentCreationOnTheFlyClue
               .metadataFrame
@@ -591,7 +591,7 @@ block content
             if(document.getElementById("testIfNew") == null || (document.getElementById("tdPrefix") != null && document.getElementById("tdPrefix").className !== formData.prefix)){
               $.ajax({
                  type: 'GET',
-                 url: '/dataset/lov/api/v2/vocabulary/prefix/exists',
+                 url: '/dataset/api/v2/vocabulary/prefix/exists',
                  data: {prefix: formData.prefix},
                  dataType: 'json',
                  error: function() {
@@ -791,7 +791,7 @@ block content
               minLength: 1,
               source: function (request, response) {
                $.ajax({
-                 url: "/dataset/lov/api/v2/agent/autoCompleteFull",
+                 url: "/dataset/api/v2/agent/autoCompleteFull",
                  data: { q: request.term },
                  dataType: "json",
                  success: response,
