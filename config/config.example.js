@@ -26,8 +26,8 @@ module.exports = {
     patterns: process.env.PATTERN_PATHS || '/home/user/Patterns/Patrones',
     //Path to python environment
     python_patterns: process.env.PYTHON_PATTERNS_PATH || '/home/user/Patterns/env/bin/python',
-    app_name: 'OEG | LOV',
-    app_name_shorcut: 'EAN',
+    app_name: 'Ontology Hub',
+    app_name_shorcut: 'Pionera',
     root: rootPath,
     notifier: notifier,
     email: {
