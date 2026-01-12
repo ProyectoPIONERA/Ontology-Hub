@@ -315,93 +315,93 @@ block content
               link(rel='stylesheet', type='text/css', media='all', href='/css/editor.css')
               script(src='/js/editor.js')
 
-      //-
-        //Borrar la linea anterior e indentar todo el bloque hacia atras una vez
-        script(src='/js/popup.js')
-        script(src='/js/callFoops.js')
-        link(rel='stylesheet', type='text/css', media='all', href='/css/callFoops.css')
-        section#posts_foops.default-area
-          article 
-            div#greenContainer(class="contents clear col-2 split wrplGreen")
-              h2#foopsHeader FOOPS! FAIR VALIDATOR
-                div.metadataFrame(style="width:100%")
-                  table(style="width:100%" class="metadata-table noheader flat-table-3")
-                    tr#loadingMessage
-                      p#loadingHint It may take a few seconds
-                      td.center-text(style="padding-top: 0px;")
-                        button#callFoopsButton(onclick= "callFoops()") RUN FOOPS!
-                        div#loadingImage
-                          img(src="/img/load.gif" class="load_image")
-                        div#vocabContainer(data-uri='#{vocab.uri}')
-                  div#foops-results
-                    //- INFO
-                    div.row.mt-3.ml-0.w-100
-                      div.col-12.caja.caja-info
-                        div.row.my-3
-                          div.col-1.d-flex.align-items-center
-                            span.texto4 Title:
-                          div.col-11
-                            div.caja-texto.pl-2
-                              span.texto4#title default
-                        div.row.my-3
-                          div.col-1.d-flex.align-items-center
-                            span.texto4 URI:
-                          div.col-11
-                            div.caja-texto.pl-2
-                              span.texto4#URI-title default
-                        div.row.my-3
-                          div.col-1.d-flex.align-items-center
-                            span.texto4 License:
-                          div.col-11
-                            div.caja-texto.pl-2
-                              span.texto4#license W3C
-                    div#graphics
-                      div#graphicScore.col-6.d-flex.align-items-center.justify-content-center(pointer-events="all")
-                      div#scorePopup(style="left: 271.188px; top: 500px; display: none;")
-                        h4 Overall score
-                        p Percentage of passed tests
-                      div#graphicSpider.col-6.d-flex.align-items-center.justify-content-center.pt-4(pointer-events="all")
-                      div#radarPopup
-                        h4 Radar chart score
-                        p Percentage of passed tests (out of total) per dimension
-            
-                      //- Findable
-                    div.row.w-100.mt-3.ml-0.pb-2.caja
-                      div.row.w-100.pl-3.pt-2.caja-category
-                        div.col-10
-                          span.texto-category Findable
-                        div.col-2.d-flex.align-items-center.justify-content-end
-                          img(src="/img/dash.svg" onclick="arrowClicked(event, 'Findable-checks')" width="34" height="34")
-                      div#Findable-checks.col-12.p-0.caja-principles         
-                        //- Accessible
-                    div.row.w-100.mt-3.ml-0.pb-2.caja
-                      div.row.w-100.pl-3.pt-2.caja-category
-                        div.col-10
-                          span.texto-category Accessible
-                        div.col-2.d-flex.align-items-center.justify-content-end
-                          img(src="/img/dash.svg" onclick="arrowClicked(event, 'Accessible-checks')" width="34" height="34")
-                      div#Accessible-checks.col-12.p-0.caja-principles
-                        //- Aqui van todos los checks
-            
-                        //- Interoperable
-                    div.row.w-100.mt-3.ml-0.pb-2.caja
-                      div.row.w-100.pl-3.pt-2.caja-category
-                        div.col-10
-                          span.texto-category Interoperable
-                        div.col-2.d-flex.align-items-center.justify-content-end
-                          img(src="/img/dash.svg" onclick="arrowClicked(event, 'Interoperable-checks')" width="34" height="34")
-                      div#Interoperable-checks.col-12.p-0.caja-principles
-                        //- Aqui van todos los checks
-            
-                      //- Reusable
-                    div.row.w-100.mt-3.ml-0.pb-2.caja
-                      div.row.w-100.pl-3.pt-2.caja-category
-                        div.col-10
-                          span.texto-category Reusable
-                        div.col-2.d-flex.align-items-center.justify-content-end
-                          img(src="/img/dash.svg" onclick="arrowClicked(event, 'Reusable-checks')" width="34" height="34")
-                      div#Reusable-checks.col-12.p-0.caja-principles 
-                        //- Aqui van todos los checks
+      
+      //Borrar la linea anterior e indentar todo el bloque hacia atras una vez
+      script(src='/js/popup.js')
+      script(src='/js/callFoops.js')
+      link(rel='stylesheet', type='text/css', media='all', href='/css/callFoops.css')
+      section#posts_foops.default-area
+        article 
+          div#greenContainer(class="contents clear col-2 split wrplGreen")
+            h2#foopsHeader FOOPS! FAIR VALIDATOR
+              div.metadataFrame(style="width:100%")
+                table(style="width:100%" class="metadata-table noheader flat-table-3")
+                  tr#loadingMessage
+                    p#loadingHint It may take a few seconds
+                    td.center-text(style="padding-top: 0px;")
+                      button#callFoopsButton(onclick= "callFoops()") RUN FOOPS!
+                      div#loadingImage
+                        img(src="/img/load.gif" class="load_image")
+                      div#vocabContainer(data-uri='#{vocab.uri}')
+                div#foops-results
+                  //- INFO
+                  div.row.mt-3.ml-0.w-100
+                    div.col-12.caja.caja-info
+                      div.row.my-3
+                        div.col-1.d-flex.align-items-center
+                          span.texto4 Title:
+                        div.col-11
+                          div.caja-texto.pl-2
+                            span.texto4#title default
+                      div.row.my-3
+                        div.col-1.d-flex.align-items-center
+                          span.texto4 URI:
+                        div.col-11
+                          div.caja-texto.pl-2
+                            span.texto4#URI-title default
+                      div.row.my-3
+                        div.col-1.d-flex.align-items-center
+                          span.texto4 License:
+                        div.col-11
+                          div.caja-texto.pl-2
+                            span.texto4#license W3C
+                  div#graphics
+                    div#graphicScore.col-6.d-flex.align-items-center.justify-content-center(pointer-events="all")
+                    div#scorePopup(style="left: 271.188px; top: 500px; display: none;")
+                      h4 Overall score
+                      p Percentage of passed tests
+                    div#graphicSpider.col-6.d-flex.align-items-center.justify-content-center.pt-4(pointer-events="all")
+                    div#radarPopup
+                      h4 Radar chart score
+                      p Percentage of passed tests (out of total) per dimension
+          
+                    //- Findable
+                  div.row.w-100.mt-3.ml-0.pb-2.caja
+                    div.row.w-100.pl-3.pt-2.caja-category
+                      div.col-10
+                        span.texto-category Findable
+                      div.col-2.d-flex.align-items-center.justify-content-end
+                        img(src="/img/dash.svg" onclick="arrowClicked(event, 'Findable-checks')" width="34" height="34")
+                    div#Findable-checks.col-12.p-0.caja-principles         
+                      //- Accessible
+                  div.row.w-100.mt-3.ml-0.pb-2.caja
+                    div.row.w-100.pl-3.pt-2.caja-category
+                      div.col-10
+                        span.texto-category Accessible
+                      div.col-2.d-flex.align-items-center.justify-content-end
+                        img(src="/img/dash.svg" onclick="arrowClicked(event, 'Accessible-checks')" width="34" height="34")
+                    div#Accessible-checks.col-12.p-0.caja-principles
+                      //- Aqui van todos los checks
+          
+                      //- Interoperable
+                  div.row.w-100.mt-3.ml-0.pb-2.caja
+                    div.row.w-100.pl-3.pt-2.caja-category
+                      div.col-10
+                        span.texto-category Interoperable
+                      div.col-2.d-flex.align-items-center.justify-content-end
+                        img(src="/img/dash.svg" onclick="arrowClicked(event, 'Interoperable-checks')" width="34" height="34")
+                    div#Interoperable-checks.col-12.p-0.caja-principles
+                      //- Aqui van todos los checks
+          
+                    //- Reusable
+                  div.row.w-100.mt-3.ml-0.pb-2.caja
+                    div.row.w-100.pl-3.pt-2.caja-category
+                      div.col-10
+                        span.texto-category Reusable
+                      div.col-2.d-flex.align-items-center.justify-content-end
+                        img(src="/img/dash.svg" onclick="arrowClicked(event, 'Reusable-checks')" width="34" height="34")
+                    div#Reusable-checks.col-12.p-0.caja-principles 
+                      //- Aqui van todos los checks
       
                     
 
