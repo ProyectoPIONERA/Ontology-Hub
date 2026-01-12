@@ -25,7 +25,7 @@ module.exports = {
     //Path to "Patrones" repository
     patterns: process.env.PATTERN_PATHS || '/home/user/Patterns/Patrones',
     //Path to python environment
-    python_patterns: process.env.PYTHON_PATTERNS_PATH || '/home/user/Patterns/env/bin/python',
+    python_patterns: process.env.PYTHON_PATTERNS_PATH || '/app/Patterns/env/bin/python',
     app_name: 'Ontology Hub',
     app_name_shorcut: 'Pionera',
     root: rootPath,
