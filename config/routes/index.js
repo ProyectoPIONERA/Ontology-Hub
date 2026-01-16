@@ -281,6 +281,13 @@ router.put(
   vocabularies.update
 );
 
+router.delete(
+  "/edition/vocabs/:vocabPxEdition",
+  auth.requiresLogin,
+  vocabularies.destroy
+);
+
+
 //versions
 router.get(
   "/edition/vocabs/:vocabPxEdition/versions",
