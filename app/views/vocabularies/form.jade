@@ -357,12 +357,19 @@ block content
                   a.editionCancelButtonRight(href="/edition", title="cancel") Cancel
                   .clear
                 #jsonResult
-            #listOfTags(title='Select a Tag' style='display:none;')
-              ul.tagsVocab
-                each tag in listTags
-                  li
-                    span.tag.tagFromList #{tag.label}
-                                
+
+                #listOfTags(title='Select a Tag' style='display:none;')
+                  //- Create Tag
+                  .tagCreateBar(style='margin-bottom:10px;')
+                    input#newTagLabel(type='text' placeholder='New tag name' style='width:70%; padding:6px;')
+                    button#btnCreateTag(type='button' style='padding:6px 10px; margin-left:8px;') Create
+                    div#newTagError(style='display:none; color:#b00020; margin-top:6px;')
+                    //- Show existing Tags
+                    ul#tagsPickerList.tagsVocab
+                      each tag in listTags
+                        li
+                          span.tag.tagFromList #{tag.label}
+
             form(method='post' action='/edition/agents/creationOnTheFly' name='agentCreationOnTheFlyForm' id='agentCreationOnTheFlyForm' title='Get Or Create an Agent' style='display:none;')
               input(type='hidden', name='_csrf', value="#{csrf_token}")
               #agentCreationOnTheFlyClue
@@ -390,6 +397,21 @@ block content
                           
       script.
         function addTag(tagName){
+          
+          var normalized = (tagName || '').trim();
+          if(!normalized) return;
+
+          var normalizedLower = normalized.toLowerCase();
+
+          var existing = document.querySelectorAll('#tagsUl input[name="tags[]"]');
+          // Check if nametag already added
+          for (var i = 0; i < existing.length; i++){
+            var v = (existing[i].value || '').trim().toLowerCase();
+            if(v === normalizedLower){
+              return;
+            }
+          }
+
           var li = document.createElement('li');
              var span = document.createElement('span');
              span.className  = 'tag';
@@ -407,6 +429,7 @@ block content
           li.appendChild(Id);
           document.getElementById('tagsUl').appendChild(li);
         }
+
         function addReview(divName,dataArray,langArray,value,lang){
           var cptVal = document.getElementById('cptOverall').value;
           cptVal++;
@@ -716,7 +739,7 @@ block content
 
           $('.tagFromList').click(function(e){
             addTag($(this).text());
-            $('#listOfTags').dialog('close');
+            //$('#listOfTags').dialog('close');
           });
         
           $('.fieldTagsAddAction').click(function(e){
@@ -725,6 +748,67 @@ block content
               height:600,
               width:800,
               modal: true
+            });
+          });
+
+          $('#btnCreateTag').click(function (e){
+            e.preventDefault();
+
+            const label = ($('#newTagLabel').val() || '').trim();
+            $('#newTagError').hide().text('');
+
+            if(!label){
+              $('#newTagError').text('tag name is required').show();
+              return;
+            }
+
+            const csrf = $('input[name="_csrf"]').val();
+
+            $.ajax({
+              url: '/edition/tags',
+              type: 'POST',
+              dataType: 'json',
+              data: { label: label, _csrf: csrf},
+              success: function(data){
+                const createdLabel = 
+                  (data && data.label) ? data.label :
+                  (data && data.tag && data.tag.label) ? data.tag.label :
+                  label;
+
+                  //
+                  const exists = $('#tagsPickerList .tagFromList').filter(function(){
+                    return $(this).text().trim().toLowerCase() === createdLabel.trim().toLowerCase();
+                  }).length > 0;
+
+                  if(!exists){
+                    const li = document.createElement('li');
+                    const span = document.createElement('span');
+                    span.className = 'tag tagFromList';
+                    span.textContent = createdLabel;
+
+                    li.appendChild(span);
+                    document.getElementById('tagsPickerList').appendChild(li);
+
+                    $(span).click(function(){
+                      addTag($(this).text());
+                      //$('#listOfTags').dialog('close');
+                    });
+                  }
+
+                  //Select automaticaly
+                  addTag(createdLabel);
+
+                  //Clean input
+                  $('#newTagLabel').val('');
+
+                  //Close dialog
+                  //$('#listOfTags').dialog('close');
+              },
+              error: function(xhr){
+                let msg = 'Error creating tag';
+                if(xhr && xhr.responseText) msg = xhr.responseText;
+                $('#newTagError').text(msg).show();
+              }
             });
           });
         
