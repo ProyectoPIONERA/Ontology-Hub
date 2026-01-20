@@ -656,6 +656,9 @@ router.get("/dataset/api/v2", function (req, res) {
   });
 });
 
+
+router.get("/dataset/api/v2/home", vocabularies.indexjson);
+
 router.get("/dataset/apidoc", function (req, res) {
   res.render("api", {
     lov: config.lov,

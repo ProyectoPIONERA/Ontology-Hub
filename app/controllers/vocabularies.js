@@ -1221,6 +1221,59 @@ exports.detectPatterns = function (req, res, patterns, python_patterns) {
   }
 };
 
+exports.indexjson = function (req, res) {
+  // Use a helper for error handling to keep the code clean
+  const sendError = (err) => {
+    return res.status(500).json({
+      error: "Database Error",
+      details: err.message,
+      app_name_shorcut: typeof app_name_shorcut !== 'undefined' ? app_name_shorcut : "LOV",
+      app_name: typeof app_name !== 'undefined' ? app_name : "Linked Open Vocabularies"
+    });
+  };
+
+  Vocabulary.list(function (err, vocabs) {
+    if (err) return sendError(err);
+
+    Stattag.mostPopularTags(30, function (err, tagsMostPopular) {
+      if (err) return sendError(err);
+
+      Statvocabulary.mostLOVIncomingLinks(0, function (err, vocabsMostLOVIncomingLinks) {
+        if (err) return sendError(err);
+
+        Vocabulary.latestInsertion(5, function (err, vocabsLatestInsertion) {
+          if (err) return sendError(err);
+
+          Vocabulary.latestModification(5, function (err, vocabsLatestModification) {
+            if (err) return sendError(err);
+
+            // SUCCESS: Return JSON instead of rendering a view
+            res.status(200).json({
+              title: "Articles",
+              vocabs: vocabs,
+              vocabsLatestInsertion: vocabsLatestInsertion,
+              vocabsLatestModification: vocabsLatestModification,
+              vocabsMostLOVIncomingLinks: vocabsMostLOVIncomingLinks,
+              tagsMostPopular: tagsMostPopular,
+              app_name_shorcut: typeof app_name_shorcut !== 'undefined' ? app_name_shorcut : "LOV",
+              app_name: typeof app_name !== 'undefined' ? app_name : "Linked Open Vocabularies"
+            });
+          });
+        });
+      });
+    });
+  });
+};
+
+// Helper function to avoid repeating the error logic
+function handleError(res, err) {
+  console.error("Database Error:", err);
+  // Using statusCode + send for maximum compatibility
+  res.statusCode = 500;
+  return res.json({ error: "Internal Server Error", details: err.message });
+}
+
+
 function encodeToZip(zip, versionPath, voc) {
 
   //const root = (voc || '').replace(/\/+$/, '');
