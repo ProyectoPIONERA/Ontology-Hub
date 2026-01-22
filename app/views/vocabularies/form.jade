@@ -357,12 +357,24 @@ block content
                   a.editionCancelButtonRight(href="/edition", title="cancel") Cancel
                   .clear
                 #jsonResult
-            #listOfTags(title='Select a Tag' style='display:none;')
-              ul.tagsVocab
-                each tag in listTags
-                  li
-                    span.tag.tagFromList #{tag.label}
-                                
+
+                #listOfTags(title='Select a Tag' style='display:none;')
+                  .tagCreateBar(style='margin-bottom:10px;')
+                    //- Show existing Tags
+                    ul#tagsPickerList.tagsVocab
+                      each tag in listTags
+                        li
+                          span.tag.tagFromList #{tag.label}
+                  div(style='clear: both; height: 10px;')
+                  //- Toggle create tag
+                  button#toggleCreateTag(type='button' style='margin-bottom:10px;') + Create new tag
+                  //- Create Tag
+                  .tagCreateBar#tagCreateBar(style='display:none; margin-bottom:10px;')
+                    input#newTagLabel(type='text' placeholder='New tag name' style='width:70%; padding:6px;')
+                    button#btnCreateTag(type='button' style='padding:6px 10px; margin-left:8px;') Create 
+                    button#btnCancelCreateTag(type='button' style='padding:6px 10px;margin-left:8px;') Cancel
+                    div#newTagError(style='display:none; color:#b00020; margin-top:6px;')
+
             form(method='post' action='/edition/agents/creationOnTheFly' name='agentCreationOnTheFlyForm' id='agentCreationOnTheFlyForm' title='Get Or Create an Agent' style='display:none;')
               input(type='hidden', name='_csrf', value="#{csrf_token}")
               #agentCreationOnTheFlyClue
@@ -386,10 +398,17 @@ block content
                         td URI
                         td
                           input(type='text', name="prefUri")
-              
-                          
+
       script.
         function addTag(tagName){
+
+          var normalized = (tagName || '').trim();
+          if(!normalized) return;
+
+          var normalizedLower = normalized.toLowerCase();
+
+          var existing = document.querySelectorAll('#tagsUl input[name="tags[]"]');
+
           var li = document.createElement('li');
              var span = document.createElement('span');
              span.className  = 'tag';
@@ -407,6 +426,36 @@ block content
           li.appendChild(Id);
           document.getElementById('tagsUl').appendChild(li);
         }
+
+        function isTagSelected(label){
+          label = (label || '').trim().toLowerCase();
+          return $('#tagsUl input[name="tags[]"]').filter(function (){
+            return ($(this).val() || '').trim().toLowerCase() === label;
+          }).length > 0;
+        }
+
+        function removeTagFromVocab(label){
+          label = (label || '').trim().toLowerCase();
+
+          $('#tagsUl li').each(function () {
+            var hidden = $(this).find('input[name="tags[]"]');
+            if(hidden.length && (hidden.val() || '').trim().toLowerCase() === label){
+              this.remove();
+              return false;
+            }
+          });
+        }
+
+        function markpickerTag(label, selected){
+          var target = (label || '').trim().toLowerCase();
+          $('#tagsPickerList .tagFromList').each(function () {
+            if (($(this).text() || '').trim().toLowerCase() === target){
+              $(this).toggleClass('is-selected', !!selected);
+              return false;
+            }
+          });
+        }
+
         function addReview(divName,dataArray,langArray,value,lang){
           var cptVal = document.getElementById('cptOverall').value;
           cptVal++;
@@ -714,9 +763,34 @@ block content
           const fieldSVGDiagramAddAction = document.querySelector('#fieldSVGDiagramAddAction');
           const fieldSVGDiagramEditAction = document.querySelector('#fieldSVGDiagramEditAction');
 
-          $('.tagFromList').click(function(e){
-            addTag($(this).text());
-            $('#listOfTags').dialog('close');
+          $(document).on('click', '#tagsPickerList .tagFromList', function (e){
+            e.preventDefault();
+
+            var label = $(this).text().trim();
+
+            if(isTagSelected(label)){
+              removeTagFromVocab(label);
+              $(this).removeClass('is-selected');
+            }else{
+              addTag(label);
+              $(this).addClass('is-selected');
+            }
+          });
+
+          $(document).on('click', '#toggleCreateTag', function(e){
+            e.preventDefault();
+            $('#newTagError').hide().text('');
+            $('#tagCreateBar').toggle();
+            if($('#tagCreateBar').is(':visible')){
+              $('#newTagLabel').focus();
+            }
+          });
+
+          $(document).on('click', '#btnCancelCreateTag', function(e){
+            e.preventDefault();
+            $('#newTagLabel').val('');
+            $('#newTagError').hide().text('');
+            $('#tagCreateBar').hide();
           });
         
           $('.fieldTagsAddAction').click(function(e){
@@ -724,7 +798,77 @@ block content
               resizable: false,
               height:600,
               width:800,
-              modal: true
+              modal: true,
+              open: function(){
+                $('#tagsPickerList .tagFromList').removeClass('is-selected');
+
+                $('#tagsUl input[name="tags[]"]').each(function (){
+                  markpickerTag($(this).val(),true);
+                });
+              },
+              close: function(){
+                $('#tagCreateBar').hide();
+                $('#newTagLabel').val('');
+                $('#newTagError').hide().text('');
+              }
+            });
+          });
+
+          $('#btnCreateTag').click(function (e){
+            e.preventDefault();
+
+            const label = ($('#newTagLabel').val() || '').trim();
+            $('#newTagError').hide().text('');
+
+            if(!label){
+              $('#newTagError').text('tag name is required').show();
+              return;
+            }
+
+            const csrf = $('input[name="_csrf"]').val();
+
+            $.ajax({
+              url: '/edition/tags',
+              type: 'POST',
+              dataType: 'json',
+              data: { label: label, _csrf: csrf},
+              success: function(data){
+                const createdLabel = 
+                  (data && data.label) ? data.label :
+                  (data && data.tag && data.tag.label) ? data.tag.label :
+                  label;
+
+                  //
+                  const exists = $('#tagsPickerList .tagFromList').filter(function(){
+                    return $(this).text().trim().toLowerCase() === createdLabel.trim().toLowerCase();
+                  }).length > 0;
+
+                  if(!exists){
+                    const li = document.createElement('li');
+                    const span = document.createElement('span');
+                    span.className = 'tag tagFromList';
+                    span.textContent = createdLabel;
+
+                    li.appendChild(span);
+                    document.getElementById('tagsPickerList').appendChild(li);
+
+                    addTag(createdLabel);
+                    markpickerTag(createdLabel, true);
+
+                    //Close toggle
+                    $('#newTagLabel').val('');
+                    $('#newTagError').hide().text('');
+                    $('#tagCreateBar').hide();
+
+                    //Clean input
+                    $('#newTagLabel').val('');
+                  }
+              },
+              error: function(xhr){
+                let msg = 'Error creating tag';
+                if(xhr && xhr.responseText) msg = xhr.responseText;
+                $('#newTagError').text(msg).show();
+              }
             });
           });
         
