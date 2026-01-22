@@ -367,7 +367,7 @@ block content
                           span.tag.tagFromList #{tag.label}
                   div(style='clear: both; height: 10px;')
                   //- Toggle create tag
-                  button#toggleCreateTag(type='button' style='margin-bottom:10px;') + Create new tag
+                  button#toggleCreateTag(type='button' style='margin-bottom:10px;') Create new tag
                   //- Create Tag
                   .tagCreateBar#tagCreateBar(style='display:none; margin-bottom:10px;')
                     input#newTagLabel(type='text' placeholder='New tag name' style='width:70%; padding:6px;')
@@ -780,8 +780,14 @@ block content
           $(document).on('click', '#toggleCreateTag', function(e){
             e.preventDefault();
             $('#newTagError').hide().text('');
-            $('#tagCreateBar').toggle();
-            if($('#tagCreateBar').is(':visible')){
+
+            const $btn = $('#toggleCreateTag');
+            const $bar = $('#tagCreateBar');
+
+            $bar.toggle();
+
+            $btn.toggleClass('is-open', $bar.is(':visible'));
+            if($bar.is(':visible')){
               $('#newTagLabel').focus();
             }
           });

@@ -252,17 +252,36 @@ margin-left: auto;
   text-align: center;
 }
 
+#toggleCreateTag{
+  position: relative;
+  padding-left: 22px;
+}
+
+#toggleCreateTag:before{
+  content: '+';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  line-height:1;
+}
+
+#toggleCreateTag.is-open:before{
+  content: '-';
+}
+
 #tagsPickerList .tagFromList{
   cursor: pointer;
   user-select: none;
   display: inline-block;
 }
 #tagsPickerList .tagFromList.is-selected:before{
-  border-color: transparent #2d6cdf transparent transparent;
+  border-color: transparent #5E9B9B transparent transparent;
 }
 
 #tagsPickerList .tagFromList.is-selected{
-  background: #2d6cdf;
+  background: #5E9B9B;
   color: #fff;
 }
 
