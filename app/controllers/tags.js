@@ -145,31 +145,55 @@ exports.update = function (req, res) {
  * Create tag
  */
 exports.create = function (req, res) {
+  //Detect if AJAX or JSON
+  const wantsJson = req.xhr || (req.headers.accept && req.headers.accept.indexOf("application/json") !== -1);
+
+  const label = (req.body.label || "").trim();
+  if(!label){
+    if(wantsJson) return res.status(400).json({error: "Tag label is required"});
+    req.flash("error", "Tag label is required");
+    return res.redirect("/edition/tags/new");
+  }
+
   //Check if the tag already exists
-  Tag.findLabel(req.body.label, function (err, label) {
-    if (err)
+  Tag.findLabel(label, function (err, existing) {
+    if (err){
+      if (wantsJson) return res.status(500).json({error: "Database error"});
       return res.render("500", {
         app_name_shorcut: app_name_shorcut,
         app_name: app_name,
       });
-    if (label) {
+    }
+
+    if (existing) {
       //tag already exist
+      if(wantsJson) return res.status(409).json({error: "This tag already exists"});
       req.flash("error", "This tag already exists");
-      res.redirect("/edition/tags/new");
-    } else {
-      var tag = new Tag(req.body);
-      tag
-        .save()
-        .then(() => {
+      return res.redirect("/edition/tags/new");
+    } 
+
+    var tag = new Tag({label: label});
+
+    tag
+      .save()
+      .then((saved) => {
+        if(wantsJson){
+          return res.status(201).json({
+            _id: saved._id,
+            label: saved.label,
+          });
+        }
           req.flash("success", "Tag created successfully");
           return res.redirect(req.session.backURL || "/edition/");
         })
         .catch((err) => {
+          console.error("[tags.create error]", err);
+          if(wantsJson) return res.status(500).json({error: "Error saving tag"});
+
           return res.render("500", {
             app_name_shorcut: app_name_shorcut,
             app_name: app_name,
           });
         });
-    }
   });
 };
