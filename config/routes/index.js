@@ -775,7 +775,7 @@ function executeSPARQLQuery(
   namedGraphUri
 ) {
   var sparqlExecTime = Date.now();
-  let sparqlPath = "/sparql?query=" + encodeURIComponent(query);
+  let sparqlPath = "/lov/sparql?query=" + encodeURIComponent(query);
   if (defaultGraphUri)
     sparqlPath += "&default-graph-uri=" + encodeURIComponent(defaultGraphUri);
   if (namedGraphUri)
