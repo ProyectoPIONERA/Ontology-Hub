@@ -15,6 +15,7 @@ var mongoose = require("mongoose"),
 
 const { Parser } = require('n3');
 const crypto = require('crypto');
+const ElasticService = require('../elastic'); // Asegúrate de que la ruta sea correcta
 
 var app_name;
 var app_name_shorcut;
@@ -1426,7 +1427,7 @@ function parseOntology(req, res, scripts, data, extension, requirements, concept
 }
 
 
-function createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, python_patterns, vocab) {
+function  createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, python_patterns, vocab) {
   if ((!stderr || !stderr.startsWith("ERROR")) && stdout && stdout.length > 0) {
     // Asegurar que stdout es la ruta y existe (cuando viene de downloadVersion o del form ontology_path)
     stdout = (stdout || "").toString().split("\n")[0].trim();
@@ -1528,6 +1529,9 @@ function createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, py
           var command3 = scripts + "/bin/statsonevocab " + scripts + "/lov.config " + vocab.uri;
 
           var exec3 = require("child_process").exec;
+
+          ElasticService.sync('vocabulary', vocab);
+
           child = exec3(command3, function (error3, stdout3, stderr3) {
             // Generar estructuras (not_flatten) y detectar patrones globales
             exports

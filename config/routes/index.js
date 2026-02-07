@@ -60,9 +60,18 @@ var esclient = new elasticsearch.Client({
   },
 });
 */
+
 var esclient = new elasticsearch.Client({
-  host: config.es.host + ":" + config.es.port,
-  log: "error", // Puedes usar: 'trace', 'debug', 'info', 'warning', 'error', 'silent'
+    host: [
+        {
+            protocol: 'http',
+            host: config.es.host,
+            port: config.es.port,
+            auth: config.es.user + ":" + config.es.pass // El usuario y pass van aquí dentro
+        }
+    ],
+    ssl: { rejectUnauthorized: false }, // Muy importante en Docker
+    log: "error"
 });
 
 /**

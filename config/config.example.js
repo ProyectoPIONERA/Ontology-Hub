@@ -18,6 +18,8 @@ module.exports = {
     es: {
       host: process.env.ELASTIC_SEARCH_HOST,
       port: 9200,
+      user: process.env.ELASTIC_SEARCH_USER,
+      pass: process.env.ELASTIC_SEARCH_PASSWORD,
     },
     lov: process.env.SELF_HOST_URL || 'http://localhost:3333',
     //Path to where the output of "lov_scripts" repository have been generated

@@ -1,0 +1,39 @@
+{
+  "properties": {
+    "prefix": {
+      "type": "keyword",
+      "index": false,
+      "fields": {
+        "autocomplete": {
+          "type": "text",
+          "analyzer": "autocomplete_ngram_index",
+          "search_analyzer": "autocomplete_ngram_search"
+        }
+      }
+    },
+    "tags": {
+      "type": "keyword"
+    },
+    "langs": {
+      "type": "keyword"
+    },
+    "uri": {
+      "type": "keyword",
+      "fields": {
+        "autocomplete": {
+          "type": "text",
+          "analyzer": "autocomplete_ngram_index",
+          "search_analyzer": "autocomplete_ngram_search"
+        }
+      }
+    },
+    "http://purl.org/dc/terms/title*": {
+      "type": "text",
+      "analyzer": "standard"
+    },
+    "http://purl.org/dc/terms/description*": {
+      "type": "text",
+      "analyzer": "standard"
+    }
+  }
+}

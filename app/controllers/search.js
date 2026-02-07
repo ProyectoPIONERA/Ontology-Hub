@@ -1,6 +1,7 @@
 var utils = require("../../lib/utils");
+const ElasticService = require('../services/elasticService');
 
-var indexName = "lov"; /* Name of the ElasticSearch index */
+var indexName = "lov_vocabulary"; /* Name of the ElasticSearch index */
 var placeholders = [
   /* placeholder used in the input box */ /*"all you want to know about LOV!",
   "LOV is all :)",
@@ -115,45 +116,46 @@ exports.search = function (req, res, esclient) {
 /**
  * Search for vocabulary used by the /vocabs UI
  */
-exports.searchVocabulary = function (req, res, esclient) {
-  return execSearchVocabulary(
-    esclient,
-    req.query.q,
-    req.query.page_size,
-    req.query.page,
-    req.query.tag,
-    req.query.tag_limit,
-    req.query.lang,
-    req.query.lang_limit,
-    function (err, results) {
-      if (err)
-        return res.render("500", {
-          app_name_shorcut: app_name_shorcut,
-          app_name: app_name,
-        });
-      //store log in DB
-      /*var log = new LogSearch({searchWords: req.query.q,
-      searchURL: req.originalUrl,
-      date: new Date(),
-      category: "vocabularySearch",
-      method: "ui",
-      nbResults: results.total_results  });//console.log(log);
-    log.save(function (err){if(err)console.log(err)});*/
-      var arr = [];
-      for (var i = 0; i < results.results.length; i++) {
-        arr.push(results.results[i]._source.prefix);
-      }
-      res.render("vocabularies/index", {
-        results: results,
-        placeholder:
-          placeholders[Math.floor(Math.random() * placeholders.length)],
-        resultsList: arr,
-        utils: utils,
-        app_name_shorcut: app_name_shorcut,
-        app_name: app_name,
-      });
-    }
-  );
+exports.searchVocabulary = async function (req, res, esclient) {
+  const service = new ElasticService(esclient);
+
+  const options = {
+    queryString: req.query.q,
+    page: parseInt(req.query.page) || 1,
+    pageSize: parseInt(req.query.page_size) || 15,
+    tag: req.query.tag,
+    lang: req.query.lang,
+    tagLimit: req.query.tag_limit || 10,
+    langLimit: req.query.lang_limit || 10,
+    fields: [
+      "prefix.autocomplete^12",
+      "http://purl.org/dc/terms/title*^3",
+      "http://purl.org/dc/terms/description*^1.5"
+    ]
+  };
+
+  try {
+    const results = await service.search('vocabulary', options);
+
+    // Mantenemos tu lógica de prefijos para la UI
+    const arr = results.results.map(item => item._source.prefix);
+
+    res.render("vocabularies/index", {
+      results: results,
+      placeholder: placeholders[Math.floor(Math.random() * placeholders.length)],
+      resultsList: arr,
+      utils: utils,
+      app_name_shorcut: app_name_shorcut,
+      app_name: app_name,
+    });
+
+  } catch (err) {
+    console.error("Critical Render Error:", err);
+    res.status(500).render("500", {
+      app_name_shorcut: app_name_shorcut,
+      app_name: app_name,
+    });
+  }
 };
 
 /**
@@ -872,170 +874,107 @@ function execSearch(
  * Execution of a search on vocabularies
  */
 function execSearchVocabulary(
-  client,
-  queryString,
-  page_size,
-  page,
-  tag,
-  tag_limit,
-  lang,
-  lang_limit,
-  callback
+    client,
+    queryString,
+    page_size,
+    page,
+    tag,
+    tag_limit,
+    lang,
+    lang_limit,
+    callback
 ) {
-  if (
-    !tag_limit ||
-    (!parseInt(tag_limit) && tag_limit !== "0") ||
-    parseInt(page_size) < 1
-  )
-    tag_limit = 10;
-  if (
-    !lang_limit ||
-    (!parseInt(lang_limit) && lang_limit !== "0") ||
-    parseInt(page_size) < 1
-  )
-    lang_limit = 10;
-  var type = "vocabulary";
-  if (
-    !page_size ||
-    (!parseInt(page_size) && page_size !== "0") ||
-    parseInt(page_size) < 1
-  )
-    page_size = 15;
-  if (!page || (!parseInt(page) && page !== "0") || parseInt(page) < 1)
-    page = 1;
-  page = parseInt(page, 10) || 1;
+  // --- Configuración de parámetros por defecto ---
+  tag_limit = (parseInt(tag_limit) >= 0) ? parseInt(tag_limit) : 10;
+  lang_limit = (parseInt(lang_limit) >= 0) ? parseInt(lang_limit) : 10;
+  page_size = (parseInt(page_size) > 0) ? parseInt(page_size) : 15;
+  page = (parseInt(page) > 0) ? parseInt(page) : 1;
 
-  /* Weights for each field type in the score function */
-  var weightLocalName = 12; /* the local name of a URI */
-  var weightPrimLabel = 3; /* primary label includes dcterms:title*/
-  var weightSecLabel = 1.5; /* secondary label includes dcterms:description*/
-  /* fields concerned by the query and their corresponding boost */
+  /* Pesos para el score */
+  var weightLocalName = 12;
+  var weightPrimLabel = 3;
+  var weightSecLabel = 1.5;
+
   var fieldToSearchOn = [
     "prefix.autocomplete^" + weightLocalName,
     "http://purl.org/dc/terms/title*^" + weightPrimLabel,
     "http://purl.org/dc/terms/description*^" + weightSecLabel,
   ];
 
-  /* dynamic build of the filters using tag and lang values */
-  var filter = "[";
-  if (tag != null) {
-    if (filter.length > 1) filter = filter + ",";
-    var tagsplit = tag.split(",");
-    for (i = 0; i < tagsplit.length; i++) {
-      if (tagsplit.length > 0 && i > 0) filter = filter + ",";
-      filter = filter + '{"term":{"tags":"' + tagsplit[i] + '"}}';
-    }
+  /* 1. Construcción dinámica de FILTROS (Moderno: Array de objetos) */
+  var filterArray = [];
+  if (tag && tag !== "null") {
+    tag.split(",").forEach(t => {
+      filterArray.push({ term: { "tags": t.trim() } });
+    });
   }
-  if (lang != null) {
-    if (filter.length > 1) filter = filter + ",";
-    var langsplit = lang.split(",");
-    for (i = 0; i < langsplit.length; i++) {
-      if (langsplit.length > 0 && i > 0) filter = filter + ",";
-      filter = filter + '{"term":{"langs":"' + langsplit[i] + '"}}';
-    }
+  if (lang && lang !== "null") {
+    lang.split(",").forEach(l => {
+      filterArray.push({ term: { "langs": l.trim() } });
+    });
   }
-  filter = eval("(" + filter + "]" + ")");
 
-  var q = {
+  /* 2. Construcción del Body de la Query (Formato Bool para ES 9.x) */
+  var queryBody = {
     from: (page - 1) * page_size,
     size: page_size,
-    query: (function () {
-      /* In case we have a vocabulary or tag filter, we are using a filtered query */
-      if (lang != null || tag != null) {
-        return {
-          filtered: {
-            query: (function () {
-              if (queryString && queryString.length > 0) {
-                return {
-                  multi_match: {
-                    query: queryString,
-                    fields: fieldToSearchOn,
-                  },
-                };
-              } else {
-                return {
-                  match_all: {},
-                };
-              }
-            })(),
-            filter: { bool: { must: filter } },
-          },
-        };
-      } else {
-        return (function () {
+    query: {
+      bool: {
+        must: (function() {
           if (queryString && queryString.length > 0) {
             return {
               multi_match: {
                 query: queryString,
                 type: "best_fields",
                 fields: fieldToSearchOn,
-              },
+              }
             };
           } else {
-            return {
-              match_all: {},
-            };
+            return { match_all: {} };
           }
-        })();
+        })(),
+        filter: filterArray // Aquí van los tags y langs
       }
-    })(),
-    sort: (function () {
+    },
+    sort: (function() {
       if (queryString && queryString.length > 0) {
         return [{ _score: { order: "desc" } }];
       } else {
-        //return [{ "prefix.keyword": { order: "asc" } }];
-        return [{ prefix: { order: "asc" } }];
+        return [{ "prefix.keyword": { order: "asc" } }]; // Usamos .keyword para sort
       }
     })(),
     aggregations: {
-      tags: {
-        terms: {
-          field: "tags",
-          size: parseInt(tag_limit),
-        },
-      },
-      langs: {
-        terms: {
-          field: "langs",
-          size: parseInt(lang_limit),
-        },
-      },
-    },
+      tags: { terms: { field: "tags", size: tag_limit } },
+      langs: { terms: { field: "langs", size: lang_limit } }
+    }
   };
-  /* build and return the result JSON object */
-  return (
-    client
-      //.search(indexName, type, q)
-      .search({
-        index: indexName,
-        type: type,
-        body: q,
-      })
-      .then((data) => {
-        var parsed, result;
-        parsed = data.hits;
-        //parsed = JSON.parse(data).hits;
-        /* filters are the parameters sent by the client to filter the query results */
-        var filters = {};
-        if (tag != "null") filters.tag = tag;
-        if (lang != "null") filters.lang = lang;
 
-        result = {
-          total_results: parsed.total,
+  /* 3. Ejecución (Sin el parámetro 'type') */
+  return client.search({
+    index: indexName, // Solo el índice, el type causa el error 400
+    body: queryBody
+  })
+      .then((data) => {
+        var hits = data.hits;
+        var filters = {};
+        if (tag && tag !== "null") filters.tag = tag;
+        if (lang && lang !== "null") filters.lang = lang;
+
+        var result = {
+          total_results: typeof hits.total === 'object' ? hits.total.value : hits.total,
           page: page,
           page_size: page_size,
           queryString: queryString,
           filters: filters,
           aggregations: data.aggregations,
-          //aggregations: JSON.parse(data).aggregations,
-          results: parsed.hits,
+          results: hits.hits
         };
         return callback(null, result);
       })
       .catch((error) => {
+        console.error("Error en execSearchVocabulary:", error);
         return callback(error, null);
-      })
-  );
+      });
 }
 
 /**
