@@ -2,7 +2,7 @@
   "properties": {
     "prefix": {
       "type": "keyword",
-      "index": false,
+      "index": true,
       "fields": {
         "autocomplete": {
           "type": "text",
@@ -11,29 +11,24 @@
         }
       }
     },
-    "tags": {
-      "type": "keyword"
-    },
-    "langs": {
-      "type": "keyword"
-    },
-    "uri": {
-      "type": "keyword",
+    "uri": { "type": "keyword" },
+    "tags": { "type": "keyword" },
+    "langs": { "type": "keyword" },
+    "titles": {
+      "type": "text",
+      "analyzer": "standard",
       "fields": {
-        "autocomplete": {
-          "type": "text",
-          "analyzer": "autocomplete_ngram_index",
-          "search_analyzer": "autocomplete_ngram_search"
-        }
+        "keyword": { "type": "keyword", "ignore_above": 256 }
       }
     },
-    "http://purl.org/dc/terms/title*": {
-      "type": "text",
-      "analyzer": "standard"
+    "descriptions": { "type": "text", "analyzer": "standard" },
+    "metrics": {
+      "properties": {
+        "occurrencesInDatasets": { "type": "long" },
+        "reusedByDatasets": { "type": "long" }
+      }
     },
-    "http://purl.org/dc/terms/description*": {
-      "type": "text",
-      "analyzer": "standard"
-    }
+    "issued": { "type": "date" },
+    "modified": { "type": "date" }
   }
 }

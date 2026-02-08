@@ -1,25 +1,11 @@
 {
   "properties": {
-    "prefix": {
-      "type": "keyword",
-      "index": false
-    },
-    "tags": {
-      "type": "keyword"
-    },
+    "uri": { "type": "keyword" },
+    "type": { "type": "keyword" },
     "prefixedName": {
       "type": "text",
       "fields": {
-        "autocomplete": {
-          "type": "text",
-          "analyzer": "autocomplete_ngram_index",
-          "search_analyzer": "autocomplete_ngram_search"
-        }
-      }
-    },
-    "uri": {
-      "type": "keyword",
-      "fields": {
+        "keyword": { "type": "keyword", "ignore_above": 256 },
         "autocomplete": {
           "type": "text",
           "analyzer": "autocomplete_ngram_index",
@@ -28,13 +14,7 @@
       }
     },
     "localName": {
-      "type": "text",
-      "fields": {
-        "autocomplete": {
-          "type": "text",
-          "analyzer": "autocomplete_ngram_index",
-          "search_analyzer": "autocomplete_ngram_search"
-        },
+      "properties": {
         "ngram": {
           "type": "text",
           "analyzer": "ngram_analyzer_index",
@@ -42,8 +22,18 @@
         }
       }
     },
-    "labelsWithoutLang": {
-      "type": "completion"
-    }
+    "vocabulary": {
+      "properties": {
+        "prefix": { "type": "keyword" },
+        "uri": { "type": "keyword" }
+      }
+    },
+    "metrics": {
+      "properties": {
+        "occurrencesInDatasets": { "type": "integer" },
+        "reusedByDatasets": { "type": "integer" }
+      }
+    },
+    "tags": { "type": "keyword" }
   }
 }

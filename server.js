@@ -1,11 +1,13 @@
 /**
  * Module dependencies.
  */
+require('dotenv').config(); // Cargar variables de entorno al inicio
 var app = require("./config/app");
-const initElastic = require('./app/elastic/mappingManager');
+const { ElasticService } = require('./app/elastic'); // Importamos el servicio unificado
 var http = require("http");
-require('dotenv').config();
+
 console.log('Connecting to MongoDB with:', process.env.MONGO_DB_CONNECTION_STRING);
+
 /**
  * Set default timezone in London
  */
@@ -27,19 +29,23 @@ async function bootstrap() {
   try {
     console.log('Esperando configuración de Elasticsearch...');
 
-    // Ejecutamos la creación de índices y mappings
-    await initElastic();
+    // 1. Ejecutamos la creación de índices y mappings desde el objeto unificado
+    await ElasticService.init();
 
-    console.log('Elasticsearch mappings verificados.');
+    // 2. Inyectamos el servicio en Express para que esté disponible en los controladores
+    // Esto permite usar req.app.get('elasticService') en cualquier parte
+    app.set('elasticService', ElasticService);
 
+    console.log('Elasticsearch mappings verificados y servicio inyectado.');
+
+    // 3. Iniciamos el servidor
     server.listen(port, '0.0.0.0', () => {
       console.log("Express server listening on port " + port);
     });
 
   } catch (err) {
-    console.error('Error crítico al iniciar Elasticsearch:', err);
-    // Decisión de arquitectura: ¿Debe el server caerse si Elastic no conecta?
-    // Generalmente sí, para que Docker lo reinicie.
+    console.error('Error crítico al iniciar la aplicación:', err);
+    // Salimos con error para que orquestadores como Docker o PM2 reinicien el proceso
     process.exit(1);
   }
 }

@@ -15,7 +15,9 @@ var mongoose = require("mongoose"),
 
 const { Parser } = require('n3');
 const crypto = require('crypto');
-const ElasticService = require('../elastic'); // Asegúrate de que la ruta sea correcta
+const rdfExtractor = require('../services/rdfExtractor');
+const lovWrapper = require('../services/lovWrapper');
+const { ElasticService } = require('../elastic/index');
 
 var app_name;
 var app_name_shorcut;
@@ -1426,151 +1428,95 @@ function parseOntology(req, res, scripts, data, extension, requirements, concept
   });
 }
 
+async function createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, python_patterns, vocab) {
+  // Ya no dependemos de req.app.get('elasticService') para evitar el error de undefined
 
-function  createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, python_patterns, vocab) {
   if ((!stderr || !stderr.startsWith("ERROR")) && stdout && stdout.length > 0) {
-    // Asegurar que stdout es la ruta y existe (cuando viene de downloadVersion o del form ontology_path)
-    stdout = (stdout || "").toString().split("\n")[0].trim();
-    if (!fs.existsSync(stdout)) {
-      return res.status(500).send("Provided ontology path not found: " + stdout);
+    const tempPath = (stdout || "").toString().split("\n")[0].trim();
+    if (!fs.existsSync(tempPath)) {
+      return res.status(500).send("Provided ontology path not found: " + tempPath);
     }
 
-    /* move file with its name */
-    var version = {};
-    var versionIssued = new Date();
+    const versionIssued = new Date();
+    const d = versionIssued.getDate();
+    const m = versionIssued.getMonth() + 1;
+    const y = versionIssued.getFullYear();
+    const issuedStr = "" + y + "-" + (m <= 9 ? "0" + m : m) + "-" + (d <= 9 ? "0" + d : d);
 
-    var d = versionIssued.getDate();
-    var m = versionIssued.getMonth() + 1;
-    var y = versionIssued.getFullYear();
-    var issuedStr = "" + y + "-" + (m <= 9 ? "0" + m : m) + "-" + (d <= 9 ? "0" + d : d);
-    var versionName = "v" + issuedStr;
+    const dir = "./versions/" + vocab._id;
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-    version.issued = versionIssued;
-    version.name = versionName;
-    version.isReviewed = true;
+    const target_path = path.join(dir, `${vocab._id}_${issuedStr}.n3`);
 
-    var dir = "./versions/" + vocab._id;
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir);
-    }
+    fs.rename(tempPath, target_path, async (err) => {
+      if (err) return res.status(500).send("Error moving ontology file.");
 
-    // Si quisieras conservar la extensión original:
-    // const origExt = path.extname(stdout) || ".n3";
-    // Aquí dejamos ".n3" para mantener compatibilidad con tu pipeline actual
-    var target_path = "./versions/" + vocab._id + "/" + vocab._id + "_" + issuedStr + ".n3";
+      try {
+        console.log(`[Indexer] Procesando ontología: ${target_path}`);
 
-    // Mover el archivo desde tmp (o ruta de downloadVersion) al destino definitivo
-    fs.rename(stdout, target_path, function (err) {
-      if (err) {
-        return res.status(500).send("The ontology has not been downloaded. No version found.");
-      }
+        // Extraemos términos de forma nativa
+        const extracted = await rdfExtractor.extractAllTerms(target_path);
+        const vocabDoc = vocab.toObject();
 
-      // Descarga opcional de artefactos (GitHub/GitLab) si vienen en el form
-      if (req.body.requirements) {
-        downloadArtifact(req.body.requirements, "./versions/" + vocab._id + "/requirements");
-      }
-      if (req.body.conceptualization) {
-        downloadArtifact(req.body.conceptualization, "./versions/" + vocab._id + "/conceptualization");
-      }
-      if (req.body.shapes) {
-        downloadArtifact(req.body.shapes, "./versions/" + vocab._id + "/shapes");
-      }
-      if (req.body.examples) {
-        downloadArtifact(req.body.examples, "./versions/" + vocab._id + "/examples");
-      }
-      if (req.body.tests) {
-        downloadArtifact(req.body.tests, "./versions/" + vocab._id + "/tests");
-      }
+        // 3. INDEXACIÓN USANDO ElasticService DIRECTAMENTE
+        // Indexar el Vocabulario principal
+        // Dentro de createVocab, en la parte de indexación:
+        await ElasticService.upsert('vocabulary', vocab._id.toString(), vocab.toObject());
 
-      var versionPublicPath = lov + "/dataset/vocabs/" + vocab.prefix + "/versions/" + issuedStr + ".n3";
+        const categoryMap = {
+          'classes': 'class',
+          'properties': 'property',
+          'datatypes': 'datatype',
+          'individuals': 'individual'
+        };
 
-      /* run analytics on vocab */
-      var command2 =
-        scripts +
-        "/bin/versionAnalyser " +
-        versionPublicPath +
-        " " +
-        vocab.uri +
-        " " +
-        vocab.nsp +
-        " " +
-        scripts +
-        "/lov.config";
+        let totalIndexed = 0;
+        for (const catPlural of Object.keys(categoryMap)) {
+          const terms = extracted[catPlural] || [];
+          const elasticType = categoryMap[catPlural];
 
-      var exec2 = require("child_process").exec;
-      child = exec2(command2, function (error2, stdout2, stderr2) {
-        stdout2 = JSON.parse(stdout2);
-        stdout2 = _.extend(stdout2, version);
+          for (const term of terms) {
+            const wrappedDoc = lovWrapper.wrap(term, vocabDoc);
+            const elasticId = Buffer.from(term.uri).toString('base64');
 
-        // Add diagram to version (si se subió un diagrama)
-        if (req.body.file) {
-          var diagramsDir = dir + "/diagrams";
-          var diagramPath = diagramsDir + "/" + vocab._id + "_" + issuedStr + ".svg";
-          stdout2["diagramPath"] = diagramPath;
-
-          if (!fs.existsSync(diagramsDir)) {
-            fs.mkdirSync(diagramsDir);
+            // Llamada directa al servicio importado
+            await ElasticService.upsert(elasticType, elasticId, wrappedDoc);
+            totalIndexed++;
           }
-          fs.writeFile(diagramPath, req.body.file.fileContent, (err) => {
-            if (err) {
-              console.error(err);
-            }
-          });
         }
+        console.log(`[Indexer] ${totalIndexed} términos indexados en Elasticsearch.`);
 
-        /* add version */
-        Vocabulary.addVersion(vocab.prefix, stdout2, function (err) {
-          if (err) {
-            return res.send({ redirect: "500" });
-          }
-          vocab.versions = stdout2;
+        /* 4. Actualizar MongoDB */
+        const versionData = {
+          issued: versionIssued,
+          name: "v" + issuedStr,
+          isReviewed: true,
+          classNumber: extracted.classes.length,
+          propertyNumber: extracted.properties.length,
+          datatypeNumber: extracted.datatypes.length,
+          instanceNumber: extracted.individuals.length
+        };
 
-          // success generate first stats
-          var command3 = scripts + "/bin/statsonevocab " + scripts + "/lov.config " + vocab.uri;
+        Vocabulary.addVersion(vocab.prefix, versionData, (err) => {
+          if (err) return res.send({ redirect: "500" });
 
-          var exec3 = require("child_process").exec;
-
-          ElasticService.sync('vocabulary', vocab);
-
-          child = exec3(command3, function (error3, stdout3, stderr3) {
-            // Generar estructuras (not_flatten) y detectar patrones globales
-            exports
-              .generateStructures(
-                vocab.prefix,     // voc
-                vocab,            // vocab
-                "not_flatten",    // flatten
-                "both",           // pattern: "type" | "name" | "both"
-                python_patterns,  // python scripts path
-                patterns,         // patterns path
-                false             // regenerateStructures
-              )
-              .then(([versionPath, structuresTypePath, structuresNamePath]) => {
+          exports.generateStructures(vocab.prefix, vocab, "not_flatten", "both", python_patterns, patterns, false)
+              .then(() => {
                 exports.detectGlobalPatterns(patterns, python_patterns, (err) => {
-                  if (err) {
-                    return res.send({
-                      redirect: "/dataset/vocabs/" + vocab.prefix,
-                      err: err,
-                    });
-                  }
-                  return res.send({ redirect: "/dataset/vocabs/" + vocab.prefix });
+                  return res.send({ redirect: "/dataset/lov/vocabs/" + vocab.prefix });
                 });
-              })
-              .catch((err) => {
-                return res.send({
-                  redirect: "/dataset/vocabs/" + vocab.prefix,
-                  err: "The structures for this Ontology has not been detected.",
-                });
-              });
+              }).catch(err => {
+            return res.send({ redirect: "/dataset/lov/vocabs/" + vocab.prefix, err: "Structure failed" });
           });
         });
-      });
+
+      } catch (procError) {
+        console.error("Error en el procesamiento nativo:", procError);
+        res.status(500).send({ error: procError.message });
+      }
     });
   } else {
-    // no version found
-    res.send({
-      redirect: "/dataset/vocabs/" + vocab.prefix,
-      err: "The ontology has not been downloaded. No version found.",
-    });
+    res.send({ redirect: "/dataset/lov/vocabs/", err: "No ontology found." });
   }
 }
 
