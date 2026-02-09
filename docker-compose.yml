@@ -40,6 +40,7 @@ services:
     volumes:
       - ./app:/app/app
       - ./public:/app/public
+      - ./config/routes:/app/config/routes
       - ontology_hub_folder:/app
 
   elasticsearch:

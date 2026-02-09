@@ -891,6 +891,29 @@ exports.update = function (req, res) {
     });
 };
 
+exports.destroy = async function (req, res) {
+  try {
+    const vocab = req.vocab;
+    if (!vocab) return res.status(404).send("Vocabulary not found");
+
+    const vocabId = String(vocab._id);
+
+    // Delete all versions
+    const versionsDir = path.resolve(__dirname, "..", "..", "versions", vocabId);
+    if (fs.existsSync(versionsDir)) {
+      fs.rmSync(versionsDir, { recursive: true, force: true });
+    }
+
+    // Delete on Mongo
+    await Vocabulary.deleteOne({ _id: vocab._id });
+
+    return res.redirect("/edition");
+  } catch (err) {
+    console.error("[destroy vocab error]", err);
+    return res.status(500).send("Error deleting vocabulary");
+  }
+};
+
 exports.edit = function (req, res, scripts) {
   Language.listAll(function (err, langs) {
     if (err)

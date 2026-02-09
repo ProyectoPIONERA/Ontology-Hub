@@ -287,6 +287,13 @@ router.put(
   vocabularies.update
 );
 
+router.delete(
+  "/edition/vocabs/:vocabPxEdition",
+  auth.requiresLogin,
+  vocabularies.destroy
+);
+
+
 //versions
 router.get(
   "/edition/vocabs/:vocabPxEdition/versions",
@@ -742,6 +749,33 @@ router.post("/dataset/sparql", function (req, res, next) {
   );
 });
 
+
+const { spawn } = require('child_process');
+const path = require('path');
+
+
+router.post('/edition/indexAll', auth.requiresLogin, auth.requiresAdmin, (req, res) => {
+
+  const repoDir = '/app';
+  const scriptPath = path.join(repoDir, 'setup', 'lovInitialization.sh');
+
+  const cmd = `cd "${path.join(repoDir, 'setup')}" && bash "${scriptPath}"`; //>> "${logPath}" 2>&1`;
+
+  const child = spawn('bash', ['-lc', cmd], {
+    env: process.env,
+    detached: true,
+    stdio: ['ignore', 'ignore', 'ignore'],
+  });
+
+  child.on('error', (err) => {
+    console.error('[IndexAll] spawn error:', err);
+  });
+
+  child.unref();
+
+  return res.redirect('/edition');
+});
+
 function executeSPARQLQuery(
   res,
   headers,
@@ -750,17 +784,17 @@ function executeSPARQLQuery(
   namedGraphUri
 ) {
   var sparqlExecTime = Date.now();
-  path = "/sparql?query=" + encodeURIComponent(query);
+  let sparqlPath = "/lov/sparql?query=" + encodeURIComponent(query);
   if (defaultGraphUri)
-    path += "&default-graph-uri=" + encodeURIComponent(defaultGraphUri);
+    sparqlPath += "&default-graph-uri=" + encodeURIComponent(defaultGraphUri);
   if (namedGraphUri)
-    path += "&named-graph-uri=" + encodeURIComponent(namedGraphUri);
+    sparqlPath += "&named-graph-uri=" + encodeURIComponent(namedGraphUri);
   delete headers["content-length"];
   delete headers["cookie"];
   var options = {
     hostname: "localhost",
     port: 3030,
-    path: path,
+    path: sparqlPath,
     headers: headers,
   };
   http.get(options, function (response) {

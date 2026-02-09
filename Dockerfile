@@ -12,8 +12,12 @@ ARG REPO_NAME
 # Install git
 RUN apt-get update && apt-get install -y git
 
-# Clone the repository
-RUN git clone --branch ${BRANCH_NAME} ${REPO_URL} ${REPO_NAME}
+# Ensure REPO_NAME is set and remove any existing directory before cloning
+RUN if [ -z "${REPO_NAME}" ]; then echo "REPO_NAME is not set" && exit 1; fi \
+    && rm -rf "/usr/src/app/${REPO_NAME}" \
+    && git config --global core.autocrlf false \
+    && git config --global core.eol lf \
+    && git clone --branch "${BRANCH_NAME}" "${REPO_URL}" "${REPO_NAME}"
 
 # Set working directory to the cloned repo
 WORKDIR /usr/src/app/${REPO_NAME}
