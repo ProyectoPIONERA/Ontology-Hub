@@ -118,36 +118,66 @@ exports.search = function (req, res, esclient) {
  * Search for vocabulary used by the /vocabs UI
  */
 exports.searchVocabulary = async function (req, res) {
+  // 1. Extraer parámetros de la URL
+  const query = req.query.q || "";
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.page_size) || 15;
+  const tag = req.query.tag;
+  const lang = req.query.lang;
+
   const options = {
-    queryString: req.query.q,
-    page: parseInt(req.query.page) || 1,
-    pageSize: parseInt(req.query.page_size) || 15,
-    tag: req.query.tag,
-    lang: req.query.lang,
-    fields: [
-      "prefix.autocomplete^12",
-      "titles^3",
-      "descriptions^1.5"
-    ]
+    queryString: query,
+    page: page,
+    pageSize: pageSize,
+    tag: tag,
+    lang: lang,
+    fields: ["prefix.autocomplete^12", "titles^3", "descriptions^1.5"]
   };
 
   try {
-    const results = await ElasticService.search('vocabulary', options);
+    const searchResponse = await ElasticService.search('vocabulary', options);
 
-    // Mapeo seguro de los prefijos para la vista
-    const resultsList = (results.results || []).map(item => item._source.prefix);
+    // 2. Construir el objeto "results" EXACTAMENTE como lo pide el .jade
+    const resultsForView = {
+      results: searchResponse.results || [],
+      total_results: searchResponse.total_results || 0,
+      queryString: query,
+      page: page,
+      page_size: pageSize,
+      // Esta es la parte que hacía fallar la línea 64:
+      filters: {
+        tag: tag || undefined,
+        lang: lang || undefined
+      },
+      // Agregaciones para los faceteados laterales
+      aggregations: searchResponse.aggregations || {
+        tags: { buckets: [] },
+        langs: { buckets: [] }
+      }
+    };
+
+    // 3. Lista de prefijos para el log de eventos (línea 61 del jade)
+    const resultsList = (searchResponse.results || []).map(item =>
+        item._source ? item._source.prefix : ""
+    ).join(',');
 
     res.render("vocabularies/index", {
-      results: results,
+      results: resultsForView,
       resultsList: resultsList,
       placeholder: "Search for a vocabulary...",
+      req: req, // Necesario para req.sessionID en el script del jade
       utils: require('../../lib/utils'),
       app_name_shorcut: "LOV",
       app_name: "Linked Open Vocabularies"
     });
+
   } catch (err) {
     console.error("Critical Render Error:", err);
-    res.status(500).render("500", { app_name: "LOV", app_name_shorcut: "LOV" });
+    res.status(500).render("500", {
+      app_name: "LOV",
+      app_name_shorcut: "LOV",
+      utils: require('../../lib/utils')
+    });
   }
 };
 
@@ -198,42 +228,56 @@ exports.searchVocabularyPatterns = function (req, res, esclient) {
 /**
  * Search for agent used by the /agents UI
  */
-exports.searchAgent = function (req, res, esclient) {
-  return execSearchAgent(
-    esclient,
-    req.query.q,
-    req.query.page_size,
-    req.query.page,
-    req.query.type,
-    req.query.tag,
-    req.query.tag_limit,
-    function (err, results) {
-      if (err){
-        console.log(err)
-        return res.render("500", {
-          app_name_shorcut: app_name_shorcut,
-          app_name: app_name,
-        });
-      }
-      //store log in DB
-      /*var log = new LogSearch({searchWords: req.query.q,
-        searchURL: req.originalUrl,
-        date: new Date(),
-        category: "agentSearch",
-        method: "ui",
-        nbResults: results.total_results  });//console.log(log);
-      log.save(function (err){if(err)console.log(err)});*/
-      res.render("agents/index", {
-        results: results,
-        placeholder:
-          placeholders[Math.floor(Math.random() * placeholders.length)],
-        utils: utils,
+exports.searchAgent = async function (req, res) {
+  const query = req.query.q || "";
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.page_size) || 15;
+  const type = req.query.type; // 'person', 'organization' o null (ambos)
+  const tag = req.query.tag;
 
-        app_name_shorcut: app_name_shorcut,
-        app_name: app_name,
-      });
-    }
-  );
+  const options = {
+    queryString: query,
+    page: page,
+    pageSize: pageSize,
+    tag: tag,
+    // Usamos el campo correcto para agentes según tu mapping
+    fields: ["name^5", "alternativeNames^2"]
+  };
+
+  try {
+    // Si 'type' viene definido (person u organization), buscamos en ese.
+    // Si no, buscamos en ambos simultáneamente.
+    const searchType = type || 'agent';
+    const searchResponse = await ElasticService.search(searchType, options);
+
+    const resultsForView = {
+      results: searchResponse.results || [],
+      total_results: searchResponse.total_results || 0,
+      queryString: query,
+      page: page,
+      page_size: pageSize,
+      filters: {
+        type: type,
+        tag: tag
+      },
+      aggregations: searchResponse.aggregations || {
+        tags: { buckets: [] }
+      }
+    };
+
+    res.render("agents/index", {
+      results: resultsForView,
+      placeholder: "Search for a person or organization...",
+      req: req,
+      utils: require('../../lib/utils'),
+      app_name_shorcut: "LOV",
+      app_name: "Linked Open Vocabularies"
+    });
+
+  } catch (err) {
+    console.error("Agent Search Error:", err);
+    res.status(500).render("500", { app_name: "LOV" });
+  }
 };
 
 /**
@@ -826,8 +870,8 @@ function execSearchVocabulary(
       }
     })(),
     aggregations: {
-      tags: { terms: { field: "tags", size: tag_limit } },
-      langs: { terms: { field: "langs", size: lang_limit } }
+      tags: { terms: { field: "tags.keyword", size: tag_limit } },
+      langs: { terms: { field: "langs.keyword", size: lang_limit } }
     }
   };
 

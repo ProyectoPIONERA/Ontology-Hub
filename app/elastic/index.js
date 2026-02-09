@@ -26,8 +26,6 @@ const ElasticService = {
         const mappingsDir = path.join(__dirname, 'mappings');
         try {
             console.log('--- [Elastic] Iniciando infraestructura ---');
-
-            // 1. Cargar y Limpiar Settings
             const settingsRaw = JSON.parse(fs.readFileSync(path.join(mappingsDir, 'settings.json'), 'utf8'));
             const actualSettings = settingsRaw.settings ? settingsRaw.settings : settingsRaw;
 
@@ -38,8 +36,6 @@ const ElasticService = {
                     const mappingPath = path.join(mappingsDir, `${key}.json`);
                     if (fs.existsSync(mappingPath)) {
                         const mappingRaw = JSON.parse(fs.readFileSync(mappingPath, 'utf8'));
-
-                        // 2. Limpiar Mappings: Forzamos la raíz "properties"
                         const actualProperties = mappingRaw.properties ? mappingRaw.properties : mappingRaw;
 
                         console.log(`[Creando] ${indexName}...`);
@@ -47,54 +43,79 @@ const ElasticService = {
                             index: indexName,
                             body: {
                                 settings: actualSettings,
-                                mappings: {
-                                    properties: actualProperties
-                                }
+                                mappings: { properties: actualProperties }
                             }
                         });
-                        console.log(`[OK] ${indexName} configurado.`);
+
+                        // Espera a que el índice esté listo
+                        await client.cluster.health({
+                            index: indexName,
+                            waitForStatus: 'yellow',
+                            timeout: '30s'
+                        });
+
+                        console.log(`[OK] ${indexName} configurado y activo.`);
                     }
+                } else {
+                    console.log(`[Info] ${indexName} ya existe.`);
                 }
             }
         } catch (err) {
             console.error('--- [ERROR CRÍTICO EN INIT] ---');
-            // Aquí ES nos dirá si hay un error de sintaxis en el JSON
             if (err.meta && err.meta.body) {
                 console.error(JSON.stringify(err.meta.body.error, null, 2));
             } else {
                 console.error(err.message);
             }
-            process.exit(1); // Detenemos el servidor para obligar a leer el error
+            process.exit(1);
         }
     },
 
     async search(type, options) {
-        const index = this.indices[type] || `lov_${type.toLowerCase()}`;
+        let indexName;
+        // Si es agente, buscamos en Personas y Organizaciones
+        if (type === 'agent') {
+            indexName = `${this.indices.person},${this.indices.organization}`;
+        } else {
+            indexName = this.indices[type] || `lov_${type.toLowerCase()}`;
+        }
+
         const { queryString, page = 1, pageSize = 10, fields = ["*"], tag, lang } = options;
 
-        const sortField = (type === 'vocabulary') ? "prefix" : "prefixedName.keyword";
+        // Ajuste de campo de ordenamiento dinámico
+        let sortField = "name.keyword";
+        if (type === 'vocabulary') sortField = "prefix.keyword";
+        if (type === 'property' || type === 'class') sortField = "prefixedName.keyword";
 
         try {
             const response = await client.search({
-                index: index,
+                index: indexName,
+                // CLAVE: No fallar si lov_organization no existe todavía
+                ignore_unavailable: true,
                 from: (page - 1) * pageSize,
                 size: pageSize,
                 body: {
                     query: {
                         bool: {
                             must: queryString ? {
-                                multi_match: { query: queryString, fields: fields, type: "best_fields" }
+                                multi_match: {
+                                    query: queryString,
+                                    fields: fields,
+                                    type: "best_fields"
+                                }
                             } : { match_all: {} },
                             filter: (tag || lang) ? [
-                                ...(tag ? [{ term: { "tags": tag } }] : []),
-                                ...(lang ? [{ term: { "langs": lang } }] : [])
+                                ...(tag ? [{ term: { "tags.keyword": tag } }] : []),
+                                ...(lang ? [{ term: { "langs.keyword": lang } }] : [])
                             ] : []
                         }
                     },
+                    // unmapped_type evita errores 400 si el campo no existe en el índice
                     sort: [{ [sortField]: { order: "asc", unmapped_type: "keyword" } }],
                     aggregations: {
-                        tags: { terms: { field: "tags", size: 10 } },
-                        langs: { terms: { field: "langs", size: 10 } }
+                        tags: { terms: { field: "tags.keyword", size: 10, missing: "N/A" } },
+                        types: { terms: { field: "type.keyword", size: 10, missing: "N/A" } },
+                        langs: { terms: { field: "langs.keyword", size: 10, missing: "N/A" } }
                     }
                 }
             });
@@ -105,9 +126,18 @@ const ElasticService = {
                 aggregations: response.aggregations
             };
         } catch (error) {
-            console.error("--- [ERROR EN SEARCH] ---");
-            if (error.meta && error.meta.body) {
-                console.error(JSON.stringify(error.meta.body.error, null, 2));
+            console.error(`--- [ERROR EN SEARCH (${type})] ---`);
+            // Devolver estructura vacía pero compatible con Jade si hay error 404
+            if (error.meta && error.meta.statusCode === 404) {
+                return {
+                    total_results: 0,
+                    results: [],
+                    aggregations: {
+                        tags: { buckets: [] },
+                        types: { buckets: [] },
+                        langs: { buckets: [] }
+                    }
+                };
             }
             throw error;
         }
@@ -116,10 +146,25 @@ const ElasticService = {
     upsert: async function(type, id, data) {
         const index = this.indices[type] || `lov_${type.toLowerCase()}`;
         try {
+            // Convertimos documento de Mongoose a objeto plano
             let doc = data.toObject ? data.toObject() : JSON.parse(JSON.stringify(data));
-            delete doc._id; delete doc.__v;
-            return await client.index({ index, id: id.toString(), document: doc, refresh: true });
-        } catch (err) { throw err; }
+
+            // Forzamos que el campo 'type' exista para que las agregaciones funcionen
+            if (!doc.type) doc.type = type;
+
+            delete doc._id;
+            delete doc.__v;
+
+            return await client.index({
+                index,
+                id: id.toString(),
+                document: doc,
+                refresh: true
+            });
+        } catch (err) {
+            console.error("--- [ERROR EN UPSERT] ---", err);
+            throw err;
+        }
     }
 };
 

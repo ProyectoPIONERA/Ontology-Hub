@@ -21,8 +21,8 @@ var http = require("http");
 var negotiate = require("express-negotiate");
 const multer = require("multer");
 const upload = multer();
-//var elasticsearch = require("@elastic/elasticsearch");
-var elasticsearch = require("elasticsearch");
+var elasticsearch = require("@elastic/elasticsearch");
+//var elasticsearch = require("elasticsearch");
 var fs = require("fs");
 var nodemailer = require("nodemailer");
 
@@ -62,15 +62,12 @@ var esclient = new elasticsearch.Client({
 */
 
 var esclient = new elasticsearch.Client({
-    host: [
-        {
-            protocol: 'http',
-            host: config.es.host,
-            port: config.es.port,
-            auth: config.es.user + ":" + config.es.pass // El usuario y pass van aquí dentro
-        }
-    ],
-    ssl: { rejectUnauthorized: false }, // Muy importante en Docker
+    node: `http://${config.es.host}:${config.es.port}`,
+    auth: {
+        username: config.es.user,
+        password: config.es.pass
+    },
+    tls: { rejectUnauthorized: false }, // Muy importante en Docker
     log: "error"
 });
 
