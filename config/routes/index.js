@@ -415,6 +415,43 @@ router.get(
   }
 );
 
+router.get("/dataset/vocabs/:vocabPx/artifacts/:type/:fileName", function (req, res) {
+  const allowedTypes = ["requirements", "conceptualization", "shapes", "examples", "tests"];
+  const type = req.params.type;
+  
+  if (!allowedTypes.includes(type)) {
+    return res.status(400).send("Invalid artifact type");
+  }
+
+  const vocabId = req.vocab && req.vocab._id ? String(req.vocab._id) : null;
+  if (!vocabId) return res.status(404).send("Vocabulary not found");
+
+  const fileName = req.params.fileName;
+
+  if (fileName.includes("..") || fileName.includes("/") || fileName.includes("\\")) {
+    return res.status(400).send("Invalid file name");
+  }
+
+  const filePath = path.resolve(__dirname, "..", "..", "versions", vocabId, type, fileName);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send("Artifact not found");
+  }
+
+  const forceDownload = String(req.query.download || "") === "1";
+  if(forceDownload){
+    return res.download(filePath, fileName);
+  }
+  //just view
+  res.setHeader("Content-Disposition", 'inline; filename="${fileName}"');
+  res.setHeader("X-Content-Type_options", "nosniff");
+  res.type(path.extname(fileName));
+
+  return res.sendFile(filePath);
+  
+  
+});
+
 router.get("/dataset/vocabs/:vocabPx", (req, res) => {
   vocabularies.show(req, res, config.lov);
 });

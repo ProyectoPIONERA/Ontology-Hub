@@ -64,6 +64,16 @@ block content
                           td isDefinedBy
                           td
                             a(href='#{vocab.isDefinedBy}', target='_blank') #{vocab.isDefinedBy}
+                      - var lic = vocab.license;
+                      - var licArr = (Array.isArray(lic) ? lic : (lic ? [lic] : []));
+
+                      if licArr.length > 0
+                        tr
+                          td License
+                          td
+                            each l in licArr
+                              a(href=l, target='_blank') #{l}
+                              br
                       if vocab.homepage
                         tr
                           td homepage
@@ -299,6 +309,37 @@ block content
                       - each tag in vocab.tags
                         li
                           a.tag(href='/dataset/vocabs?tag='+encodeURIComponent(tag)) #{tag}
+                .clear
+                h2 Artifacts
+                .line
+                .asideListFloat
+
+                  - var labels = {requirements:"Requirements", conceptualization:"Conceptualization", shapes:"SHACL Shapes", examples:"Examples", tests:"Tests"};
+                  - var types  = ["requirements","conceptualization","shapes","examples","tests"];
+                  - var any = Object.keys(artifacts || {}).some(function(k){ return (artifacts[k] || []).length; });
+                  
+                  if (artifacts && any)
+                    each t in types
+                      - var files = (artifacts[t] || []);
+                      if (files.length)
+                        .artifact-group
+                          h3.artifact-title= labels[t] || t
+                          ul.artifact-list
+                            each f in files
+                              - var url = '/dataset/vocabs/' + vocab.prefix + '/artifacts/' + t + '/' + encodeURIComponent(f);
+                              - var lower = (f || '').toLowerCase();
+                              - var isImg = (lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.gif') || lower.endsWith('.svg') || lower.endsWith('.webp'));
+                              - var isDrawio = lower.endsWith('.drawio');
+                              - var isRDF = lower.endsWith('.rdf');
+                              li.artifact-item
+                                .artifact-row
+                                  span.artifact-name(title=f)= f
+                                  .artifact-actions
+                                    if (!isDrawio && !isRDF)
+                                      a.artifact-btn(href=url, target='_blank') View
+                                    a.artifact-btn.artifact-btn-primary(href=url + '?download=1') Download                               
+                  else
+                    span No artifacts found
                 .clear
                 h2 LOD
                 .line

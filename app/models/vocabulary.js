@@ -47,6 +47,7 @@ var VocabularySchema = new Schema({
     },
   ],
   tags: [{ type: String, trim: true }],
+  license: [{type: String, trim:true}],
   issuedAt: { type: Date }, //first publication of the vocabulary on the WEB (not in LOV)
   createdInLOVAt: { type: Date }, //creation of the record in LOV
   lastModifiedInLOVAt: { type: Date }, //last modification of the record in LOV (either by the BOT or a curator)
@@ -72,6 +73,7 @@ var VocabularySchema = new Schema({
       diagramPath: { type: String, trim: true },
       issued: { type: Date },
       isReviewed: { type: Boolean, default: false },
+      license: [{type: String, trim: true}],
       classNumber: { type: String, trim: true },
       propertyNumber: { type: String, trim: true },
       instanceNumber: { type: String, trim: true },
