@@ -107,7 +107,9 @@ exports.apiListVocabs = function (req, res) {
  */
 exports.apiPrefixExists = function (req, res) {
   if (!(req.query.prefix != null))
-    return res.send(500, "You must provide a value for 'prefix' parameter");
+    return res
+      .status(500)
+      .send("You must provide a value for 'prefix' parameter");
   Vocabulary.testIfPrefixExists(req.query.prefix, function (err, count) {
     return standardCallback(req, res, err, { count: count });
   });
@@ -132,9 +134,11 @@ exports.apiTags = function (req, res) {
  */
 exports.apiInfoVocab = function (req, res) {
   if (!(req.query.vocab != null))
-    return res.send(500, "You must provide a value for 'vocab' parameter");
+    return res
+      .status(500)
+      .send("You must provide a value for 'vocab' parameter");
   Vocabulary.loadFromPrefixURINSP(req.query.vocab, function (err, vocab) {
-    if (err) return res.send(500, err);
+    if (err) return res.status(500).send(err);
     //store log in DB
     var exists = vocab ? 1 : 0;
     var log = new LogSearch({
@@ -280,7 +284,7 @@ exports.apiDistributionDetails = function (req, res) {
  */
 exports.jsonLDListVocabs = function (req, res) {
   Vocabulary.listPrefixNspUri(function (err, vocabs) {
-    if (err) return res.send(500, err);
+    if (err) return res.status(500).send(err);
     var contexts = {};
     for (x in vocabs) {
       contexts[vocabs[x].prefix] = vocabs[x].nsp;
@@ -295,18 +299,18 @@ exports.jsonLDListVocabs = function (req, res) {
 /* depending on result, send the appropriate response code */
 function standardCallback(req, res, err, results) {
   if (err != null) {
-    return res.send(500, err);
+    return res.status(500).send(err);
   } else if (!(results != null)) {
-    return res.send(404, "API returned no results");
+    return res.status(404).send("API returned no results");
   } else {
-    return res.send(200, results);
+    return res.status(200).send(results);
   }
 }
 
 /* return a notification of a bad request */
 function standardBadRequestHandler(req, res, helpText) {
   res.set("Content-Type", "text/plain");
-  return res.send(400, helpText);
+  return res.status(400).send(helpText);
 }
 
 /**

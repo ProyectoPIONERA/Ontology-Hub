@@ -20,8 +20,14 @@
     "npm": "1.2.x"
   },
   "scripts": {
-    "start": "NODE_ENV=development ./node_modules/.bin/nodemon server.js",
-    "test": "NODE_ENV=test ./node_modules/.bin/mocha --reporter spec --timeout 10000 test/test-*.js"
+    "start": "cross-env NODE_ENV=development nodemon server.js",
+    "test": "cross-env NODE_ENV=test mocha --require test/mocha-root-hooks.js --reporter spec --timeout 10000 --exit \"test/**/*.js\"",
+    "test:int:core": "cross-env NODE_ENV=test mocha --require test/mocha-root-hooks.js --reporter spec --timeout 30000 --exit \"test/test-integration-api-v2-terms.js\" \"test/test-integration-api-v2-agents.js\" \"test/test-integration-api-v2-vocabs.js\" \"test/test-integration-api-v2-remaining.js\" \"test/test-integration-smoke.js\"",
+    "test:int:sparql": "cross-env NODE_ENV=test mocha --require test/mocha-root-hooks.js --reporter spec --timeout 30000 --exit \"test/test-integration-sparql.js\" \"test/test-integration-downloads-and-sparql-get.js\"",
+    "test:int:external": "cross-env NODE_ENV=test RUN_EXTERNAL_TESTS=1 mocha --require test/mocha-root-hooks.js --reporter spec --timeout 30000 --exit \"test/test-integration-external.js\"",
+    "test:contract": "cross-env NODE_ENV=test mocha --require test/mocha-root-hooks.js --reporter spec --timeout 30000 --exit \"test/contract/**/*.js\"",
+    "test:int:all": "npm run test:int:core && npm run test:int:sparql && npm run test:contract",
+    "test:int:all:external": "npm run test:int:all && npm run test:int:external"
   },
   "dependencies": {
     "@elastic/elasticsearch": "^8.13.1",
@@ -60,9 +66,11 @@
     "winston": "^3.13.0"
   },
   "devDependencies": {
+    "cross-env": "^10.1.0",
+    "jest": "^30.2.0",
     "mocha": "latest",
     "nodemon": "latest",
     "should": "latest",
-    "supertest": "latest"
+    "supertest": "^7.2.2"
   }
 }

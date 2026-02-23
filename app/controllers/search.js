@@ -1436,29 +1436,57 @@ exports.apiAutocompleteLabelsTerms = function (req, res, esclient) {
       },
     };
 
-    esclient.suggest(query).then(function (resp) {
-      var results = [];
-      res.header("Content-type", "application/json; charset=utf-8");
-      res.json(resp.autocomplete[0].options);
-    });
+    if (!esclient || typeof esclient.suggest !== "function") {
+      return res.status(503).json({
+        error: "Search backend unavailable",
+        details: "Autocomplete labels is not supported by current ES client",
+      });
+    }
+
+    esclient
+      .suggest(query)
+      .then(function (resp) {
+        res.header("Content-type", "application/json; charset=utf-8");
+        res.json(resp.autocomplete[0].options);
+      })
+      .catch(function (err) {
+        return standardCallback(req, res, err, null);
+      });
   }
 };
 
 /* return a notification of a bad request */
 function standardBadRequestHandler(req, res, helpText) {
   res.set("Content-Type", "text/plain");
-  return res.send(400, helpText);
+  return res.status(400).send(helpText);
 }
 
 /* depending on result, send the appropriate response code */
 function standardCallback(req, res, err, results) {
   if (err != null) {
-    return res.send(500, err);
+    var errMessage = err && err.message ? err.message : String(err);
+    var errDump = "";
+    try {
+      errDump = JSON.stringify(err);
+    } catch (e) {
+      errDump = String(err);
+    }
+    var errText = (errMessage + " " + errDump).toLowerCase();
+    if (
+      /econnrefused|no living connections|enotfound|ehostunreach|connectionfault|responseerror|index_not_found_exception|search_phase_execution_exception|unsupported by current es client/.test(
+        errText
+      )
+    ) {
+      return res
+        .status(503)
+        .json({ error: "Search backend unavailable", details: errMessage });
+    }
+    return res.status(500).send(err);
   } else if (!(results != null)) {
-    return res.send(404, "API returned no results");
+    return res.status(404).send("API returned no results");
   } else {
     res.header("Content-Type", "application/json; charset=utf-8");
-    return res.send(200, results);
+    return res.status(200).send(results);
   }
 }
 
@@ -1626,9 +1654,24 @@ function execSearchScoreExplain(
       max_nbDatasets: { max: { field: "metrics.reusedByDatasets" } },
     },
   };
-  client
-    .search(indexName, type, qAgg)
-    .on("data", function (data) {
+  var aggReq;
+  try {
+    aggReq = client.search(indexName, type, qAgg);
+  } catch (error) {
+    return callback(error, null);
+  }
+
+  if (!aggReq || typeof aggReq.on !== "function" || typeof aggReq.exec !== "function") {
+    if (aggReq && typeof aggReq.catch === "function") {
+      aggReq.catch(function () {});
+    }
+    return callback(
+      new Error("Search score explain unsupported by current ES client"),
+      null
+    );
+  }
+
+  aggReq.on("data", function (data) {
       /* get the max values from the aggregations of the previous query */
       var maxOcc = parseFloat(
         JSON.parse(data).aggregations.max_occurrences.value
@@ -1756,8 +1799,28 @@ function execSearchScoreExplain(
         },
       };
       /* build and return the result JSON object */
-      return client
-        .search(indexName, type, q)
+      var searchReq;
+      try {
+        searchReq = client.search(indexName, type, q);
+      } catch (error) {
+        return callback(error, null);
+      }
+
+      if (
+        !searchReq ||
+        typeof searchReq.on !== "function" ||
+        typeof searchReq.exec !== "function"
+      ) {
+        if (searchReq && typeof searchReq.catch === "function") {
+          searchReq.catch(function () {});
+        }
+        return callback(
+          new Error("Search score explain unsupported by current ES client"),
+          null
+        );
+      }
+
+      return searchReq
         .on("data", function (data) {
           var hit, parsed, result, x;
           parsed = JSON.parse(data).hits;
@@ -1824,7 +1887,9 @@ function execSearchScoreExplain(
           return callback(error, null);
         })
         .exec();
-    })
+    });
+
+  aggReq
     .on("error", function (error) {
       return callback(error, null);
     })

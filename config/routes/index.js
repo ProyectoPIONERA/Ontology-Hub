@@ -18,6 +18,8 @@ var users = require("../../app/controllers/users"),
   LogSparql = mongoose.model("LogSparql");
 
 var http = require("http");
+var https = require("https");
+var urlLib = require("url");
 var negotiate = require("express-negotiate");
 const multer = require("multer");
 const upload = multer();
@@ -369,39 +371,51 @@ router.get("/dataset/vocabs", function (req, res) {
 
 router.get(
   "/dataset/vocabs/:vocabPx/versions/:date.n3",
-  function (req, res) {
+  function (req, res, next) {
     res.set("Content-Type", "text/n3");
+    const filePath = require("path").resolve(
+      __dirname +
+        "/../../versions/" +
+        req.vocab._id +
+        "/" +
+        req.vocab._id +
+        "_" +
+        req.params.date +
+        ".n3"
+    );
     res.download(
-      require("path").resolve(
-        __dirname +
-          "/../../versions/" +
-          req.vocab._id +
-          "/" +
-          req.vocab._id +
-          "_" +
-          req.params.date +
-          ".n3"
-      ),
-      req.params.vocabPx + "_" + req.params.date + ".n3"
+      filePath,
+      req.params.vocabPx + "_" + req.params.date + ".n3",
+      function (err) {
+        if (!err) return;
+        if (err.code === "ENOENT" || err.status === 404 || err.statusCode === 404) {
+          return res.status(404).send("Version file not found");
+        }
+        return next(err);
+      }
     );
   }
 );
 
 router.get(
   "/dataset/vocabs/versions/:identifier/diagrams/:fileName.svg",
-  function (req, res) {
+  function (req, res, next) {
     res.set("Content-Type", "text/n3");
-    res.download(
-      require("path").resolve(
-        __dirname +
-          "/../../versions/" +
-          req.params.identifier +
-          "/diagrams/" +
-          req.params.fileName +
-          ".svg"
-      ),
-      req.params.fileName + ".svg"
+    const filePath = require("path").resolve(
+      __dirname +
+        "/../../versions/" +
+        req.params.identifier +
+        "/diagrams/" +
+        req.params.fileName +
+        ".svg"
     );
+    res.download(filePath, req.params.fileName + ".svg", function (err) {
+      if (!err) return;
+      if (err.code === "ENOENT" || err.status === 404 || err.statusCode === 404) {
+        return res.status(404).send("Diagram file not found");
+      }
+      return next(err);
+    });
     /*res.send(
       require("path").resolve(
         __dirname +
@@ -667,6 +681,484 @@ router.get("/dataset/api/v2/log/queryVocEvent", function (req, res) {
   logs.queryVocEvent(req, res);
 });
 
+function callAstreaUpStream(target, cb) {
+  var payload = JSON.stringify({ ontologies: [target] });
+  var options = {
+    hostname: "astrea.linkeddata.es",
+    path: "/api/shacl/url",
+    method: "POST",
+    headers: {
+      Accept: "text/rdf+turtle,text/plain,*/*",
+      "Content-Type": "application/json",
+      "Content-Length": Buffer.byteLength(payload),
+    },
+    timeout: 20000,
+  };
+
+  var proxyReq = https.request(options, function (proxyRes) {
+    var chunks = [];
+    proxyRes.on("data", function (c) {
+      chunks.push(c);
+    });
+    proxyRes.on("end", function () {
+      var body = Buffer.concat(chunks).toString("utf8");
+      cb(null, proxyRes.statusCode || 500, body);
+    });
+  });
+
+  proxyReq.on("timeout", function () {
+    proxyReq.destroy(new Error("Astrea timeout"));
+  });
+  proxyReq.on("error", function (err) {
+    cb(err);
+  });
+  proxyReq.write(payload);
+  proxyReq.end();
+}
+
+function callAstreaUpStreamByFile(sourceText, cb) {
+  var boundary = "----AstreaBoundary" + Date.now();
+  var fileHeader =
+    "--" +
+    boundary +
+    "\r\n" +
+    'Content-Disposition: form-data; name="file"; filename="ontology.ttl"\r\n' +
+    "Content-Type: text/turtle\r\n\r\n";
+  var formatPart =
+    "\r\n--" +
+    boundary +
+    '\r\nContent-Disposition: form-data; name="format"\r\n\r\nTurtle';
+  var fileFooter = "\r\n--" + boundary + "--\r\n";
+  var payload = Buffer.from(
+    fileHeader + String(sourceText || "") + formatPart + fileFooter,
+    "utf8"
+  );
+
+  var options = {
+    hostname: "astrea.linkeddata.es",
+    path: "/api/shacl/file",
+    method: "POST",
+    headers: {
+      Accept: "text/rdf+turtle,text/plain,*/*",
+      "Content-Type": "multipart/form-data; boundary=" + boundary,
+      "Content-Length": payload.length,
+    },
+    timeout: 20000,
+  };
+
+  var proxyReq = https.request(options, function (proxyRes) {
+    var chunks = [];
+    proxyRes.on("data", function (c) {
+      chunks.push(c);
+    });
+    proxyRes.on("end", function () {
+      var body = Buffer.concat(chunks).toString("utf8");
+      cb(null, proxyRes.statusCode || 500, body);
+    });
+  });
+
+  proxyReq.on("timeout", function () {
+    proxyReq.destroy(new Error("Astrea timeout"));
+  });
+
+  proxyReq.on("error", function (err) {
+    cb(err);
+  });
+
+  proxyReq.write(payload);
+  proxyReq.end();
+}
+
+function fetchTextFromUrlNoRedirect(targetUrl, callback) {
+  var parsed = urlLib.parse(targetUrl);
+  var client = parsed.protocol === "https:" ? https : http;
+
+  var reqOptions = {
+    hostname: parsed.hostname,
+    port: parsed.port,
+    path: parsed.path,
+    method: "GET",
+    timeout: 20000,
+    headers: {
+      Accept: "text/turtle,text/rdf+turtle,text/plain,*/*;q=0.8",
+    },
+  };
+
+  var req = client.request(reqOptions, function (resp) {
+    var chunks = [];
+    resp.on("data", function (c) {
+      chunks.push(c);
+    });
+    resp.on("end", function () {
+      var body = Buffer.concat(chunks).toString("utf8");
+      if (resp.statusCode >= 200 && resp.statusCode < 300) {
+        return callback(null, body);
+      }
+      return callback(new Error("Source fetch failed with status " + resp.statusCode));
+    });
+  });
+
+  req.on("timeout", function () {
+    req.destroy(new Error("Source fetch timeout"));
+  });
+
+  req.on("error", function (err) {
+    callback(err);
+  });
+
+  req.end();
+}
+
+
+router.get("/dataset/api/v2/validators/astrea", function (req, res) {
+  var uri = req.query && req.query.uri ? String(req.query.uri).trim() : "";
+  var sourceUrlRaw =
+    req.query && req.query.sourceUrl ? String(req.query.sourceUrl).trim() : "";
+  var sourceUrl = resolveSourceUrl(req, sourceUrlRaw);
+  if (!uri && !sourceUrl) {
+    return res.status(400).send("Missing required query param: uri or sourceUrl");
+  }
+
+  function doneIfOk(status, body) {
+    if (status >= 200 && status < 300 && body && body.trim()) {
+      res.set("Content-Type", "text/turtle; charset=utf-8");
+      res.status(200).send(body);
+      return true;
+    }
+    return false;
+  }
+
+  function trysource() {
+    if (!sourceUrl)
+      return res.status(502).send("Astrea failed with uri and no sourceUrl provided");
+
+    fetchTextFromUrlNoRedirect(sourceUrl, function (fetchErr, sourceText) {
+      if (fetchErr) {
+        return res.status(502).send(fetchErr.message || "Failed to fetch source ontology");
+      }
+
+      callAstreaUpStreamByFile(sourceText, function (err2, status2, body2) {
+        if (err2) {
+          return res.status(502).send(err2.message || "Astrea proxy request failed");
+        }
+        if (doneIfOk(status2, body2)) return;
+        return res.status(status2 || 502).send(body2 || "Astrea upstream error");
+      });
+    });
+  }
+
+  if (uri) {
+    callAstreaUpStream(uri, function (err, status, body) {
+      if (err) return trysource();
+      if (doneIfOk(status, body)) return;
+      return trysource();
+    });
+  } else {
+    trysource();
+  }
+});
+
+function resolveSourceUrl(req, sourceUrl) {
+  var clean = sourceUrl ? String(sourceUrl).trim() : "";
+  if (!clean) {
+    return "";
+  }
+  if (/^https?:\/\//i.test(clean)) {
+    return clean;
+  }
+  if (clean.charAt(0) !== "/") {
+    clean = "/" + clean;
+  }
+  return req.protocol + "://" + req.get("host") + clean;
+}
+
+function fetchTextFromUrl(targetUrl, callback, redirectsLeft) {
+  var redirects = typeof redirectsLeft === "number" ? redirectsLeft : 3;
+  var parsed = urlLib.parse(targetUrl);
+  var client = parsed.protocol === "https:" ? https : http;
+  var reqOptions = {
+    hostname: parsed.hostname,
+    port: parsed.port,
+    path: parsed.path,
+    method: "GET",
+    timeout: 20000,
+    headers: {
+      Accept: "text/plain,text/turtle,text/rdf+turtle,*/*;q=0.8",
+    },
+  };
+
+  var sourceReq = client.request(reqOptions, function (sourceRes) {
+    if (
+      sourceRes.statusCode >= 300 &&
+      sourceRes.statusCode < 400 &&
+      sourceRes.headers &&
+      sourceRes.headers.location &&
+      redirects > 0
+    ) {
+      return fetchTextFromUrl(
+        urlLib.resolve(targetUrl, sourceRes.headers.location),
+        callback,
+        redirects - 1
+      );
+    }
+
+    var chunks = [];
+    sourceRes.on("data", function (chunk) {
+      chunks.push(chunk);
+    });
+    sourceRes.on("end", function () {
+      var body = Buffer.concat(chunks).toString("utf8");
+      if (sourceRes.statusCode >= 200 && sourceRes.statusCode < 300) {
+        return callback(null, body);
+      }
+      return callback(
+        new Error("Source fetch failed with status " + sourceRes.statusCode)
+      );
+    });
+  });
+
+  sourceReq.on("timeout", function () {
+    sourceReq.destroy(new Error("Source fetch timeout"));
+  });
+
+  sourceReq.on("error", function (err) {
+    callback(err);
+  });
+
+  sourceReq.end();
+}
+
+function proxyThemisExample(sourceText, res) {
+  var body = sourceText ? String(sourceText) : "";
+  if (!body) {
+    return res.status(400).send("Missing ontology source content");
+  }
+
+  var options = {
+    hostname: "themis.linkeddata.es",
+    path: "/rest/api/example",
+    method: "POST",
+    headers: {
+      Accept: "application/json, text/plain, */*",
+      "Content-Type": "text/plain",
+      "Content-Length": Buffer.byteLength(body),
+    },
+    timeout: 20000,
+  };
+
+  var proxyReq = http.request(options, function (proxyRes) {
+    var chunks = [];
+    proxyRes.on("data", function (chunk) {
+      chunks.push(chunk);
+    });
+    proxyRes.on("end", function () {
+      var resp = Buffer.concat(chunks).toString("utf8");
+      if (proxyRes.statusCode >= 200 && proxyRes.statusCode < 300) {
+        res.set("Content-Type", "text/plain; charset=utf-8");
+        return res.status(200).send(resp);
+      }
+      return res.status(proxyRes.statusCode || 502).send(resp || "Themis upstream error");
+    });
+  });
+
+  proxyReq.on("timeout", function () {
+    proxyReq.destroy(new Error("Themis timeout"));
+  });
+
+  proxyReq.on("error", function (err) {
+    var msg = err && err.message ? err.message : "Themis proxy request failed";
+    return res.status(502).send(msg);
+  });
+
+  proxyReq.write(body);
+  proxyReq.end();
+}
+
+function callThemisResultsUpstream(ontologyInput, testfile, cb, ontologyCode) {
+  var ontologyValue = String(ontologyInput || "").trim();
+  var payloadObj = {};
+  if (ontologyValue) {
+    payloadObj.ontologies = [ontologyValue];
+  }
+  if (ontologyCode && String(ontologyCode).trim()) {
+    payloadObj.ontologiesCode = [String(ontologyCode)];
+  }
+  if (testfile) {
+    var normalizedTestfile = normalizeThemisTestfile(testfile);
+    if (normalizedTestfile) {
+      payloadObj.testfile = normalizedTestfile;
+    }
+  }
+
+  var payload = JSON.stringify(payloadObj);
+  var options = {
+    hostname: "themis.linkeddata.es",
+    path: "/rest/api/results",
+    method: "POST",
+    headers: {
+      Accept: "application/json, text/plain, */*",
+      "Content-Type": "application/json",
+      "Content-Length": Buffer.byteLength(payload),
+    },
+    timeout: 20000,
+  };
+
+  var proxyReq = http.request(options, function (proxyRes) {
+    var chunks = [];
+    proxyRes.on("data", function (chunk) {
+      chunks.push(chunk);
+    });
+    proxyRes.on("end", function () {
+      var body = Buffer.concat(chunks).toString("utf8");
+      cb(null, proxyRes.statusCode || 500, body);
+    });
+  });
+
+  proxyReq.on("timeout", function () {
+    proxyReq.destroy(new Error("Themis timeout"));
+  });
+
+  proxyReq.on("error", function (err) {
+    cb(err);
+  });
+
+  proxyReq.write(payload);
+  proxyReq.end();
+}
+
+function sendThemisResultsResponse(res, status, body) {
+  if (status >= 200 && status < 300) {
+    res.set("Content-Type", "text/plain; charset=utf-8");
+    return res.status(200).send(body);
+  }
+  var upstreamStatus = status || 502;
+  var upstreamBody = body && body.trim()
+    ? body
+    : "Themis upstream error (status " + upstreamStatus + ")";
+  return res.status(upstreamStatus).send(upstreamBody);
+}
+
+function runThemisResultsWithFallback(uri, testfile, sourceUrl, req, res) {
+  if (!uri) {
+    return res.status(400).send("Missing required param: uri");
+  }
+
+  return callThemisResultsUpstream(uri, testfile, function (err, status, body) {
+    if (!err && status >= 200 && status < 300 && body && body.trim()) {
+      return sendThemisResultsResponse(res, status, body);
+    }
+
+    if (!sourceUrl) {
+      if (err) {
+        var msg = err && err.message ? err.message : "Themis proxy request failed";
+        return res.status(502).send(msg);
+      }
+      return sendThemisResultsResponse(res, status, body);
+    }
+
+    var targetUrl = resolveSourceUrl(req, sourceUrl);
+    return fetchTextFromUrlNoRedirect(targetUrl, function (fetchErr, sourceText) {
+      if (fetchErr) {
+        if (err) {
+          return res.status(502).send(err.message || "Themis proxy request failed");
+        }
+        return sendThemisResultsResponse(res, status, body);
+      }
+
+      return callThemisResultsUpstream("", testfile, function (err2, status2, body2) {
+        if (err2) {
+          return res.status(502).send(err2.message || "Themis proxy request failed");
+        }
+        return sendThemisResultsResponse(res, status2, body2);
+      }, sourceText);
+    });
+  });
+}
+
+function normalizeThemisTestfile(raw) {
+  if (raw === null || typeof raw === "undefined") {
+    return "";
+  }
+
+  if (typeof raw === "object") {
+    if (typeof raw.testfile === "string") {
+      return raw.testfile;
+    }
+    if (typeof raw.tests === "string") {
+      return raw.tests;
+    }
+    return JSON.stringify(raw);
+  }
+
+  var text = String(raw);
+  var trimmed = text.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  if (trimmed.charAt(0) === "{" || trimmed.charAt(0) === "[") {
+    try {
+      var parsed = JSON.parse(trimmed);
+      if (parsed && typeof parsed === "object") {
+        if (typeof parsed.testfile === "string") {
+          return parsed.testfile;
+        }
+        if (typeof parsed.tests === "string") {
+          return parsed.tests;
+        }
+        if (typeof parsed.example === "string") {
+          return parsed.example;
+        }
+      }
+    } catch (e) {}
+  }
+
+  return text;
+}
+
+router.post("/dataset/api/v2/validators/themis/example", function (req, res) {
+  var sourceText = req.body && req.body.sourceText ? String(req.body.sourceText) : "";
+  var sourceUrl = req.body && req.body.sourceUrl ? String(req.body.sourceUrl) : "";
+
+  if (sourceText) {
+    return proxyThemisExample(sourceText, res);
+  }
+  if (!sourceUrl) {
+    return res.status(400).send("Missing required body param: sourceUrl or sourceText");
+  }
+
+  var targetUrl = resolveSourceUrl(req, sourceUrl);
+  return fetchTextFromUrl(targetUrl, function (err, text) {
+    if (err) {
+      return res.status(502).send(err.message || "Failed to fetch ontology source");
+    }
+    return proxyThemisExample(text, res);
+  });
+});
+
+router.get("/dataset/api/v2/validators/themis", function (req, res) {
+  var uri = req.query && req.query.uri ? String(req.query.uri).trim() : "";
+  var sourceUrl = req.query && req.query.sourceUrl ? String(req.query.sourceUrl).trim() : "";
+  var testfile = req.query && req.query.testfile ? String(req.query.testfile) : "";
+  if (!uri) {
+    return res.status(400).send("Missing required query param: uri");
+  }
+  return runThemisResultsWithFallback(uri, testfile, sourceUrl, req, res);
+});
+
+router.post("/dataset/api/v2/validators/themis", function (req, res) {
+  var uri = req.body && req.body.uri ? String(req.body.uri).trim() : "";
+  var sourceUrl = req.body && req.body.sourceUrl ? String(req.body.sourceUrl).trim() : "";
+  var testfile = req.body && (req.body.tests || req.body.testfile)
+    ? String(req.body.tests || req.body.testfile)
+    : "";
+  if (!uri) {
+    return res.status(400).send("Missing required body param: uri");
+  }
+  return runThemisResultsWithFallback(uri, testfile, sourceUrl, req, res);
+});
+
+
 router.get("/dataset/api/v2/patterns", function (req, res) {
   vocabularies.detectPatterns(
     req,
@@ -780,6 +1272,7 @@ router.post("/dataset/sparql", function (req, res, next) {
 
 const { spawn } = require('child_process');
 const path = require('path');
+const { hostname } = require("os");
 
 
 router.post('/edition/indexAll', auth.requiresLogin, auth.requiresAdmin, (req, res) => {
@@ -811,6 +1304,10 @@ function executeSPARQLQuery(
   defaultGraphUri,
   namedGraphUri
 ) {
+  if (!query) {
+    return res.status(400).send("Missing required parameter: query");
+  }
+
   var sparqlExecTime = Date.now();
   let sparqlPath = "/lov/sparql?query=" + encodeURIComponent(query);
   if (defaultGraphUri)
@@ -825,7 +1322,7 @@ function executeSPARQLQuery(
     path: sparqlPath,
     headers: headers,
   };
-  http.get(options, function (response) {
+  var proxyReq = http.get(options, function (response) {
     var bodyChunks = [];
     response.on("data", function (d) {
       bodyChunks.push(d);
@@ -848,8 +1345,18 @@ function executeSPARQLQuery(
           console.log(err);
         });
       res.set(response.headers);
-      res.send(200, body);
+      res.status(response.statusCode || 200).send(body);
     });
+  });
+
+  proxyReq.setTimeout(10000, function () {
+    proxyReq.destroy(new Error("SPARQL backend timeout"));
+  });
+
+  proxyReq.on("error", function (err) {
+    var msg =
+      err && err.message ? err.message : "SPARQL backend unavailable";
+    return res.status(503).send(msg);
   });
 }
 
