@@ -875,20 +875,56 @@ exports.detectGlobalPatterns = function (patterns, python_patterns, cb) {
     });
 };
 
-exports.update = function (req, res) {
-  var vocab = req.vocab;
-  vocab = _.extend(vocab, req.body);
-  vocab
-    .save()
-    .then(() => {
-      res.send({ redirect: "/dataset/vocabs/" + vocab.prefix });
-    })
-    .catch((err) => {
-      return res.render("500", {
-        app_name_shorcut: app_name_shorcut,
-        app_name: app_name,
+exports.update = async function (req, res) {
+  try {
+    let vocab = req.vocab;
+    const oldPrefix = vocab.prefix; // Guardamos el prefijo anterior para comparar
+
+    // Actualizamos el objeto con los datos del body
+    vocab = _.extend(vocab, req.body);
+    const newPrefix = vocab.prefix;
+
+    // 1. Guardar cambios en MongoDB
+    await vocab.save();
+
+    // 2. Actualizar en Elasticsearch (Índice de Vocabularios)
+    // El upsert se encarga de sobrescribir el documento usando el mismo ID
+    await ElasticService.upsert('vocabulary', vocab._id, vocab);
+
+    // 3. ¿Cambió el prefijo?
+    // Si el prefijo cambió, debemos actualizar todos los términos asociados
+    // para que sigan vinculados al vocabulario correcto en las búsquedas.
+    if (oldPrefix !== newPrefix) {
+      console.log(`[Elastic] Prefijo cambiado de ${oldPrefix} a ${newPrefix}. Actualizando términos...`);
+
+      const termIndices = ['lov_class', 'lov_property', 'lov_datatype', 'lov_instance'];
+
+      await ElasticService.client.updateByQuery({
+        index: termIndices,
+        refresh: true,
+        body: {
+          script: {
+            source: "ctx._source.vocabularyPrefix = params.newPrefix",
+            lang: "painless",
+            params: { newPrefix: newPrefix }
+          },
+          query: {
+            term: { "vocabularyPrefix.keyword": oldPrefix }
+          }
+        }
       });
+    }
+
+    // Respuesta para el frontend (manejando el redirect desde el cliente)
+    res.send({ redirect: "/dataset/vocabs/" + newPrefix });
+
+  } catch (err) {
+    console.error("[update vocab error]", err);
+    return res.status(500).render("500", {
+      app_name_shorcut: "LOV",
+      app_name: "Linked Open Vocabularies"
     });
+  }
 };
 
 exports.destroy = async function (req, res) {
@@ -897,15 +933,42 @@ exports.destroy = async function (req, res) {
     if (!vocab) return res.status(404).send("Vocabulary not found");
 
     const vocabId = String(vocab._id);
+    const prefix = vocab.prefix; // Usaremos el prefijo para limpiar los términos en Elastic
 
-    // Delete all versions
+    // 1. Borrar archivos físicos (Versiones)
     const versionsDir = path.resolve(__dirname, "..", "..", "versions", vocabId);
     if (fs.existsSync(versionsDir)) {
       fs.rmSync(versionsDir, { recursive: true, force: true });
     }
 
-    // Delete on Mongo
+    // 2. Borrar en MongoDB
     await Vocabulary.deleteOne({ _id: vocab._id });
+
+    // 3. Borrar en Elasticsearch
+    console.log(`[Elastic] Iniciando limpieza para vocabulario: ${prefix}`);
+
+    // 3a. Borrar el documento del Vocabulario
+    await client.delete({
+      index: 'lov_vocabulary',
+      id: vocabId,
+      refresh: true
+    }).catch(e => console.warn("[Elastic] El vocabulario no existía en el índice"));
+
+    // 3b. Borrar todos los términos asociados (Clases, Propiedades, Datatypes)
+    // Usamos deleteByQuery porque es más eficiente que borrar uno por uno
+    const termIndices = ['lov_class', 'lov_property', 'lov_datatype', 'lov_instance'];
+
+    await client.deleteByQuery({
+      index: termIndices,
+      refresh: true,
+      body: {
+        query: {
+          term: { "vocabularyPrefix.keyword": prefix } // Asumiendo que tus términos guardan el prefijo
+        }
+      }
+    }).catch(e => console.warn("[Elastic] Error o no se encontraron términos para borrar"));
+
+    console.log(`[Elastic] Limpieza completada para ${prefix}`);
 
     return res.redirect("/edition");
   } catch (err) {

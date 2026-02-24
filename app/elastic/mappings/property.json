@@ -30,8 +30,8 @@
     },
     "metrics": {
       "properties": {
-        "occurrencesInDatasets": { "type": "integer" },
-        "reusedByDatasets": { "type": "integer" }
+        "occurrencesInDatasets": { "type": "long" },
+        "reusedByDatasets": { "type": "long" }
       }
     },
     "tags": { "type": "keyword" }
