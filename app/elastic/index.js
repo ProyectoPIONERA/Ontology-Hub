@@ -165,6 +165,74 @@ const ElasticService = {
             console.error("--- [ERROR EN UPSERT] ---", err);
             throw err;
         }
+    },
+
+    delete: async function(index, id) {
+        try {
+            return await client.delete({
+                index,
+                id: id.toString(),
+                refresh: true
+            });
+        } catch (err) {
+            if (err.meta && err.meta.statusCode === 404) {
+                console.warn(`[Elastic] Document not found: ${index}/${id}`);
+                return null;
+            }
+            console.error("[Elastic Delete Error]", err);
+            throw err;
+        }
+    },
+
+    deleteByQuery: async function(indices, query) {
+        try {
+            // Filter out non-existent indices
+            const existingIndices = [];
+            for (const index of indices) {
+                try {
+                    const exists = await client.indices.exists({ index });
+                    if (exists) {
+                        existingIndices.push(index);
+                    } else {
+                        console.warn(`[Elastic] Index does not exist, skipping: ${index}`);
+                    }
+                } catch (e) {
+                    console.warn(`[Elastic] Could not check index existence: ${index}`);
+                }
+            }
+            
+            if (existingIndices.length === 0) {
+                console.warn("[Elastic] No indices found to delete from, skipping Elasticsearch cleanup");
+                return null;
+            }
+            
+            console.log(`[Elastic] Deleting from indices: ${existingIndices.join(', ')}`);
+            
+            return await client.deleteByQuery({
+                index: existingIndices,
+                refresh: true,
+                query: query
+            });
+        } catch (err) {
+            // Don't throw errors - Elasticsearch cleanup is not critical
+            // The main MongoDB deletion should always proceed
+            console.warn("[Elastic] DeleteByQuery failed, continuing anyway:", err.message);
+            return null;
+        }
+    },
+
+    updateByQuery: async function(indices, script, query) {
+        try {
+            return await client.updateByQuery({
+                index: indices,
+                refresh: true,
+                script: script,
+                query: query
+            });
+        } catch (err) {
+            console.error("[Elastic UpdateByQuery Error]", err);
+            throw err;
+        }
     }
 };
 

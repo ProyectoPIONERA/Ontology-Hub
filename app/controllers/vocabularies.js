@@ -937,20 +937,13 @@ exports.update = async function (req, res) {
 
       const termIndices = ['lov_class', 'lov_property', 'lov_datatype', 'lov_instance'];
 
-      await ElasticService.client.updateByQuery({
-        index: termIndices,
-        refresh: true,
-        body: {
-          script: {
-            source: "ctx._source.vocabularyPrefix = params.newPrefix",
-            lang: "painless",
-            params: { newPrefix: newPrefix }
-          },
-          query: {
-            term: { "vocabularyPrefix.keyword": oldPrefix }
-          }
-        }
-      });
+      await ElasticService.updateByQuery(termIndices, {
+          source: "ctx._source.vocabularyPrefix = params.newPrefix",
+          lang: "painless",
+          params: { newPrefix: newPrefix }
+        }, {
+          term: { "vocabularyPrefix.keyword": oldPrefix }
+        });
     }
 
     // Respuesta para el frontend (manejando el redirect desde el cliente)
@@ -981,32 +974,29 @@ exports.destroy = async function (req, res) {
 
     // 2. Borrar en MongoDB
     await Vocabulary.deleteOne({ _id: vocab._id });
+    console.log(`[MongoDB] Vocabulary deleted: ${prefix}`);
 
-    // 3. Borrar en Elasticsearch
+    // 3. Borrar en Elasticsearch (non-blocking, don't fail if ES is unavailable)
     console.log(`[Elastic] Iniciando limpieza para vocabulario: ${prefix}`);
 
-    // 3a. Borrar el documento del Vocabulario
-    await client.delete({
-      index: 'lov_vocabulary',
-      id: vocabId,
-      refresh: true
-    }).catch(e => console.warn("[Elastic] El vocabulario no existía en el índice"));
+    try {
+      // 3a. Borrar el documento del Vocabulario
+      await ElasticService.delete('lov_vocabulary', vocabId);
 
-    // 3b. Borrar todos los términos asociados (Clases, Propiedades, Datatypes)
-    // Usamos deleteByQuery porque es más eficiente que borrar uno por uno
-    const termIndices = ['lov_class', 'lov_property', 'lov_datatype', 'lov_instance'];
+      // 3b. Borrar todos los términos asociados (Clases, Propiedades, Datatypes)
+      // Usamos deleteByQuery porque es más eficiente que borrar uno por uno
+      const termIndices = ['lov_class', 'lov_property', 'lov_datatype', 'lov_instance'];
 
-    await client.deleteByQuery({
-      index: termIndices,
-      refresh: true,
-      body: {
-        query: {
-          term: { "vocabularyPrefix.keyword": prefix } // Asumiendo que tus términos guardan el prefijo
-        }
-      }
-    }).catch(e => console.warn("[Elastic] Error o no se encontraron términos para borrar"));
+      await ElasticService.deleteByQuery(termIndices, {
+        term: { "vocabularyPrefix.keyword": prefix }
+      });
 
-    console.log(`[Elastic] Limpieza completada para ${prefix}`);
+      console.log(`[Elastic] Limpieza completada para ${prefix}`);
+    } catch (esError) {
+      // Elasticsearch cleanup failed, but MongoDB deletion succeeded
+      // Don't fail the whole operation - vocabulary is already deleted
+      console.warn(`[Elastic] Cleanup failed but continuing: ${esError.message}`);
+    }
 
     return res.redirect("/edition");
   } catch (err) {
@@ -1655,10 +1645,10 @@ async function createVocab(req, res, error, stdout, stderr, scripts, lov, patter
           exports.generateStructures(vocab.prefix, vocab, "not_flatten", "both", python_patterns, patterns, false)
               .then(() => {
                 exports.detectGlobalPatterns(patterns, python_patterns, (err) => {
-                  return res.send({ redirect: "/dataset/lov/vocabs/" + vocab.prefix });
+                  return res.send({ redirect: "/dataset/vocabs/" + vocab.prefix });
                 });
               }).catch(err => {
-            return res.send({ redirect: "/dataset/lov/vocabs/" + vocab.prefix, err: "Structure failed" });
+            return res.send({ redirect: "/dataset/vocabs/" + vocab.prefix, err: "Structure failed" });
           });
         });
 
@@ -1668,7 +1658,7 @@ async function createVocab(req, res, error, stdout, stderr, scripts, lov, patter
       }
     });
   } else {
-    res.send({ redirect: "/dataset/lov/vocabs/", err: "No ontology found." });
+    res.send({ redirect: "/dataset/vocabs/", err: "No ontology found." });
   }
 }
 
