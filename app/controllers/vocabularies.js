@@ -107,7 +107,9 @@ exports.apiListVocabs = function (req, res) {
  */
 exports.apiPrefixExists = function (req, res) {
   if (!(req.query.prefix != null))
-    return res.send(500, "You must provide a value for 'prefix' parameter");
+    return res
+      .status(500)
+      .send("You must provide a value for 'prefix' parameter");
   Vocabulary.testIfPrefixExists(req.query.prefix, function (err, count) {
     return standardCallback(req, res, err, { count: count });
   });
@@ -132,9 +134,11 @@ exports.apiTags = function (req, res) {
  */
 exports.apiInfoVocab = function (req, res) {
   if (!(req.query.vocab != null))
-    return res.send(500, "You must provide a value for 'vocab' parameter");
+    return res
+      .status(500)
+      .send("You must provide a value for 'vocab' parameter");
   Vocabulary.loadFromPrefixURINSP(req.query.vocab, function (err, vocab) {
-    if (err) return res.send(500, err);
+    if (err) return res.status(500).send(err);
     //store log in DB
     var exists = vocab ? 1 : 0;
     var log = new LogSearch({
@@ -280,7 +284,7 @@ exports.apiDistributionDetails = function (req, res) {
  */
 exports.jsonLDListVocabs = function (req, res) {
   Vocabulary.listPrefixNspUri(function (err, vocabs) {
-    if (err) return res.send(500, err);
+    if (err) return res.status(500).send(err);
     var contexts = {};
     for (x in vocabs) {
       contexts[vocabs[x].prefix] = vocabs[x].nsp;
@@ -295,18 +299,18 @@ exports.jsonLDListVocabs = function (req, res) {
 /* depending on result, send the appropriate response code */
 function standardCallback(req, res, err, results) {
   if (err != null) {
-    return res.send(500, err);
+    return res.status(500).send(err);
   } else if (!(results != null)) {
-    return res.send(404, "API returned no results");
+    return res.status(404).send("API returned no results");
   } else {
-    return res.send(200, results);
+    return res.status(200).send(results);
   }
 }
 
 /* return a notification of a bad request */
 function standardBadRequestHandler(req, res, helpText) {
   res.set("Content-Type", "text/plain");
-  return res.send(400, helpText);
+  return res.status(400).send(helpText);
 }
 
 /**
@@ -616,6 +620,15 @@ exports.show = function (req, res, lov) {
         req.flash("error", "The vocabulary is not available");
       }
     }
+
+    const artifacts = {
+      requirements: listArtifactFiles(req.vocab._id, "requirements"),
+      conceptualization: listArtifactFiles(req.vocab._id, "conceptualization"),
+      shapes: listArtifactFiles(req.vocab._id, "shapes"),
+      examples: listArtifactFiles(req.vocab._id, "examples"),
+      tests: listArtifactFiles(req.vocab._id, "tests"),
+    };
+
     res.render("vocabularies/show", {
       statvocab: statvocab,
       vocab: req.vocab,
@@ -630,7 +643,32 @@ exports.show = function (req, res, lov) {
       app_name_shorcut: app_name_shorcut,
       app_name: app_name,
       svgDiagram: svgDiagram,
+      artifacts: artifacts
     });
+  });
+};
+
+exports.artifactFile = function(req, res){
+  const {prefix, type, file} = req.params;
+
+  const allowed = ["requirements", "conceptualization", "shapes", "examples", "tests"];
+  if (!allowed.includes(type)) return res.status(400).send("Invalid artifact type");
+
+  if(file.includes("..") || file.includes("/") || file.includes("\\")){
+    return res.status(400).send("Invalid file");
+  }
+
+  Vocabulary.load(prefix, function(err, vocab){
+    if(err || !vocab) return res.status(404).send("Vocab not found");
+
+    const absPath = path.resolve(__dirname, "..", "..", "versions", String(vocab._id), type, file);
+    if(!fs.existsSync(absPath)) return res.status(404).send("Artifact not found");
+
+    // Si quieres forzar descarga:
+    // return res.download(absPath);
+
+    // Si quieres servirlo inline:
+    return res.sendFile(absPath);
   });
 };
 
@@ -1429,26 +1467,41 @@ function createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, py
     var target_path = "./versions/" + vocab._id + "/" + vocab._id + "_" + issuedStr + ".n3";
 
     // Mover el archivo desde tmp (o ruta de downloadVersion) al destino definitivo
-    fs.rename(stdout, target_path, function (err) {
+    fs.rename(stdout, target_path, async function (err) {
       if (err) {
         return res.status(500).send("The ontology has not been downloaded. No version found.");
       }
 
-      // Descarga opcional de artefactos (GitHub/GitLab) si vienen en el form
-      if (req.body.requirements) {
-        downloadArtifact(req.body.requirements, "./versions/" + vocab._id + "/requirements");
+      try{
+        // Descarga opcional de artefactos (GitHub/GitLab) si vienen en el form
+        if (req.body.requirements) {
+          await downloadArtifact(req.body.requirements, "./versions/" + vocab._id + "/requirements");
+        }
+        if (req.body.conceptualization) {
+          await downloadArtifact(req.body.conceptualization, "./versions/" + vocab._id + "/conceptualization");
+        }
+        if (req.body.shapes) {
+          await downloadArtifact(req.body.shapes, "./versions/" + vocab._id + "/shapes");
+        }
+        if (req.body.examples) {
+          await downloadArtifact(req.body.examples, "./versions/" + vocab._id + "/examples");
+        }
+        if (req.body.tests) {
+          await downloadArtifact(req.body.tests, "./versions/" + vocab._id + "/tests");
+        }
+      } catch(e){
+        console.error("[artifact download error]", e);
       }
-      if (req.body.conceptualization) {
-        downloadArtifact(req.body.conceptualization, "./versions/" + vocab._id + "/conceptualization");
-      }
-      if (req.body.shapes) {
-        downloadArtifact(req.body.shapes, "./versions/" + vocab._id + "/shapes");
-      }
-      if (req.body.examples) {
-        downloadArtifact(req.body.examples, "./versions/" + vocab._id + "/examples");
-      }
-      if (req.body.tests) {
-        downloadArtifact(req.body.tests, "./versions/" + vocab._id + "/tests");
+
+      const extractedLicense = extractLicenseFromRdfFile(target_path);
+      console.log("Extracted license:", extractedLicense);
+      
+      //Save license in MongoDB
+      if (extractedLicense.length) {
+        await Vocabulary.updateOne(
+          { _id: vocab._id },
+          { $set: { license: extractedLicense } }
+        ).catch(e => console.error("[save license error]", e));
       }
 
       var versionPublicPath = lov + "/dataset/vocabs/" + vocab.prefix + "/versions/" + issuedStr + ".n3";
@@ -1470,6 +1523,8 @@ function createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, py
       child = exec2(command2, function (error2, stdout2, stderr2) {
         stdout2 = JSON.parse(stdout2);
         stdout2 = _.extend(stdout2, version);
+        stdout2.license = extractedLicense;
+        //console.log("versionAnalyser stdout2.licenses:", stdout2.licenses);
 
         // Add diagram to version (si se subió un diagrama)
         if (req.body.file) {
@@ -1541,61 +1596,80 @@ function createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, py
 }
 
 
-function downloadArtifact(artifactPath, localPath){
-  if (!fs.existsSync(localPath)) {
-    fs.mkdirSync(localPath);
+async function downloadArtifact(artifactPath, localPath) {
+  fs.mkdirSync(localPath, { recursive: true });
+
+  const resp = await fetch(artifactPath);
+  if (!resp.ok) throw new Error("Cannot access artifact folder: " + artifactPath);
+
+  const files = await resp.json();
+  if (!Array.isArray(files)) {
+    throw new Error("Artifact path is not a folder: " + artifactPath);
   }
 
-  //Get the artifact
-  fetch(artifactPath)
-    .then(function(response){
-      if (!response.ok) {
-        return Promise.reject();
-      }
-      else{
-        return response.json();
-      }
-    })
-    .then(function (files){
-      // The response will be an array of file objects if it's a directory
-      if (!Array.isArray(files)) {
-        return Promise.reject(new Error('The implementation path specified in the .config file is not a folder.'));
-      }
-      
-      const filesToDownload = files.filter(item => item.type === 'file');
-      const foldersIgnored = files.filter(item => item.type === 'dir');
+  const filesToDownload = files.filter(item => item.type === "file" && item.download_url);
+  if (filesToDownload.length === 0) return [];
 
-      if (filesToDownload.length === 0) {
-          return Promise.reject(new Error("No files found in the specified folder."));
-      }
-      /*
-      if (foldersIgnored.length > 0) {
-          console.log(`Ignoring ${foldersIgnored.length} subfolders.`);
-      }
-      */
+  await Promise.all(
+    filesToDownload.map(async (file) => {
+      const r = await fetch(file.download_url);
+      if (!r.ok) throw new Error("Download failed: " + file.download_url);
 
-      //Download each file
-      for (const file of filesToDownload) {
-        fetch(file.download_url)
-        .then(function(response){
-          if (!response.ok) {
-            return Promise.reject();
-          }
-          else{
-            return response.text();
-          }
-        })
-        .then(function(data) {
-          // Store the artifact locally
-           fs.writeFileSync(localPath + "/" + file.name, data, 'utf8');
-          return true
-        })
-        .catch(function(err){
-          return false;
-        });
-      }
+      const ab = await r.arrayBuffer();
+      fs.writeFileSync(path.join(localPath, file.name), Buffer.from(ab)); // binario SIEMPRE
+      return file.name;
     })
-    .catch(function(err) {
-      return false;
-    });
+  );
+
+  return filesToDownload.map(f => f.name);
+}
+
+
+function listArtifactFiles(vocabId, folderName){
+  try {
+    const dir = path.resolve(__dirname, "..", "..", "versions", String(vocabId), folderName);
+    if(!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir, {withFileTypes: true})
+      .filter(d => d.isFile())
+      .map(d => d.name);
+  } catch (e) {
+    return [];
+  }
+}
+
+function extractLicenseFromRdfFile(filePath) {
+  try {
+    const text = fs.readFileSync(filePath, "utf8");
+    const parser = new Parser(); // N3 parser
+    const quads = parser.parse(text);
+
+    const LICENSE_PREDICATES = new Set([
+      "http://purl.org/dc/terms/license",
+      "http://creativecommons.org/ns#license",
+      "https://schema.org/license",
+      "http://schema.org/license",
+    ]);
+
+    const license = [];
+
+    for (const q of quads) {
+      if (!q || !q.predicate || !q.object) continue;
+      if (!LICENSE_PREDICATES.has(q.predicate.value)) continue;
+
+      // si el objeto es URI
+      if (q.object.termType === "NamedNode") {
+        license.push(q.object.value);
+      }
+      // si viene como literal (a veces pasa)
+      else if (q.object.termType === "Literal") {
+        license.push(q.object.value);
+      }
+    }
+
+    // deduplicar
+    return Array.from(new Set(license));
+  } catch (e) {
+    console.error("[extractLicenseFromRdfFile] error:", e.message);
+    return [];
+  }
 }

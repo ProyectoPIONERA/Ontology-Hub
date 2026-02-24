@@ -45,7 +45,7 @@ exports.clickEvent = function (req, res) {
   log
     .save()
     .then(() => {
-      res.send(200, "");
+      res.status(200).send("");
     })
     .catch((err) => {
       console.log(err);
@@ -66,7 +66,7 @@ exports.clickVocEvent = function (req, res) {
   log
     .save()
     .then(() => {
-      return res.send(200, "");
+      return res.status(200).send("");
     })
     .catch((err) => {
       console.log(err);
@@ -92,7 +92,7 @@ exports.queryEvent = function (req, res) {
   log
     .save()
     .then(() => {
-      return res.send(200, "");
+      return res.status(200).send("");
     })
     .catch((err) => {
       return res.render("500", {
@@ -120,7 +120,7 @@ exports.queryVocEvent = function (req, res) {
   log
     .save()
     .then(() => {
-      return res.send(200, "");
+      return res.status(200).send("");
     })
     .catch((err) => {
       return res.render("500", {
@@ -133,10 +133,10 @@ exports.queryVocEvent = function (req, res) {
 /* depending on result, send the appropriate response code */
 function standardCallback(req, res, err, results) {
   if (err != null) {
-    return res.send(500, err);
+    return res.status(500).send(err);
   } else if (!(results != null)) {
-    return res.send(404, "API returned no results");
+    return res.status(404).send("API returned no results");
   } else {
-    return res.send(200, results);
+    return res.status(200).send(results);
   }
 }
