@@ -23,8 +23,8 @@ var urlLib = require("url");
 var negotiate = require("express-negotiate");
 const multer = require("multer");
 const upload = multer();
-//var elasticsearch = require("@elastic/elasticsearch");
-var elasticsearch = require("elasticsearch");
+var elasticsearch = require("@elastic/elasticsearch");
+//var elasticsearch = require("elasticsearch");
 var fs = require("fs");
 var nodemailer = require("nodemailer");
 
@@ -62,9 +62,15 @@ var esclient = new elasticsearch.Client({
   },
 });
 */
+
 var esclient = new elasticsearch.Client({
-  host: config.es.host + ":" + config.es.port,
-  log: "error", // Puedes usar: 'trace', 'debug', 'info', 'warning', 'error', 'silent'
+    node: `http://${config.es.host}:${config.es.port}`,
+    auth: {
+        username: config.es.user,
+        password: config.es.pass
+    },
+    tls: { rejectUnauthorized: false }, // Muy importante en Docker
+    log: "error"
 });
 
 /**
@@ -1191,6 +1197,9 @@ router.get("/dataset/api/v2", function (req, res) {
     app_name: config.app_name,
   });
 });
+
+
+router.get("/dataset/api/v2/home", vocabularies.indexjson);
 
 router.get("/dataset/apidoc", function (req, res) {
   res.render("api", {

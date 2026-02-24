@@ -1,0 +1,23 @@
+{
+  "properties": {
+    "uri": {
+      "type": "keyword"
+    },
+    "tags2": {
+      "properties": {
+        "label": { "type": "keyword" },
+        "occurrences": { "type": "long" }
+      }
+    },
+    "name": {
+      "type": "text",
+      "fields": {
+        "ngram": {
+          "type": "text",
+          "analyzer": "ngram_analyzer_index",
+          "search_analyzer": "ngram_analyzer_search"
+        }
+      }
+    }
+  }
+}

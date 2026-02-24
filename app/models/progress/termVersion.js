@@ -59,7 +59,7 @@ var VocabularySchema = new Schema({
     user: { type : Schema.ObjectId, ref : 'User' },
     createdAt: { type : Date, default : Date.now }
   }],
-  term: {term: { type : Schema.ObjectId, ref : 'Term' },
+  term: {term: { type : Schema.ObjectId, ref : 'Term' }},
 })
 
 /**

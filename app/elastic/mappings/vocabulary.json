@@ -1,0 +1,34 @@
+{
+  "properties": {
+    "prefix": {
+      "type": "keyword",
+      "index": true,
+      "fields": {
+        "autocomplete": {
+          "type": "text",
+          "analyzer": "autocomplete_ngram_index",
+          "search_analyzer": "autocomplete_ngram_search"
+        }
+      }
+    },
+    "uri": { "type": "keyword" },
+    "tags": { "type": "keyword" },
+    "langs": { "type": "keyword" },
+    "titles": {
+      "type": "text",
+      "analyzer": "standard",
+      "fields": {
+        "keyword": { "type": "keyword", "ignore_above": 256 }
+      }
+    },
+    "descriptions": { "type": "text", "analyzer": "standard" },
+    "metrics": {
+      "properties": {
+        "occurrencesInDatasets": { "type": "long" },
+        "reusedByDatasets": { "type": "long" }
+      }
+    },
+    "issued": { "type": "date" },
+    "modified": { "type": "date" }
+  }
+}
