@@ -1578,9 +1578,6 @@ async function createVocab(req, res, error, stdout, stderr, scripts, lov, patter
       try {
         console.log(`[Indexer] Procesando ontología: ${target_path}`);
 
-      try {
-        console.log(`[Indexer] Procesando ontología: ${target_path}`);
-
         // 1. Download artifacts (from HEAD)
         if (req.body.requirements) {
           await downloadArtifact(req.body.requirements, "./versions/" + vocab._id + "/requirements");
