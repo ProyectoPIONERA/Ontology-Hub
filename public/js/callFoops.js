@@ -1,8 +1,22 @@
+function runFoopsFromToolbar(uri) {
+  if (typeof window.activateOntologyTab === "function") {
+    window.activateOntologyTab("foops");
+  }
+  window.__foopsPendingUri = uri;
+
+  var runButton = document.getElementById("callFoopsButton");
+  if (runButton) {
+    setTimeout(function () {
+      runButton.click();
+    }, 0);
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
 
   // Obtener la URI del vocabulario desde el atributo data-uri
   const vocabContainer = document.getElementById("vocabContainer");
-  const uri = vocabContainer.getAttribute("data-uri");
+  const defaultUri = vocabContainer.getAttribute("data-uri");
   const foopsHeader = document.getElementById("foopsHeader");
 
   // Inicialmente ocultar resultados y mensaje de carga
@@ -12,11 +26,13 @@ document.addEventListener("DOMContentLoaded", function () {
   document
     .getElementById("callFoopsButton")
     .addEventListener("click", function () {
+      const uri = window.__foopsPendingUri || defaultUri;
+      window.__foopsPendingUri = null;
 
       // Mostrar el mensaje de espera y el GIF
       document.getElementById("loadingMessage").style.display = "block";
       document.getElementById("loadingImage").style.display = "block";
-      document.getElementById("callFoopsButton").style.display = "none"; // Ocultar el botón mientras se hace la llamada
+      document.getElementById("callFoopsButton").style.display = "none"; // Ocultar el botÃ³n mientras se hace la llamada
       document.getElementById("loadingHint").style.display = "none"; // Oculta texto
 
       if (uri) {
@@ -24,7 +40,7 @@ document.addEventListener("DOMContentLoaded", function () {
         callFoops(uri);
         foopsHeader.classList.add("hide-hint");
       } else {
-        console.error("La URI de la ontología no es válida.");
+        console.error("La URI de la ontologÃ­a no es vÃ¡lida.");
       }
     });
 });
@@ -32,49 +48,56 @@ document.addEventListener("DOMContentLoaded", function () {
 function callFoops(uri) {
 
   if (!uri) {
-    console.error("Error: La URI está undefined o es inválida.");
-    return; // Salir de la función si la URI no es válida
+    console.error("Error: La URI estÃ¡ undefined o es invÃ¡lida.");
+    return; // Salir de la funciÃ³n si la URI no es vÃ¡lida
   }
-
-  const data = JSON.stringify({ ontologyUri: uri });
-  const xhr = new XMLHttpRequest();
 
   const startTime = performance.now();
 
-  xhr.addEventListener("readystatechange", function () {
-    if (this.readyState === this.DONE) {
+  fetch("https://foops.linkeddata.es/assessOntology", {
+    method: "POST",
+    headers: {
+      accept: "application/json;charset=UTF-8",
+      "Content-Type": "application/json;charset=UTF-8",
+    },
+    body: JSON.stringify({ ontologyUri: uri }),
+  })
+    .then(function (response) {
+      return response.text().then(function (body) {
+        if (!response.ok) {
+          var err = new Error("FOOPS request failed");
+          err.status = response.status;
+          err.statusText = response.statusText;
+          err.body = body;
+          throw err;
+        }
+        return body;
+      });
+    })
+    .then(function (body) {
       const endTime = performance.now();
       const executionTime = (endTime - startTime) / 1000; // Convertir a segundos
+      console.log("FOOPS execution time (s):", executionTime.toFixed(2));
 
-      // Ocultar el GIF de carga y volver a mostrar el botón
-      document.getElementById("loadingImage").style.display = "none"; // Ocultar el GIF
-      document.getElementById("loadingMessage").style.display = "none"; // Mostrar el botón nuevamente
-
-      if (this.status === 200) {
-        const results = JSON.parse(this.responseText);
-        loadChecks(results);
-        loadInfo(results);
-
-        // Mostrar los resultados
-        document.getElementById("foops-results").style.display = "block";
-      } else {
-        console.error("Error:", this.status, this.statusText);
-        console.error("Response Text:", this.responseText);
-        alert(
-          "Error when contacting the server: " +
-            this.status +
-            " " +
-            this.statusText
-        );
-      }
-    }
-  });
-
-  xhr.open("POST", "https://foops.linkeddata.es/assessOntology");
-  xhr.setRequestHeader("accept", "application/json;charset=UTF-8");
-  xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-
-  xhr.send(data);
+      const results = JSON.parse(body);
+      loadChecks(results);
+      loadInfo(results);
+      document.getElementById("foops-results").style.display = "block";
+    })
+    .catch(function (error) {
+      console.error("Error:", error.status || "", error.statusText || "");
+      console.error("Response Text:", error.body || error.message);
+      alert(
+        "Error when contacting the server: " +
+          (error.status || "") +
+          " " +
+          (error.statusText || error.message || "")
+      );
+    })
+    .finally(function () {
+      document.getElementById("loadingImage").style.display = "none";
+      document.getElementById("loadingMessage").style.display = "none";
+    });
 }
 
 function loadInfo(result) {
@@ -345,7 +368,7 @@ function getSpiderDraw(points, category_results) {
 
 function getRadialScoreHTML(score, size) {
   const percentage = Math.round(score * 100);
-  const barWidth = 130 * size; // Ajusta tamaño según el factor `size`
+  const barWidth = 130 * size; // Ajusta tamaÃ±o segÃºn el factor `size`
   const barHeight = 30 * size;
 
   let color;
@@ -441,7 +464,7 @@ function getResults() {
   }
 
   // TO-DO
-  // Aqui iría la llamada al backend
+  // Aqui irÃ­a la llamada al backend
 
   return {
     ontology_URI: "la uri https://w3id.org/okn/o/sd",
@@ -624,7 +647,7 @@ function loadCategory(category, result) {
   var checks_div = document.getElementById(category + "-checks");
   if (!checks_div) {
     console.error("Elemento no encontrado:", category + "-checks");
-    return; // Salir de la función si el elemento no existe
+    return; // Salir de la funciÃ³n si el elemento no existe
   }
   checks_div.innerHTML = getLineHTMLNoLine();
 
@@ -673,13 +696,13 @@ function loadPrinciples(principles, checks_div) {
 }
 
 function loadChecks(results) {
-  // Crear títulos de categorías y resultados
+  // Crear tÃ­tulos de categorÃ­as y resultados
   const categories = ["Findable", "Accessible", "Interoperable", "Reusable"];
   categories.forEach((category) => {
     const checks_div = document.getElementById(`${category}-checks`);
     if (!checks_div) {
       console.error(`Elemento no encontrado: ${category}-checks`);
-      return; // Salir de la función si el elemento no existe
+      return; // Salir de la funciÃ³n si el elemento no existe
     }
     checks_div.innerHTML = getLineHTMLNoLine();
 
@@ -691,7 +714,7 @@ function loadChecks(results) {
   const scoreContainer = document.getElementById("graphicScore");
   scoreContainer.innerHTML = getRadialScoreHTML(results.overall_score, 1.3);
 
-  // Mostrar el gráfico spider
+  // Mostrar el grÃ¡fico spider
   const spiderContainer = document.getElementById("graphicSpider");
   spiderContainer.innerHTML = getSpiderGraphHTML(results);
 }
@@ -937,14 +960,14 @@ function showContent(id) {
   var escapedId = escapeSelector(id);
   var resultBlock = document.querySelector("#" + escapedId);
   resultBlock.style.visibility = "visible";
-  resultBlock.style.height = "auto"; // Asegura que el tamaño sea automático
+  resultBlock.style.height = "auto"; // Asegura que el tamaÃ±o sea automÃ¡tico
 }
 
 function hideContent(id) {
   var escapedId = escapeSelector(id);
   var resultBlock = document.querySelector("#" + escapedId);
   resultBlock.style.visibility = "hidden";
-  resultBlock.style.height = "0"; // Asegura que el tamaño sea cero cuando esté oculto
+  resultBlock.style.height = "0"; // Asegura que el tamaÃ±o sea cero cuando estÃ© oculto
 }
 
 function example1(uri) {

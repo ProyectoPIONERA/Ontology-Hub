@@ -240,9 +240,11 @@ exports.apiListAgents = function (req, res) {
  */
 exports.apiInfoAgent = function (req, res) {
   if (!(req.query.agent != null))
-    return res.send(500, "You must provide a value for 'agent' parameter");
+    return res
+      .status(500)
+      .send("You must provide a value for 'agent' parameter");
   Agent.loadFromNameURIAltURI(req.query.agent, function (err, agent) {
-    if (err) return res.send(500, err);
+    if (err) return res.status(500).send(err);
     //store log in DB
     var exists = agent ? 1 : 0;
     var log = new LogSearch({
@@ -266,11 +268,11 @@ exports.apiInfoAgent = function (req, res) {
 /* depending on result, send the appropriate response code */
 function standardCallback(req, res, err, results) {
   if (err != null) {
-    return res.send(500, err);
+    return res.status(500).send(err);
   } else if (!(results != null)) {
-    return res.send(404, "API returned no results");
+    return res.status(404).send("API returned no results");
   } else {
-    return res.send(200, results);
+    return res.status(200).send(results);
   }
 }
 

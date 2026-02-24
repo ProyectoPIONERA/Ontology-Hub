@@ -1,6 +1,6 @@
 /* EXTRAS BOOSTRAP SETTINGS*/
 
-#loadingHint {
+#loadingHint, #astreaLoadingHint, #themisLoadingHint {
   color: black;
   text-align: center;
   font-style: normal;
@@ -61,6 +61,95 @@
   display: none;
 }
 
+.validation-tabs {
+  display: flex;
+  gap: 0.75rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.validation-tab {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #d0d7da;
+  border-radius: 6px;
+  background: #f6f7f8;
+  color: #212529;
+  text-decoration: none;
+  font-weight: 600;
+  text-shadow: none;
+}
+
+.validation-tab.is-active {
+  background: #82bac7;
+  border-color: #5e9b9b;
+  color: #ffffff;
+}
+
+.validation-tab-panel {
+  display: none;
+}
+
+.validation-tab-panel.is-active {
+  display: block;
+}
+
+.ontology-tabs-nav ul {
+  overflow: auto;
+  margin: 0 0 1em;
+  padding: 0;
+}
+
+.ontology-tabs-nav li {
+  list-style-type: none;
+  float: left;
+  padding: 0 1em;
+}
+
+.ontology-tab {
+  display: block;
+  padding: 1em;
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-weight: bold;
+  color: #d0d7da;
+  text-decoration: none;
+  text-shadow: 1px 1px 0px white;
+}
+
+.ontology-tab:hover,
+.ontology-tab.is-active {
+  background-color: #444747;
+  color: #fbfbfb;
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3) inset;
+  -o-box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3) inset;
+  -moz-box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3) inset;
+  -webkit-box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3) inset;
+  text-shadow: none;
+}
+
+.ontology-tab-panel {
+  display: none;
+}
+
+.ontology-tab-panel.is-active {
+  display: block;
+}
+
+#astreaOutput/*,
+#themisOutput*/ {
+  height: 260px;
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: auto;
+  white-space: pre;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .texto-URI a {
   text-shadow: none;
 }
@@ -71,7 +160,7 @@
   margin-top: 20px;
 }
 
-#posts_foops {
+#posts_foops, #posts_astrea, #posts_themis {
   max-width: 1800px; /* Ajusta según el diseño */
   margin: auto;
 }
@@ -87,6 +176,56 @@
 #posts_foops td {
   width: 100%;
   display: block;
+}
+
+#posts_astrea tr,
+#posts_astrea td {
+  width: 100%;
+  display: block;
+}
+
+#posts_themis tr{
+  display: table-row;
+  width: auto;
+}
+
+#posts_themis td,
+#post_themis th {
+  display: table-cell;
+  width: auto;
+  vertical-align: top;
+}
+
+#themisResultstable{
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+#themisResultsTable td,
+#themisResultsTable th {
+  padding: 0.6rem;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+
+#posts_themis #greenContainer{
+  width: 100%;
+}
+
+#posts_themis #greenContainer h2{
+  color: #000000;
+  font-size: medium;
+}
+
+#posts_astrea #greenContainer{
+  width: 100%;
+}
+
+#posts_astrea #greenContainer h2{
+  color: #000000;
+  font-size: medium;
 }
 
 #posts_foops #greenContainer{
@@ -133,13 +272,109 @@
 #title {
   margin-left: 0 !important;
 }
-#callFoopsButton {
+#callFoopsButton,
+#callAstreaButton,
+#callThemisButton,
+#executeThemisButton {
   background: #82bac7;
   border-color: white;
   font-size: 30px;
   line-height: 40px;
   color: #ffffff;
   margin-top: 20px;
+}
+
+#themisTestEditor {
+  width: 100%;
+  min-height: 260px;
+  resize: vertical;
+  border: 1px solid #d1d5db;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.35;
+  padding: 0.75rem;
+  box-sizing: border-box;
+}
+
+#themisVisualSummary {
+  margin-bottom: 0.75rem;
+}
+
+#themisResultsTitle {
+  margin: 0 0 0.45rem;
+  font-size: 32px;
+  line-height: 1.1;
+  color: #2f80cc;
+  text-align: center;
+  text-shadow: none;
+  font-weight: normal;
+}
+
+#themisResultsTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: #f4f4f4;
+}
+
+#themisResultsTable thead th {
+  text-align: left;
+  padding: 0.7rem 0.55rem;
+  color: #111827;
+  font-size: 0.95rem;
+  border-bottom: 1px solid #cfd4d7;
+  text-shadow: none;
+}
+
+#themisResultsTable tbody td {
+  padding: 0.82rem 0.55rem;
+  border-bottom: 1px solid #d8dcdf;
+  text-shadow: none;
+  color: #111827;
+  vertical-align: middle;
+}
+
+.themis-test-cell {
+  width: 47%;
+}
+
+.themis-result-cell {
+  width: 18%;
+}
+
+.themis-problem-cell {
+  width: 35%;
+}
+
+.themis-result-tag {
+  display: inline-block;
+  border-radius: 3px;
+  padding: 0.16rem 0.45rem;
+  font-size: 0.76rem;
+  font-weight: bold;
+  line-height: 1.1;
+  color: #ffffff;
+  text-shadow: none;
+}
+
+.themis-result-tag-pass {
+  background: #41b853;
+}
+
+.themis-result-tag-fail {
+  background: #d73a49;
+}
+
+.themis-result-tag-warn {
+  background: #f0ad4e;
+}
+
+.themis-result-tag-other {
+  background: #6b7280;
+}
+
+.themis-empty-row {
+  text-align: center;
+  color: #4b5563 !important;
 }
 
 /** Info **/
@@ -223,6 +458,20 @@
 #posts_foops *,
 #posts_foops *::before,
 #posts_foops *::after {
+  box-sizing: border-box !important;
+}
+
+/** Aplica pseudo elementos **/
+#posts_astrea *,
+#posts_astrea *::before,
+#posts_astrea *::after {
+  box-sizing: border-box !important;
+}
+
+/** Aplica pseudo elementos **/
+#posts_themis *,
+#posts_themis *::before,
+#posts_themis *::after {
   box-sizing: border-box !important;
 }
 
