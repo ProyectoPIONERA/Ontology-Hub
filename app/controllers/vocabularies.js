@@ -1597,12 +1597,15 @@ async function createVocab(req, res, error, stdout, stderr, scripts, lov, patter
           ).catch(e => console.error("[save license error]", e));
         }
 
+        const vocabDocForEs = vocab.toObject();
+        vocabDocForEs.license = extractedLicense;
+
         // 3. RDF extraction + Elasticsearch indexing (from ELSK_9)
         const extracted = await rdfExtractor.extractAllTerms(target_path);
         const vocabDoc = vocab.toObject();
 
         // Index vocabulary in Elasticsearch
-        await ElasticService.upsert('vocabulary', vocab._id.toString(), vocab.toObject());
+        await ElasticService.upsert('vocabulary', vocab._id.toString(), vocabDocForEs);
 
         const categoryMap = {
           'classes': 'class',
