@@ -1,0 +1,42 @@
+{
+  "properties": {
+    "prefix": { "type": "keyword", "index": false },
+    "tags": { "type": "keyword" },
+    "prefixedName": {
+      "type": "text",
+      "fields": {
+        "autocomplete": {
+          "type": "text",
+          "analyzer": "autocomplete_ngram_index",
+          "search_analyzer": "autocomplete_ngram_search"
+        }
+      }
+    },
+    "uri": {
+      "type": "keyword",
+      "fields": {
+        "autocomplete": {
+          "type": "text",
+          "analyzer": "autocomplete_ngram_index",
+          "search_analyzer": "autocomplete_ngram_search"
+        }
+      }
+    },
+    "localName": {
+      "type": "text",
+      "fields": {
+        "autocomplete": {
+          "type": "text",
+          "analyzer": "autocomplete_ngram_index",
+          "search_analyzer": "autocomplete_ngram_search"
+        },
+        "ngram": {
+          "type": "text",
+          "analyzer": "ngram_analyzer_index",
+          "search_analyzer": "ngram_analyzer_search"
+        }
+      }
+    },
+    "labelsWithoutLang": { "type": "completion" }
+  }
+}

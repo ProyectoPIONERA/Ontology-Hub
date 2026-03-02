@@ -1,6 +1,8 @@
 var utils = require("../../lib/utils");
 
-var indexName = "lov"; /* Name of the ElasticSearch index */
+const { ElasticService } = require('../elastic/index');
+
+var indexName = "lov_vocabulary"; /* Name of the ElasticSearch index */
 var placeholders = [
   /* placeholder used in the input box */ /*"all you want to know about LOV!",
   "LOV is all :)",
@@ -115,45 +117,68 @@ exports.search = function (req, res, esclient) {
 /**
  * Search for vocabulary used by the /vocabs UI
  */
-exports.searchVocabulary = function (req, res, esclient) {
-  return execSearchVocabulary(
-    esclient,
-    req.query.q,
-    req.query.page_size,
-    req.query.page,
-    req.query.tag,
-    req.query.tag_limit,
-    req.query.lang,
-    req.query.lang_limit,
-    function (err, results) {
-      if (err)
-        return res.render("500", {
-          app_name_shorcut: app_name_shorcut,
-          app_name: app_name,
-        });
-      //store log in DB
-      /*var log = new LogSearch({searchWords: req.query.q,
-      searchURL: req.originalUrl,
-      date: new Date(),
-      category: "vocabularySearch",
-      method: "ui",
-      nbResults: results.total_results  });//console.log(log);
-    log.save(function (err){if(err)console.log(err)});*/
-      var arr = [];
-      for (var i = 0; i < results.results.length; i++) {
-        arr.push(results.results[i]._source.prefix);
+exports.searchVocabulary = async function (req, res) {
+  // 1. Extraer parámetros de la URL
+  const query = req.query.q || "";
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.page_size) || 15;
+  const tag = req.query.tag;
+  const lang = req.query.lang;
+
+  const options = {
+    queryString: query,
+    page: page,
+    pageSize: pageSize,
+    tag: tag,
+    lang: lang,
+    fields: ["prefix.autocomplete^12", "titles^3", "descriptions^1.5"]
+  };
+
+  try {
+    const searchResponse = await ElasticService.search('vocabulary', options);
+
+    // 2. Construir el objeto "results" EXACTAMENTE como lo pide el .jade
+    const resultsForView = {
+      results: searchResponse.results || [],
+      total_results: searchResponse.total_results || 0,
+      queryString: query,
+      page: page,
+      page_size: pageSize,
+      // Esta es la parte que hacía fallar la línea 64:
+      filters: {
+        tag: tag || undefined,
+        lang: lang || undefined
+      },
+      // Agregaciones para los faceteados laterales
+      aggregations: searchResponse.aggregations || {
+        tags: { buckets: [] },
+        langs: { buckets: [] }
       }
-      res.render("vocabularies/index", {
-        results: results,
-        placeholder:
-          placeholders[Math.floor(Math.random() * placeholders.length)],
-        resultsList: arr,
-        utils: utils,
-        app_name_shorcut: app_name_shorcut,
-        app_name: app_name,
-      });
-    }
-  );
+    };
+
+    // 3. Lista de prefijos para el log de eventos (línea 61 del jade)
+    const resultsList = (searchResponse.results || []).map(item =>
+        item._source ? item._source.prefix : ""
+    ).join(',');
+
+    res.render("vocabularies/index", {
+      results: resultsForView,
+      resultsList: resultsList,
+      placeholder: "Search for a vocabulary...",
+      req: req, // Necesario para req.sessionID en el script del jade
+      utils: require('../../lib/utils'),
+      app_name_shorcut: "LOV",
+      app_name: "Linked Open Vocabularies"
+    });
+
+  } catch (err) {
+    console.error("Critical Render Error:", err);
+    res.status(500).render("500", {
+      app_name: "LOV",
+      app_name_shorcut: "LOV",
+      utils: require('../../lib/utils')
+    });
+  }
 };
 
 /**
@@ -203,40 +228,56 @@ exports.searchVocabularyPatterns = function (req, res, esclient) {
 /**
  * Search for agent used by the /agents UI
  */
-exports.searchAgent = function (req, res, esclient) {
-  return execSearchAgent(
-    esclient,
-    req.query.q,
-    req.query.page_size,
-    req.query.page,
-    req.query.type,
-    req.query.tag,
-    req.query.tag_limit,
-    function (err, results) {
-      if (err)
-        return res.render("500", {
-          app_name_shorcut: app_name_shorcut,
-          app_name: app_name,
-        });
-      //store log in DB
-      /*var log = new LogSearch({searchWords: req.query.q,
-        searchURL: req.originalUrl,
-        date: new Date(),
-        category: "agentSearch",
-        method: "ui",
-        nbResults: results.total_results  });//console.log(log);
-      log.save(function (err){if(err)console.log(err)});*/
-      res.render("agents/index", {
-        results: results,
-        placeholder:
-          placeholders[Math.floor(Math.random() * placeholders.length)],
-        utils: utils,
+exports.searchAgent = async function (req, res) {
+  const query = req.query.q || "";
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.page_size) || 15;
+  const type = req.query.type; // 'person', 'organization' o null (ambos)
+  const tag = req.query.tag;
 
-        app_name_shorcut: app_name_shorcut,
-        app_name: app_name,
-      });
-    }
-  );
+  const options = {
+    queryString: query,
+    page: page,
+    pageSize: pageSize,
+    tag: tag,
+    // Usamos el campo correcto para agentes según tu mapping
+    fields: ["name^5", "alternativeNames^2"]
+  };
+
+  try {
+    // Si 'type' viene definido (person u organization), buscamos en ese.
+    // Si no, buscamos en ambos simultáneamente.
+    const searchType = type || 'agent';
+    const searchResponse = await ElasticService.search(searchType, options);
+
+    const resultsForView = {
+      results: searchResponse.results || [],
+      total_results: searchResponse.total_results || 0,
+      queryString: query,
+      page: page,
+      page_size: pageSize,
+      filters: {
+        type: type,
+        tag: tag
+      },
+      aggregations: searchResponse.aggregations || {
+        tags: { buckets: [] }
+      }
+    };
+
+    res.render("agents/index", {
+      results: resultsForView,
+      placeholder: "Search for a person or organization...",
+      req: req,
+      utils: require('../../lib/utils'),
+      app_name_shorcut: "LOV",
+      app_name: "Linked Open Vocabularies"
+    });
+
+  } catch (err) {
+    console.error("Agent Search Error:", err);
+    res.status(500).render("500", { app_name: "LOV" });
+  }
 };
 
 /**
@@ -555,487 +596,311 @@ exports.apiSuggestTerms = function (req, res, esclient) {
  * Execution of a full text search
  */
 function execSearch(
-  client,
-  queryString,
-  page_size,
-  page,
-  type,
-  vocab,
-  vocab_limit,
-  tag,
-  tag_limit,
-  callback
+    client,
+    queryString,
+    page_size,
+    page,
+    type,
+    vocab,
+    vocab_limit,
+    tag,
+    tag_limit,
+    callback
 ) {
-  if (
-    !vocab_limit ||
-    (!parseInt(vocab_limit) && vocab_limit !== "0") ||
-    parseInt(page_size) < 1
-  )
-    vocab_limit = 10;
-  if (
-    !tag_limit ||
-    (!parseInt(tag_limit) && tag_limit !== "0") ||
-    parseInt(page_size) < 1
-  )
-    tag_limit = 10;
-  if (!type) type = "class,property";
-  if (
-    !page_size ||
-    (!parseInt(page_size) && page_size !== "0") ||
-    parseInt(page_size) < 1
-  )
-    page_size = 10;
-  if (!page || (!parseInt(page) && page !== "0") || parseInt(page) < 1)
-    page = 1;
-  page = parseInt(page, 10) || 1;
+  // --- 1. Validaciones y Saneamiento ---
+  const v_limit = (parseInt(vocab_limit) > 0) ? parseInt(vocab_limit) : 10;
+  const t_limit = (parseInt(tag_limit) > 0) ? parseInt(tag_limit) : 10;
+  const p_size = (parseInt(page_size) > 0) ? parseInt(page_size) : 10;
+  const p_current = (parseInt(page) > 0) ? parseInt(page) : 1;
 
-  /* Weights for subparts of the score function */
-  var wHitScore = 1.0; /* weight given to the similarity score */
-  var wOccScore = 0.3; /* weight given to the frequence of the term in LOD */
-  var wDatScore = 0.5; /* weight given to the number of datasets (in LOD) having at least one instance of the term */
+  // Mapeo de índices a SINGULAR (Coherente con el resto del sistema)
+  const search_type = type || "class,property";
+  let indicesToSearch = [];
+  if (search_type.includes("class")) indicesToSearch.push("lov_class");
+  if (search_type.includes("property")) indicesToSearch.push("lov_property");
+  if (search_type.includes("datatype")) indicesToSearch.push("lov_datatype");
+  if (search_type.includes("vocabulary")) indicesToSearch.push("lov_vocabulary");
 
-  /* Weights for each field type in the score function */
-  var weightLocalName = 12; /* the local name of a URI */
-  var weightPrimLabel = 3; /* primary label includes rdfs:label, dcterms:title, dce:title, skos:prefLabel */
-  var weightSecLabel = 1.5; /* secondary label includes rdfs:comment, dcterms:description, dce:description, skos:altLabel */
-  var weightVocabularyInfo = 1; /* weight for matches on fields belonging to the vocabulary document of a vocabulary term */
+  const indexName = indicesToSearch.length > 0 ? indicesToSearch.join(',') : "lov_class,lov_property,lov_datatype";
 
-  /* fields concerned by the query and their corresponding boost */
-  var fieldToSearchOn = [
-    "http://www.*",
-    "localName.ngram^" + weightLocalName,
-    "http://www.w3.org/2000/01/rdf-schema#label*^" + weightPrimLabel,
-    "http://purl.org/dc/terms/title*^" + weightPrimLabel,
-    "http://purl.org/dc/elements/1.1/title*^" + weightPrimLabel,
-    "http://www.w3.org/2004/02/skos/core#prefLabel*^" + weightPrimLabel,
-    "http://www.w3.org/2000/01/rdf-schema#comment*^" + weightSecLabel,
-    "http://purl.org/dc/terms/description*^" + weightSecLabel,
-    "http://purl.org/dc/elements/1.1/description*^" + weightSecLabel,
-    "http://www.w3.org/2004/02/skos/core#altLabel*^" + weightSecLabel,
-    "vocabulary.*^" + weightVocabularyInfo,
+  // --- 2. Pesos de Scoring ---
+  const weights = {
+    hit: 1.0,
+    occ: 0.3,
+    dat: 0.5,
+    localName: 12,
+    primLabel: 3,
+    secLabel: 1.5,
+    vocabInfo: 1
+  };
+
+  const fieldToSearchOn = [
+    `localName.ngram^${weights.localName}`,
+    `label*^${weights.primLabel}`,
+    `comment*^${weights.secLabel}`,
+    `vocabulary.prefix^${weights.vocabInfo}`
   ];
 
-  /* dynamic build of the filters using vocab and tag values */
-  var filter = "[";
-  if (vocab != null)
-    filter = filter + '{"term":{"vocabulary.prefix":"' + vocab + '"}}';
-
-  if (tag != null) {
-    if (filter.length > 1) filter = filter + ",";
-    var tagsplit = tag.split(",");
-    for (i = 0; i < tagsplit.length; i++) {
-      if (tagsplit.length > 0 && i > 0) filter = filter + ",";
-      filter = filter + '{"term":{"tags":"' + tagsplit[i] + '"}}';
-    }
+  // --- 3. Construcción de Filtros (USANDO .keyword) ---
+  let mustFilters = [];
+  if (vocab && vocab !== "null") {
+    mustFilters.push({ term: { "vocabulary.prefix.keyword": vocab } });
+  }
+  if (tag && tag !== "null") {
+    tag.split(",").forEach(t => {
+      mustFilters.push({
+        bool: {
+          should: [
+            { term: { "tags.keyword": t.trim() } },
+            { term: { "vocabulary.tags.keyword": t.trim() } }
+          ]
+        }
+      });
+    });
   }
 
-  filter = eval("(" + filter + "]" + ")");
-
-  /* The first query is used to get the aggregation max value for occurrencesInDatasets and reusedByDatasets metrics */
-  var qAgg = {
-    size: 1,
-    fields: [
-      "uri",
-      "prefixedName",
-      "vocabulary.prefix",
-      "metrics.occurrencesInDatasets",
-      "metrics.reusedByDatasets",
-    ],
-    query: (function () {
-      if (vocab != null || tag != null) {
-        /* case we have a filters to apply */
-        return {
-          filtered: {
-            query: (function () {
-              if (queryString && queryString.length > 0) {
-                return {
-                  multi_match: {
-                    query: queryString,
-                    fields: fieldToSearchOn,
-                  },
-                };
-              } else {
-                return {
-                  match_all: {},
-                };
-              }
-            })(),
-            filter: { bool: { must: filter } },
-          },
-        };
-      } else {
-        /* if no filter */
-        if (queryString && queryString.length > 0) {
-          return {
-            multi_match: {
-              query: queryString,
-              fields: fieldToSearchOn,
-            },
-          };
-        } else {
-          return {
-            match_all: {},
-          };
+  const baseQuery = {
+    bool: {
+      must: queryString ? {
+        multi_match: {
+          query: queryString,
+          fields: fieldToSearchOn,
+          type: "best_fields"
         }
-      }
-    })(),
-    aggregations: {
-      max_occurrences: { max: { field: "metrics.occurrencesInDatasets" } },
-      max_nbDatasets: { max: { field: "metrics.reusedByDatasets" } },
-    },
+      } : { match_all: {} },
+      filter: mustFilters
+    }
   };
-  client
-    //.search(indexName, type, qAgg)
-    .search({
-      index: indexName,
-      type: type,
-      body: qAgg,
-    })
-    .then((data) => {
-      /* get the max values from the aggregations of the previous query */
-      //var maxOcc = JSON.parse(data).aggregations.max_occurrences.value;
-      //var maxDatasets = JSON.parse(data).aggregations.max_nbDatasets.value;
-      //var maxScore = JSON.parse(data).hits.max_score;
-      var maxOcc = data.aggregations.max_occurrences.value;
-      var maxDatasets = data.aggregations.max_nbDatasets.value;
-      var maxScore = data.hits.max_score;
 
-      /* Define the core of the query */
-      var qCore = {
-        function_score: {
-          boost_mode: "replace",
-          query: {
-            multi_match: {
-              query: queryString,
-              fields: fieldToSearchOn,
-            },
-          },
-          script_score: {
-            lang: "groovy",
-            params: {
-              maxScore: maxScore,
-              wHitScore: parseFloat(wHitScore),
-              wOccScore: parseFloat(wOccScore),
-              wDatScore: parseFloat(wDatScore),
-              maxOcc: maxOcc,
-              maxDatasets: maxDatasets,
-            },
-            script:
-              "maxOcc>>0 ? ((_score / maxScore) * wHitScore + sqrt( doc['metrics.occurrencesInDatasets'].value / maxOcc) * wOccScore + sqrt(doc['metrics.reusedByDatasets'].value / maxDatasets) * wDatScore) / (wHitScore+wOccScore+wDatScore) :_score",
-          },
-        },
-      };
+  // --- 4. PRIMERA QUERY: Obtener máximos para normalización del Score ---
+  client.search({
+    index: indexName,
+    body: {
+      size: 0,
+      query: baseQuery,
+      aggregations: {
+        max_occurrences: { max: { field: "metrics.occurrencesInDatasets" } },
+        max_nbDatasets: { max: { field: "metrics.reusedByDatasets" } }
+      }
+    }
+  })
+      .then(aggData => {
+        const maxOcc = (aggData.aggregations.max_occurrences.value > 0) ? aggData.aggregations.max_occurrences.value : 1;
+        const maxDatasets = (aggData.aggregations.max_nbDatasets.value > 0) ? aggData.aggregations.max_nbDatasets.value : 1;
+        const maxScore = (aggData.hits.max_score > 0) ? aggData.hits.max_score : 1.0;
 
-      var qCoreMatchAll = {
-        function_score: {
-          boost_mode: "replace",
-          query: { match_all: {} },
-          script_score: {
-            lang: "groovy",
-            params: {
-              maxScore: maxScore,
-              wHitScore: parseFloat(wHitScore),
-              wOccScore: parseFloat(wOccScore),
-              wDatScore: parseFloat(wDatScore),
-              maxOcc: maxOcc,
-              maxDatasets: maxDatasets,
-            },
-            script:
-              "(maxOcc>>0 && maxDatasets>>0)? ((sqrt( doc['metrics.occurrencesInDatasets'].value / maxOcc) * wOccScore + sqrt(doc['metrics.reusedByDatasets'].value / maxDatasets) * wDatScore) / (wOccScore+wDatScore)): _score",
-          },
-        },
-      };
-
-      /* The second query inject the metrics max as parameters in the score function script */
-      var q = {
-        from: (page - 1) * page_size,
-        size: page_size,
-        fields: [
-          "uri",
-          "prefixedName",
-          "vocabulary.prefix",
-          "metrics.occurrencesInDatasets",
-          "metrics.reusedByDatasets",
-        ],
-        query: (function () {
-          /* In case we have a vocabulary or tag filter, we are using a filtered query */
-          if (vocab != null || tag != null) {
-            return {
-              filtered: {
-                query: (function () {
-                  if (queryString && queryString.length > 0) {
-                    return qCore;
-                  } else {
-                    return qCoreMatchAll;
+        // --- 5. SEGUNDA QUERY: Búsqueda con Painless y Agregaciones ---
+        return client.search({
+          index: indexName,
+          body: {
+            from: (p_current - 1) * p_size,
+            size: p_size,
+            _source: ["uri", "prefixedName", "vocabulary.prefix", "metrics", "type", "tags"],
+            query: {
+              function_score: {
+                query: baseQuery,
+                boost_mode: "replace",
+                script_score: {
+                  script: {
+                    lang: "painless",
+                    params: {
+                      p_maxScore: maxScore,
+                      p_maxOcc: maxOcc,
+                      p_maxDatasets: maxDatasets,
+                      wHit: weights.hit,
+                      wOcc: weights.occ,
+                      wDat: weights.dat
+                    },
+                    source: `
+                      double s = _score / (double)params.p_maxScore;
+                      double occVal = doc.containsKey('metrics.occurrencesInDatasets') && !doc['metrics.occurrencesInDatasets'].empty ? (double)doc['metrics.occurrencesInDatasets'].value : 0.0;
+                      double datVal = doc.containsKey('metrics.reusedByDatasets') && !doc['metrics.reusedByDatasets'].empty ? (double)doc['metrics.reusedByDatasets'].value : 0.0;
+                      double occ = Math.sqrt(occVal / (double)params.p_maxOcc);
+                      double dat = Math.sqrt(datVal / (double)params.p_maxDatasets);
+                      return (s * params.wHit + occ * params.wOcc + dat * params.wDat) / (params.wHit + params.wOcc + params.wDat);
+                    `
                   }
-                })(),
-                filter: { bool: { must: filter } },
-              },
-            };
-          } else {
-            return (function () {
-              if (queryString && queryString.length > 0) {
-                return qCore;
-              } else {
-                return qCoreMatchAll;
-              }
-            })();
-          }
-        })(),
-        highlight: {
-          pre_tags: ["<b>"],
-          post_tags: ["</b>"],
-          fragment_size: 50,
-          number_of_fragments: 3,
-          fields: [
-            { "localName.ngram": {} },
-            { "http*": {} },
-            { "vocabulary.prefix": {} },
-            { "vocabulary.http://purl.org/dc/terms/title*": {} },
-            { "vocabulary.http://purl.org/dc/terms/description*": {} },
-          ],
-        },
-        aggregations: {
-          types: {
-            terms: {
-              field: "_type",
-              size: 10,
-            },
-          },
-          vocabs: {
-            terms: {
-              field: "vocabulary.prefix",
-              size: parseInt(vocab_limit),
-            },
-          },
-          tags: {
-            terms: {
-              field: "tags",
-              size: parseInt(tag_limit),
-            },
-          },
-        },
-      };
-      /* build and return the result JSON object */
-      return (
-        client
-          //.search(indexName, type, q)
-          .search({
-            index: indexName,
-            type: type,
-            body: q,
-          })
-          .then((data) => {
-            var hit, parsed, result, x, maxScore, maxOcc;
-            //parsed = JSON.parse(data).hits;
-            parsed = data.hits;
-            /* filters are the parameters sent by the client to filter the query results */
-            var filters = {};
-            if (type != "null" && type.indexOf(",") < 0) filters.type = type;
-            if (vocab != "null") filters.vocab = vocab;
-            if (tag != "null") filters.tag = tag;
-
-            result = {
-              total_results: parsed.total,
-              page: page,
-              page_size: page_size,
-              queryString: queryString,
-              filters: filters,
-              //aggregations: JSON.parse(data).aggregations,
-              aggregations: data.aggregations,
-              results: (function () {
-                var results = [];
-                for (var i = 0; i < parsed.hits.length; i++) {
-                  hit = parsed.hits[i];
-                  x = hit.fields;
-                  x.type = hit._type;
-                  x.score = hit._score;
-                  x.highlight = hit.highlight;
-                  results.push(x);
                 }
-                return results;
-              })(),
-            };
-            return callback(null, result);
-          })
-          .catch((error) => {
-            return callback(error, null);
-          })
-      );
-    })
-    .catch((error) => {
-      return callback(error, null);
-    });
-}
+              }
+            },
+            highlight: {
+              pre_tags: ["<b>"],
+              post_tags: ["</b>"],
+              fields: {
+                "localName.ngram": {},
+                "label*": {},
+                "vocabulary.prefix": {}
+              }
+            },
+            aggregations: {
+              // ESTA ES LA PARTE QUE EVITA EL ERROR EN JADE
+              types: {
+                filters: {
+                  filters: {
+                    class: { term: { _index: "lov_class" } },
+                    property: { term: { _index: "lov_property" } },
+                    datatype: { term: { _index: "lov_datatype" } },
+                    vocabulary: { term: { _index: "lov_vocabulary" } }
+                  }
+                }
+              },
+              vocabs: { terms: { field: "vocabulary.prefix.keyword", size: v_limit } },
+              tags: { terms: { field: "tags.keyword", size: t_limit } }
+            }
+          }
+        });
+      })
+      .then(data => {
+        // --- 6. Formateo Final para la Vista ---
+        const filters = {};
+        if (search_type.indexOf(",") < 0) filters.type = search_type;
+        if (vocab && vocab !== "null") filters.vocab = vocab;
+        if (tag && tag !== "null") filters.tag = tag;
 
+        // Transformamos los buckets de 'filters' a la estructura que Jade espera
+        const typeBuckets = [];
+        for (const [key, value] of Object.entries(data.aggregations.types.buckets)) {
+          if (value.doc_count > 0) {
+            typeBuckets.push({ key: key, doc_count: value.doc_count });
+          }
+        }
+        data.aggregations.types.buckets = typeBuckets;
+
+        const results = data.hits.hits.map(hit => {
+          let x = hit._source;
+          x.score = hit._score;
+          x.highlight = hit.highlight;
+          if (!x.type) {
+            if (hit._index.includes('class')) x.type = 'class';
+            else if (hit._index.includes('property')) x.type = 'property';
+            else if (hit._index.includes('datatype')) x.type = 'datatype';
+            else if (hit._index.includes('vocabulary')) x.type = 'vocabulary';
+          }
+          return x;
+        });
+
+        const finalResponse = {
+          total_results: (typeof data.hits.total === 'object') ? data.hits.total.value : data.hits.total,
+          page: p_current,
+          page_size: p_size,
+          queryString: queryString,
+          filters: filters,
+          aggregations: data.aggregations,
+          results: results
+        };
+
+        callback(null, finalResponse);
+      })
+      .catch(err => {
+        console.error("Error en execSearch:", err);
+        callback(err, null);
+      });
+}
 /**
  * Execution of a search on vocabularies
  */
 function execSearchVocabulary(
-  client,
-  queryString,
-  page_size,
-  page,
-  tag,
-  tag_limit,
-  lang,
-  lang_limit,
-  callback
+    client,
+    queryString,
+    page_size,
+    page,
+    tag,
+    tag_limit,
+    lang,
+    lang_limit,
+    callback
 ) {
-  if (
-    !tag_limit ||
-    (!parseInt(tag_limit) && tag_limit !== "0") ||
-    parseInt(page_size) < 1
-  )
-    tag_limit = 10;
-  if (
-    !lang_limit ||
-    (!parseInt(lang_limit) && lang_limit !== "0") ||
-    parseInt(page_size) < 1
-  )
-    lang_limit = 10;
-  var type = "vocabulary";
-  if (
-    !page_size ||
-    (!parseInt(page_size) && page_size !== "0") ||
-    parseInt(page_size) < 1
-  )
-    page_size = 15;
-  if (!page || (!parseInt(page) && page !== "0") || parseInt(page) < 1)
-    page = 1;
-  page = parseInt(page, 10) || 1;
+  // --- Configuración de parámetros por defecto ---
+  tag_limit = (parseInt(tag_limit) >= 0) ? parseInt(tag_limit) : 10;
+  lang_limit = (parseInt(lang_limit) >= 0) ? parseInt(lang_limit) : 10;
+  page_size = (parseInt(page_size) > 0) ? parseInt(page_size) : 15;
+  page = (parseInt(page) > 0) ? parseInt(page) : 1;
 
-  /* Weights for each field type in the score function */
-  var weightLocalName = 12; /* the local name of a URI */
-  var weightPrimLabel = 3; /* primary label includes dcterms:title*/
-  var weightSecLabel = 1.5; /* secondary label includes dcterms:description*/
-  /* fields concerned by the query and their corresponding boost */
+  /* Pesos para el score */
+  var weightLocalName = 12;
+  var weightPrimLabel = 3;
+  var weightSecLabel = 1.5;
+
   var fieldToSearchOn = [
     "prefix.autocomplete^" + weightLocalName,
     "http://purl.org/dc/terms/title*^" + weightPrimLabel,
     "http://purl.org/dc/terms/description*^" + weightSecLabel,
   ];
 
-  /* dynamic build of the filters using tag and lang values */
-  var filter = "[";
-  if (tag != null) {
-    if (filter.length > 1) filter = filter + ",";
-    var tagsplit = tag.split(",");
-    for (i = 0; i < tagsplit.length; i++) {
-      if (tagsplit.length > 0 && i > 0) filter = filter + ",";
-      filter = filter + '{"term":{"tags":"' + tagsplit[i] + '"}}';
-    }
+  /* 1. Construcción dinámica de FILTROS (Moderno: Array de objetos) */
+  var filterArray = [];
+  if (tag && tag !== "null") {
+    tag.split(",").forEach(t => {
+      filterArray.push({ term: { "tags": t.trim() } });
+    });
   }
-  if (lang != null) {
-    if (filter.length > 1) filter = filter + ",";
-    var langsplit = lang.split(",");
-    for (i = 0; i < langsplit.length; i++) {
-      if (langsplit.length > 0 && i > 0) filter = filter + ",";
-      filter = filter + '{"term":{"langs":"' + langsplit[i] + '"}}';
-    }
+  if (lang && lang !== "null") {
+    lang.split(",").forEach(l => {
+      filterArray.push({ term: { "langs": l.trim() } });
+    });
   }
-  filter = eval("(" + filter + "]" + ")");
 
-  var q = {
+  /* 2. Construcción del Body de la Query (Formato Bool para ES 9.x) */
+  var queryBody = {
     from: (page - 1) * page_size,
     size: page_size,
-    query: (function () {
-      /* In case we have a vocabulary or tag filter, we are using a filtered query */
-      if (lang != null || tag != null) {
-        return {
-          filtered: {
-            query: (function () {
-              if (queryString && queryString.length > 0) {
-                return {
-                  multi_match: {
-                    query: queryString,
-                    fields: fieldToSearchOn,
-                  },
-                };
-              } else {
-                return {
-                  match_all: {},
-                };
-              }
-            })(),
-            filter: { bool: { must: filter } },
-          },
-        };
-      } else {
-        return (function () {
+    query: {
+      bool: {
+        must: (function() {
           if (queryString && queryString.length > 0) {
             return {
               multi_match: {
                 query: queryString,
                 type: "best_fields",
                 fields: fieldToSearchOn,
-              },
+              }
             };
           } else {
-            return {
-              match_all: {},
-            };
+            return { match_all: {} };
           }
-        })();
+        })(),
+        filter: filterArray // Aquí van los tags y langs
       }
-    })(),
-    sort: (function () {
+    },
+    sort: (function() {
       if (queryString && queryString.length > 0) {
         return [{ _score: { order: "desc" } }];
       } else {
-        //return [{ "prefix.keyword": { order: "asc" } }];
-        return [{ prefix: { order: "asc" } }];
+        return [{ "prefix.keyword": { order: "asc" } }]; // Usamos .keyword para sort
       }
     })(),
     aggregations: {
-      tags: {
-        terms: {
-          field: "tags",
-          size: parseInt(tag_limit),
-        },
-      },
-      langs: {
-        terms: {
-          field: "langs",
-          size: parseInt(lang_limit),
-        },
-      },
-    },
+      tags: { terms: { field: "tags.keyword", size: tag_limit } },
+      langs: { terms: { field: "langs.keyword", size: lang_limit } }
+    }
   };
-  /* build and return the result JSON object */
-  return (
-    client
-      //.search(indexName, type, q)
-      .search({
-        index: indexName,
-        type: type,
-        body: q,
-      })
-      .then((data) => {
-        var parsed, result;
-        parsed = data.hits;
-        //parsed = JSON.parse(data).hits;
-        /* filters are the parameters sent by the client to filter the query results */
-        var filters = {};
-        if (tag != "null") filters.tag = tag;
-        if (lang != "null") filters.lang = lang;
 
-        result = {
-          total_results: parsed.total,
+  /* 3. Ejecución (Sin el parámetro 'type') */
+  return client.search({
+    index: indexName, // Solo el índice, el type causa el error 400
+    body: queryBody
+  })
+      .then((data) => {
+        var hits = data.hits;
+        var filters = {};
+        if (tag && tag !== "null") filters.tag = tag;
+        if (lang && lang !== "null") filters.lang = lang;
+
+        var result = {
+          total_results: typeof hits.total === 'object' ? hits.total.value : hits.total,
           page: page,
           page_size: page_size,
           queryString: queryString,
           filters: filters,
           aggregations: data.aggregations,
-          //aggregations: JSON.parse(data).aggregations,
-          results: parsed.hits,
+          results: hits.hits
         };
         return callback(null, result);
       })
       .catch((error) => {
+        console.error("Error en execSearchVocabulary:", error);
         return callback(error, null);
-      })
-  );
+      });
 }
 
 /**

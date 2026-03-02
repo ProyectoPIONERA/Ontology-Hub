@@ -1,6 +1,7 @@
 /**
  * Module dependencies.
  */
+const { ElasticService } = require('../elastic');
 
 var mongoose = require("mongoose"),
   Agent = mongoose.model("Agent"),
@@ -73,19 +74,40 @@ exports.destroy = function (req, res) {
 /**
  * Create agent
  */
-exports.create = function (req, res) {
-  var agent = new Agent(req.body);
-  agent
-    .save()
-    .then(() => {
-      return res.redirect("/dataset/agents/" + agent.name);
-    })
-    .catch((err) => {
-      return res.render("500", {
-        app_name_shorcut: app_name_shorcut,
-        app_name: app_name,
-      });
+exports.create = async function (req, res) {
+  try {
+    // 1. Crear y guardar en MongoDB
+    const agent = new Agent(req.body);
+    await agent.save();
+
+    // 2. Determinar el índice correcto para Elasticsearch
+    // Asumiendo que agent.type es 'person' o 'organization'
+    const esType = (agent.type && agent.type.toLowerCase() === 'person') ? 'person' : 'organization';
+
+    // 3. Indexar en Elasticsearch
+    // Usamos el servicio unificado que ya configuramos
+    await ElasticService.upsert(esType, agent._id, {
+      uri: agent.uri,
+      name: agent.name,
+      alternativeNames: agent.alternativeNames, // Si lo tienes en el body
+      tags2: agent.tags2 || []
     });
+
+    console.log(`[Elastic] Agente ${agent.name} indexado en lov_${esType}`);
+
+    // 4. Redirigir al éxito
+    res.redirect("/dataset/agents/" + encodeURIComponent(agent.name));
+
+  } catch (err) {
+    console.error("Error al crear e indexar el agente:", err);
+
+    // Si el error es de validación de MongoDB, podrías manejar un 400
+    // por ahora mantenemos el 500 para consistencia con tu código original
+    res.status(500).render("500", {
+      app_name_shorcut: "LOV",
+      app_name: "Linked Open Vocabularies"
+    });
+  }
 };
 
 exports.createOnTheFly = function (req, res) {
