@@ -1,0 +1,39 @@
+{
+  "properties": {
+    "uri": { "type": "keyword" },
+    "type": { "type": "keyword" },
+    "prefixedName": {
+      "type": "text",
+      "fields": {
+        "keyword": { "type": "keyword", "ignore_above": 256 },
+        "autocomplete": {
+          "type": "text",
+          "analyzer": "autocomplete_ngram_index",
+          "search_analyzer": "autocomplete_ngram_search"
+        }
+      }
+    },
+    "localName": {
+      "properties": {
+        "ngram": {
+          "type": "text",
+          "analyzer": "ngram_analyzer_index",
+          "search_analyzer": "ngram_analyzer_search"
+        }
+      }
+    },
+    "vocabulary": {
+      "properties": {
+        "prefix": { "type": "keyword" },
+        "uri": { "type": "keyword" }
+      }
+    },
+    "metrics": {
+      "properties": {
+        "occurrencesInDatasets": { "type": "long" },
+        "reusedByDatasets": { "type": "long" }
+      }
+    },
+    "tags": { "type": "keyword" }
+  }
+}
