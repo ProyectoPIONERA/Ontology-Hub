@@ -59,6 +59,7 @@ var VocabularySchema = new Schema({
   creatorIds: [{ type: String, ref: "Agent", trim: true }],
   contributorIds: [{ type: String, ref: "Agent", trim: true }],
   publisherIds: [{ type: String, ref: "Agent", trim: true }],
+  repositoryUri: {type: String, trim: true},
   reviews: [
     {
       body: { type: String, trim: true },

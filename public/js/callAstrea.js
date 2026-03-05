@@ -59,30 +59,66 @@ function callAstrea(uri, sourceUrl, options) {
 }
 
 function runAstreaFromToolbar(uri, sourceUrl) {
-  if (typeof window.activateOntologyTab === "function") {
-    window.activateOntologyTab("astrea");
-  }
-
   var container = document.getElementById("astreaVocabContainer");
-  if (!uri && container) {
+  if(!uri && container){
     uri = container.getAttribute("data-uri");
   }
-  if (!sourceUrl && container) {
-    sourceUrl = container.getAttribute("data-source-url");
+  if(!sourceUrl && container){
+    sourceUrl =container.getAttribute("data-source-url");
   }
   window.__astreaPendingRun = { uri: uri, sourceUrl: sourceUrl };
 
-  var runButton = document.getElementById("callAstreaButton");
-  if (runButton) {
-    setTimeout(function () {
-      runButton.click();
-    }, 0);
+  if(typeof window.activateOntologyTab === "function"){
+    window.activateOntologyTab("astrea");
   }
 }
 
 document.addEventListener("DOMContentLoaded", function () {
   var tabs = document.querySelectorAll(".ontology-tab");
   var panels = document.querySelectorAll(".ontology-tab-panel");
+
+  function resolveFallbackSourceUrl(container, sourceUrl) {
+    if (sourceUrl) {
+      return sourceUrl;
+    }
+    if (!container) {
+      return "";
+    }
+
+    var direct = container.getAttribute("data-source-url") || "";
+    if (direct) {
+      return direct;
+    }
+
+    var prefix = container.getAttribute("data-vocab-prefix") || "";
+    var versionName = container.getAttribute("data-version-name") || "";
+    if (prefix && /^v\d{4}-\d{2}-\d{2}$/.test(versionName)) {
+      return "/dataset/vocabs/" + prefix + "/versions/" + versionName.substring(1) + ".n3";
+    }
+
+    return "";
+  }
+
+  function triggerAutoRun(name){
+    if(name == "astrea"){
+      var astreaBtn = document.getElementById("callAstreaButton");
+      if(astreaBtn && !astreaBtn.disabled){
+        setTimeout(function(){
+          astreaBtn.click();
+        }, 0);
+      }
+      return;
+    }
+
+    if(name === "foops"){
+      var foopsBtn = document.getElementById("callFoopsButton");
+      if(foopsBtn && foopsBtn.style.display !== "none"){
+        setTimeout(function(){
+          foopsBtn.click();
+        }, 0);
+      }
+    }
+  }
 
   function activateOntologyTab(name) {
     tabs.forEach(function (tab) {
@@ -108,6 +144,7 @@ document.addEventListener("DOMContentLoaded", function () {
         window.tl.layout();
       }, 0);
     }
+    triggerAutoRun(name);
   }
 
   window.activateOntologyTab = activateOntologyTab;
@@ -151,7 +188,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   var latest = "";
   var defaultUri = container.getAttribute("data-uri");
-  var defaultSourceUrl = container.getAttribute("data-source-url");
+  var defaultSourceUrl = resolveFallbackSourceUrl(
+    container,
+    container.getAttribute("data-source-url")
+  );
 
   results.style.display = "none";
   loadingMessage.style.display = "block";
@@ -162,7 +202,10 @@ document.addEventListener("DOMContentLoaded", function () {
   runButton.addEventListener("click", function () {
     var pending = window.__astreaPendingRun || {};
     var uri = pending.uri || defaultUri;
-    var sourceUrl = pending.sourceUrl || defaultSourceUrl;
+    var sourceUrl = resolveFallbackSourceUrl(
+      container,
+      pending.sourceUrl || defaultSourceUrl
+    );
     window.__astreaPendingRun = null;
 
     runButton.disabled = true;

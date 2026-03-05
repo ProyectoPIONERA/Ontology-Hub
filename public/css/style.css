@@ -1,4 +1,4 @@
-/*
+﻿/*
 inspired by http://lessframework.org and goldengridsystem.com
 by Vittorio Vittori
 http://vittoriovittori.com
@@ -623,7 +623,7 @@ article > .navigation {
 
 .container > section {
   padding-top: 2.5em;
-  padding-bottom: 2.5em;
+  padding-bottom: 0.75em;
 }
 
 .line-container {
@@ -1004,7 +1004,7 @@ aside h2 {
 }
 
 .artifact-btn:hover {
-  background: #eef1f2;
+  background: #f2eeee;
 }
 
 .artifact-btn-primary {
@@ -1202,6 +1202,234 @@ footer div .wrpl dl {
 #yasgui .tabContextButton {
   display: none;
 }
+
+.repo-artifacts{
+  margin-top: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+/* Repository URL + Artifacts toggle on one line */
+.repo-row td:last-child .repo-line{
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.repo-row td:last-child .repo-url{
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.repo-row td:last-child .repo-artifacts{
+  margin-left: auto;
+  position: relative;
+  flex-shrink: 0;
+  align-self: flex-start;
+  width: 96px;
+  overflow: visible;
+}
+
+.repo-artifacts__summary{
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: auto;          
+  margin-left: auto;    
+  margin-right: 40px;   
+  gap: 8px;
+}
+
+.repo-row td:last-child .repo-artifacts__summary{
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  font-size: 0.9rem;
+}
+
+.repo-row td:last-child .repo-artifacts[open] > .repo-artifacts__body{
+  position: relative;
+  width: 760px;
+  max-width: calc(100vw - 140px);
+  margin-top: 0.35rem;
+  margin-left: calc(100% - 760px);
+  left: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  z-index: auto;
+}
+
+/* Keep repository label anchored at top when row grows */
+.repo-row td{
+  vertical-align: top;
+}
+
+/* Allow artifacts dropdown to overflow only in General metadata block */
+#posts .metadataFrame{
+  overflow: visible;
+}
+
+.repo-artifacts__summary::-webkit-details-marker{
+  display: none;
+}
+
+.repo-artifacts__summary::before{
+  content: "\25B8";
+  margin-right: 8px;
+  transition: transform .2s ease;
+}
+
+.repo-artifacts__summary::after{
+  content: none;
+}
+
+.repo-artifacts[open] .repo-artifacts__summary::before{
+  transform: rotate(90deg);
+}
+
+.repo-artifacts__body{
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  column-gap: 28px;
+  row-gap: 14px;
+}
+
+@media (max-width: 980px) {
+  .repo-row td:last-child .repo-artifacts[open] > .repo-artifacts__body{
+    width: min(92vw, 520px);
+    margin-left: calc(100% - min(92vw, 520px));
+    left: 0;
+  }
+
+  .repo-artifacts__body{
+    grid-template-columns: 1fr;
+  }
+}
+
+.repo-row td:last-child .repo-artifacts[open] > .repo-artifacts__body{
+  margin-top: 0;
+}
+
+.repo-artifacts__group{
+  border: none;
+  border-radius: 0;
+  background: none;
+  padding: 10px;
+}
+
+.repo-artifacts__group-title{
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.repo-artifacts__list{
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.repo-artifacts__item{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+
+.repo-artifacts__item:hover{
+  background: transparent;
+}
+
+.repo-artifacts__file{
+  color: #1f2937;
+  text-decoration: none !important;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.repo-artifacts__file:hover{
+  color: #ffffff;
+  text-decoration: none !important;
+}
+
+.repo-artifacts__file--disabled{
+  color: #1f2937;
+  cursor: default;
+  opacity: 1;
+  text-decoration: none;
+}
+
+.repo-artifacts__download{
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 14px;
+  transition: all .15s ease;
+}
+
+.repo-artifacts__download:hover{
+  background: #e8f0fe;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+
+.repo-artifacts__file--disabled,
+.repo-artifacts__file--disabled:hover,
+.repo-artifacts__file--disabled:focus,
+.repo-artifacts__file--disabled:active {
+  color: #1f2937 !important;
+  background: transparent !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  cursor: default;
+}
+
+.flat-table-3 tr.repo.row:hover,
+.flat-table-3 tr.repo-row td:hover,
+.flat-table-3 tr.repo.row a:hover,
+.flat-table-3 .repo-artifacts__table tbody tr:hover{
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Menos hueco entre barra de pestaÃ±as y cualquier panel */
+.ontology-tabs-nav {
+  margin-bottom: 0.25rem;
+}
+
+.ontology-tabs-nav ul {
+  margin-bottom: 0.25rem;
+}
+
+/* Aplica a General, Incoming, Version, Astrea, Foops, Themis */
+.ontology-tab-panel {
+  padding-top: 0.25rem !important;
+}
+
+
 
 @media only screen and (min-width: 1400px) {
 }
@@ -1538,3 +1766,6 @@ footer div .wrpl dl {
 @media only screen and (-webkit-min-device-pixel-ratio: 2),
   only screen and (min-device-pixel-ratio: 2) {
 }
+
+
+

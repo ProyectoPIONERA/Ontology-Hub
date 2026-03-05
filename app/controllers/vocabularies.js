@@ -667,10 +667,9 @@ exports.artifactFile = function(req, res){
     const absPath = path.resolve(__dirname, "..", "..", "versions", String(vocab._id), type, file);
     if(!fs.existsSync(absPath)) return res.status(404).send("Artifact not found");
 
-    // Si quieres forzar descarga:
-    // return res.download(absPath);
-
-    // Si quieres servirlo inline:
+    if(req.query.download == "1"){
+      return res.download(absPath, file);
+    }
     return res.sendFile(absPath);
   });
 };
@@ -1230,7 +1229,7 @@ exports.newRepository = function (req, res, scripts) {
                           let tests = match
                             ? `https://api.github.com/repos${pathname}/contents/${match}`
                             : null;
-                          return parseOntology(req, res, scripts, data, path.extname(files[1].name), requirements, conceptualization, shapes, examples, tests);
+                          return parseOntology(req, res, scripts, data, path.extname(files[1].name), requirements, conceptualization, shapes, examples, tests, req.body.repositoryUri);
                         })
                         .catch(function(err){
                           if(err){
@@ -1456,7 +1455,7 @@ function isRepositoryUrl(url) {
   }
 }
 
-function parseOntology(req, res, scripts, data, extension, requirements, conceptualization, shapes, examples, tests) {
+function parseOntology(req, res, scripts, data, extension, requirements, conceptualization, shapes, examples, tests, repositoryUri) {
   
   const parser = new Parser();
   const quads = parser.parse(data);
@@ -1534,6 +1533,7 @@ function parseOntology(req, res, scripts, data, extension, requirements, concept
               shapes: shapes,
               examples: examples,
               tests: tests,
+              repositoryUri: repositoryUri,
             });
           });
         });

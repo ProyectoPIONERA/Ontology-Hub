@@ -325,12 +325,19 @@ document.addEventListener("DOMContentLoaded", function () {
   var container = document.getElementById("themisVocabContainer");
   var generateButton = document.getElementById("callThemisButton");
   var executeButton = document.getElementById("executeThemisButton");
+  var downloadButton = document.getElementById("downloadThemisButton");
   var editorContainer = document.getElementById("themis-editor-container");
   var editor = document.getElementById("themisTestEditor");
+  var editorMeta = document.getElementById("themisEditorMeta");
   var loadingImage = document.getElementById("themisLoadingImage");
   var loadingHint = document.getElementById("themisLoadingHint");
   var results = document.getElementById("themis-results");
   var resultsBody = document.getElementById("themisResultsBody");
+  var modeAuto = document.getElementById("themisModeAuto");
+  var modeManual = document.getElementById("themisModeManual");
+  var uploadContainer = document.getElementById("themisUploadContainer");
+  var testFileInput = document.getElementById("themisTestFile");
+  var fileMeta = document.getElementById("themisFileMeta");
 
   if (
     !container ||
@@ -343,9 +350,34 @@ document.addEventListener("DOMContentLoaded", function () {
     return;
   }
 
+  function resolveFallbackSourceUrl(sourceUrl) {
+    if (sourceUrl) {
+      return sourceUrl;
+    }
+
+    var direct = container.getAttribute("data-source-url") || "";
+    if (direct) {
+      return direct;
+    }
+
+    var prefix = container.getAttribute("data-vocab-prefix") || "";
+    var versionName = container.getAttribute("data-version-name") || "";
+    if (prefix && /^v\d{4}-\d{2}-\d{2}$/.test(versionName)) {
+      return "/dataset/vocabs/" + prefix + "/versions/" + versionName.substring(1) + ".n3";
+    }
+
+    return "";
+  }
+
   var defaultUri = container.getAttribute("data-uri");
-  var defaultSourceUrl = container.getAttribute("data-source-url");
+  var defaultSourceUrl = resolveFallbackSourceUrl(
+    container.getAttribute("data-source-url")
+  );
   var latest = "";
+  var autoLatest = "";
+  var autoTestsCache = "";
+  var manualTestsCache = "";
+  var currentAutoMode = isAutoMode();
 
   results.style.display = "none";
   editorContainer.style.display = "none";
@@ -353,6 +385,18 @@ document.addEventListener("DOMContentLoaded", function () {
     loadingImage.style.display = "none";
   }
   executeButton.disabled = true;
+  if (downloadButton) {
+    downloadButton.style.display = "none";
+    downloadButton.disabled = true;
+  }
+
+  function setDownloadVisibility(visible) {
+    if (!downloadButton) {
+      return;
+    }
+    downloadButton.style.display = visible ? "" : "none";
+    downloadButton.disabled = !visible;
+  }
 
   function setLoading(active, text) {
     if (loadingHint) {
@@ -366,33 +410,217 @@ document.addEventListener("DOMContentLoaded", function () {
     executeButton.disabled = active || !editor.value.trim();
   }
 
+  function setManualTestsFromText(text, filename){
+    var normalized = (text || "").replace(/\r\n/g, "\n");
+    manualTestsCache = normalized;
+    editor.value = normalized;
+    executeButton.disabled = !normalized.trim();
+
+    if(fileMeta){
+      if(filename){
+        fileMeta.textContent = 
+          "Loaded: " + filename + " (" + normalized.split("\n").length + " lines)";
+      }else{
+        fileMeta.textContent = normalized.trim()
+          ? "Loaded from file."
+          : "No file selected.";
+      }
+    }
+  }
+
+  if(testFileInput){
+    testFileInput.addEventListener("change", function (){
+      var file = testFileInput.files && testFileInput.files[0];
+      if(!file){
+        setManualTestsFromText("", "");
+        return;
+      }
+
+      var reader = new FileReader();
+
+      reader.onload = function(evt){
+        var content = (evt && evt.target && evt.target.result) || "";
+        setManualTestsFromText(String(content), file.name);
+      };
+
+      reader.onerror = function(){
+        alert("Error reading file.");
+        setManualTestsFromText("", "");
+      };
+
+      reader.readAsText(file, "utf-8");
+    });
+  }
+
+  function isAutoMode() {
+    return !!(modeAuto && modeAuto.checked);
+  }
+
+  function refreshModeUI() {
+    var auto = isAutoMode();
+
+    if (currentAutoMode) {
+      autoTestsCache = editor.value || "";
+    } else {
+      manualTestsCache = editor.value || "";
+    }
+    currentAutoMode = auto;
+
+    generateButton.textContent = auto ? "EXECUTE THEMIS" : "PREPARE TESTS";
+    generateButton.style.display = auto ? "" : "none";
+    executeButton.style.display = auto ? "none" : "";
+
+    if (editorMeta) {
+      editorMeta.textContent = auto
+        ? "Example tests generated. You can edit them before execution."
+        : "Manual mode. Upload a text file with your tests.";
+    }
+    if (editor) {
+      editor.style.display = auto ? "block" : "none";
+    }
+    if (uploadContainer) {
+      uploadContainer.style.display = auto ? "none" : "block";
+    }
+
+    if (loadingHint) {
+      loadingHint.textContent = auto
+        ? "Automatic mode: tests will be generated from API."
+        : "Manual mode: use your own tests.";
+    }
+
+    if (!auto) {
+      editor.value = manualTestsCache;
+      editorContainer.style.display = "block";
+      results.style.display = "none";
+      setDownloadVisibility(false);
+      executeButton.disabled = !editor.value.trim();
+      if (!editor.value.trim()) {
+        editor.focus();
+      }
+      return;
+    }
+
+    editor.value = autoTestsCache;
+    editorContainer.style.display = autoTestsCache.trim() ? "block" : "none";
+    if (autoLatest.trim()) {
+      latest = autoLatest;
+      renderThemisVisual(autoLatest, resultsBody);
+      results.style.display = "block";
+      setDownloadVisibility(true);
+    } else {
+      results.style.display = "none";
+      setDownloadVisibility(false);
+    }
+    executeButton.disabled = true;
+  }
+
   editor.addEventListener("input", function () {
     executeButton.disabled = !editor.value.trim();
+    if (isAutoMode()) {
+      autoTestsCache = editor.value || "";
+    } else {
+      manualTestsCache = editor.value || "";
+    }
   });
+
+  if (modeAuto) modeAuto.addEventListener("change", refreshModeUI);
+  if (modeManual) modeManual.addEventListener("change", refreshModeUI);
+  refreshModeUI();
 
   generateButton.addEventListener("click", function () {
     var pending = window.__themisPendingRun || {};
-    var sourceUrl = pending.sourceUrl || defaultSourceUrl;
+    var sourceUrl = resolveFallbackSourceUrl(
+      pending.sourceUrl || defaultSourceUrl
+    );
     if (pending.uri) {
       defaultUri = pending.uri;
     }
     if (pending.sourceUrl) {
-      defaultSourceUrl = pending.sourceUrl;
+      defaultSourceUrl = resolveFallbackSourceUrl(pending.sourceUrl);
     }
     window.__themisPendingRun = null;
+
+    if (!isAutoMode()) {
+      editorContainer.style.display = "block";
+      results.style.display = "none";
+      executeButton.disabled = !editor.value.trim();
+      if (!editor.value.trim()) {
+        editor.focus();
+      }
+      setLoading(false, "Manual mode: upload a text file with your tests.");
+      return;
+    }
+
+    var currentTests = autoTestsCache || editor.value || "";
+    if (currentTests.trim()) {
+      setLoading(true, "Running Themis with current tests...");
+      editorContainer.style.display = "block";
+      results.style.display = "none";
+      callThemis(defaultUri, currentTests, sourceUrl)
+        .then(function (text) {
+          var stats = getThemisStats(text);
+          latest = stats.raw;
+          autoLatest = stats.raw;
+          renderThemisVisual(latest, resultsBody);
+          results.style.display = "block";
+          setDownloadVisibility(true);
+        })
+        .catch(function (err) {
+          var errText = err.body || err.message || String(err);
+          alert("Error running Themis: " + errText);
+          setDownloadVisibility(false);
+        })
+        .finally(function () {
+          setLoading(false, "Tests ready for editing.");
+        });
+      return;
+    }
+
+    if (!sourceUrl) {
+      setLoading(true, "Running Themis directly from ontology URI...");
+      callThemis(defaultUri, "", "")
+        .then(function (text) {
+          var stats = getThemisStats(text);
+          latest = stats.raw;
+          autoLatest = stats.raw;
+          renderThemisVisual(latest, resultsBody);
+          results.style.display = "block";
+          setDownloadVisibility(true);
+        })
+        .catch(function (err) {
+          var errText = err.body || err.message || String(err);
+          alert("Error in automatic mode: " + errText);
+          setDownloadVisibility(false);
+        })
+        .finally(function () {
+          setLoading(false, "Tests ready for editing.");
+        });
+      return;
+    }
 
     setLoading(true, "Generating example tests...");
     callThemisExample(sourceUrl)
       .then(function (text) {
-        editor.value = (text || "").replace(/\r\n/g, "\n");
+        var generatedTests = (text || "").replace(/\r\n/g, "\n");
+        autoTestsCache = generatedTests;
+        editor.value = generatedTests;
         editorContainer.style.display = "block";
         executeButton.disabled = !editor.value.trim();
-        editor.focus();
         results.style.display = "none";
+        return callThemis(defaultUri, generatedTests, sourceUrl);
+      })
+      .then(function (text) {
+        var stats = getThemisStats(text);
+        latest = stats.raw;
+        autoLatest = stats.raw;
+        renderThemisVisual(latest, resultsBody);
+        results.style.display = "block";
+        setDownloadVisibility(true);
       })
       .catch(function (err) {
         var errText = err.body || err.message || String(err);
-        alert("Error generating tests: " + errText);
+        alert("Error in automatic mode: " + errText);
+        setDownloadVisibility(false);
       })
       .finally(function () {
         setLoading(false, "Tests ready for editing.");
@@ -408,20 +636,42 @@ document.addEventListener("DOMContentLoaded", function () {
     setLoading(true, "Running Themis with your tests...");
     results.style.display = "none";
 
-    callThemis(defaultUri, tests, defaultSourceUrl)
+    callThemis(defaultUri, tests, resolveFallbackSourceUrl(defaultSourceUrl))
       .then(function (text) {
         var stats = getThemisStats(text);
         latest = stats.raw;
         renderThemisVisual(latest, resultsBody);
         results.style.display = "block";
+        setDownloadVisibility(true);
       })
       .catch(function (err) {
         var errText = err.body || err.message || String(err);
         renderThemisVisual("", resultsBody);
         results.style.display = "block";
+        setDownloadVisibility(false);
       })
       .finally(function () {
         setLoading(false, "Tests ready for editing.");
       });
   });
+
+  if (downloadButton) {
+    downloadButton.addEventListener("click", function () {
+      if (!latest || !latest.trim()) {
+        return;
+      }
+      var now = new Date();
+      var stamp =
+        now.getFullYear() +
+        "-" +
+        String(now.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(now.getDate()).padStart(2, "0") +
+        "_" +
+        String(now.getHours()).padStart(2, "0") +
+        String(now.getMinutes()).padStart(2, "0") +
+        String(now.getSeconds()).padStart(2, "0");
+      downloadThemisTextFile("themis-results-" + stamp + ".txt", latest);
+    });
+  }
 });
