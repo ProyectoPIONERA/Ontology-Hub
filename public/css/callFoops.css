@@ -95,7 +95,7 @@
 
 .ontology-tabs-nav ul {
   overflow: auto;
-  margin: 0 0 1em;
+  margin: 0;
   padding: 0;
 }
 
@@ -111,9 +111,9 @@
   border-radius: 4px;
   text-transform: uppercase;
   font-weight: bold;
-  color: #d0d7da;
+  color: #374151;
   text-decoration: none;
-  text-shadow: 1px 1px 0px white;
+  text-shadow: none;
 }
 
 .ontology-tab:hover,
@@ -129,6 +129,7 @@
 
 .ontology-tab-panel {
   display: none;
+  padding-top: 0 !important;
 }
 
 .ontology-tab-panel.is-active {
@@ -215,8 +216,8 @@
 }
 
 #posts_themis #greenContainer h2{
-  color: #000000;
-  font-size: medium;
+  color: white;
+  font-size: 1.3em;
 }
 
 #posts_astrea #greenContainer{
@@ -224,8 +225,8 @@
 }
 
 #posts_astrea #greenContainer h2{
-  color: #000000;
-  font-size: medium;
+  color: white;
+  font-size: 1.3em;
 }
 
 #posts_foops #greenContainer{
@@ -233,8 +234,8 @@
 }
 
 #posts_foops #greenContainer h2{
-  color: #000000;
-  font-size: medium;
+  color: white;
+  font-size: 1.3em;
 }
 
 .row.w-100.pl-3.pt-2.caja-category {
@@ -703,6 +704,11 @@ element.style {
   overflow: hidden;
 }
 
+/* Keep repository artifacts dropdown visible in General/Metadata section */
+#posts .metadataFrame {
+  overflow: visible !important;
+}
+
 .graphicScore {
   display: block;
   justify-content: center;
@@ -1113,4 +1119,19 @@ footer {
 [aria-expanded="false"] > .expanded,
 [aria-expanded="true"] > .collapsed {
   display: none;
+}
+
+#downloadThemisButton{
+  background: #82bac7;
+  border: 1px solid white;
+  color: #ffffff;
+  text-shadow: none;
+}
+
+#downloadThemisButton:hover,
+#downloadThemisButton:focus,
+#downloadThemisButton:active{
+  background: #82bac7;
+  border-color: white;
+  color: #ffffff;
 }

@@ -1,4 +1,4 @@
-extends ../layout/layout
+﻿extends ../layout/layout
 block content
       section#post.postBlue
         article
@@ -63,7 +63,7 @@ block content
               h2 Metadata
               .metadataFrame
                 .metadataContainerVocab
-                  table.metadata-table.noheader.flat-table-3(style="width:100%")
+                  table.metadata-table.noheader.flat-table-3(style="width: 100%")
                     tbody
                       //-tr
                         td Prefix
@@ -147,8 +147,52 @@ block content
                         tr
                           td Comment
                           td !{utils.displayReviews(vocab.reviews)}
-          
-            
+                      if vocab.repositoryUri
+                        tr.repo-row
+                          td Repository
+                          td
+                            .repo-line
+                              a.repo-url(href='#{vocab.repositoryUri}', target='_blank', rel='noopener noreferrer') #{vocab.repositoryUri}
+                              - var repoArtifactLabels = {requirements:"Requirements", conceptualization:"Conceptualization", shapes:"SHACL Shapes", examples:"Examples", tests:"Tests"};
+                              - var repoArtifactTypes = ["requirements", "conceptualization", "shapes", "examples", "tests"];
+                              - var hasRepoArtifacts = Object.keys(artifacts || {}).some(function(k){ return (artifacts[k] || []).length; });
+                              
+                              if hasRepoArtifacts 
+                                details.repo-artifacts
+                                  summary.repo-artifacts__summary Artifacts
+                                  .repo-artifacts__body
+                                    each t in repoArtifactTypes 
+                                      - var files = (artifacts[t] || []);
+                                      if files.length
+                                        .repo-artifacts__group
+                                          p.repo-artifacts__group-title= repoArtifactLabels[t] || t
+                                          table.repo-artifacts__table
+                                            tbody
+                                              each f in files
+                                                - var url = '/dataset/vocabs/' + vocab.prefix + '/artifacts/' + t + '/' + encodeURIComponent(f);
+                                                - var lower = (f || '').toLowerCase();
+                                                - var isDrawio = lower.endsWith('.drawio');
+                                                - var isRDF = lower.endsWith('.rdf');
+
+                                                tr
+                                                  td(style='padding:0.12rem 0.6rem 0.12rem 0;')
+                                                    if(!isDrawio && !isRDF)
+                                                      a.repo-artifacts__file(
+                                                        href=url
+                                                        target='_blank'
+                                                        rel='noopener noreferrer'
+                                                      )= f
+                                                    else 
+                                                      span.repo-artifacts__file.repo-artifacts__file--disabled(
+                                                        title='Ete tipo de archivo no tiene visualización previa'
+                                                      )= f
+                                                  td(style='padding:0.12rem 0 0.12rem 0.2rem; white-space:nowrap;')
+                                                    a.repo-artifacts__download(
+                                                      href=url + '?download=1'
+                                                      title='Descargar'
+                                                      aria-label='Descargar ' + f
+                                                    ) &#8681;
+
 
             aside.wrpl
               .h-padding
@@ -206,37 +250,6 @@ block content
                         li
                           a.tag(href='/dataset/vocabs?tag='+encodeURIComponent(tag)) #{tag}
                 .clear
-                h2 Artifacts
-                .line
-                .asideListFloat
-
-                  - var labels = {requirements:"Requirements", conceptualization:"Conceptualization", shapes:"SHACL Shapes", examples:"Examples", tests:"Tests"};
-                  - var types  = ["requirements","conceptualization","shapes","examples","tests"];
-                  - var any = Object.keys(artifacts || {}).some(function(k){ return (artifacts[k] || []).length; });
-                  
-                  if (artifacts && any)
-                    each t in types
-                      - var files = (artifacts[t] || []);
-                      if (files.length)
-                        .artifact-group
-                          h3.artifact-title= labels[t] || t
-                          ul.artifact-list
-                            each f in files
-                              - var url = '/dataset/vocabs/' + vocab.prefix + '/artifacts/' + t + '/' + encodeURIComponent(f);
-                              - var lower = (f || '').toLowerCase();
-                              - var isImg = (lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.gif') || lower.endsWith('.svg') || lower.endsWith('.webp'));
-                              - var isDrawio = lower.endsWith('.drawio');
-                              - var isRDF = lower.endsWith('.rdf');
-                              li.artifact-item
-                                .artifact-row
-                                  span.artifact-name(title=f)= f
-                                  .artifact-actions
-                                    if (!isDrawio && !isRDF)
-                                      a.artifact-btn(href=url, target='_blank') View
-                                    a.artifact-btn.artifact-btn-primary(href=url + '?download=1') Download                               
-                  else
-                    span No artifacts found
-                .clear
                 h2 LOD
                 .line
                 .blabla 
@@ -259,6 +272,10 @@ block content
       script(src='/js/callThemis.js')
       script(src='/js/callFoops.js')
       link(rel='stylesheet', type='text/css', media='all', href='/css/callFoops.css')
+      - var issuedYMD = (lastVersion && lastVersion.issued) ? utils.dateToYMD(lastVersion.issued) : null;
+      - if (!issuedYMD && lastVersion && lastVersion.name && /^v\d{4}-\d{2}-\d{2}$/.test(lastVersion.name)) {
+      -   issuedYMD = lastVersion.name.substring(1);
+      - }
       section#posts_astrea.default-area.ontology-tab-panel(data-onto-panel='astrea')
         article
           div#greenContainer(class="contents clear col-2 split wrplGreen")
@@ -272,7 +289,9 @@ block content
                     div#astreaLoadingImage
                       img(src="/img/load.gif" class="load_image")
                     div#astreaVocabContainer(data-uri='#{(vocab.isDefinedBy)?vocab.isDefinedBy:vocab.uri}'
-                                            data-source-url='/dataset/vocabs/#{vocab.prefix}/versions/#{utils.dateToYMD(lastVersion.issued)}.n3')
+                                            data-source-url='#{issuedYMD ? ("/dataset/vocabs/" + vocab.prefix + "/versions/" + issuedYMD + ".n3") : ""}'
+                                            data-vocab-prefix='#{vocab.prefix}'
+                                            data-version-name='#{(lastVersion && lastVersion.name) ? lastVersion.name : ""}')
               div#astrea-results
                 .row.mt-3.ml-0.w-100
                   .col-12.caja.caja-info
@@ -375,16 +394,33 @@ block content
                 tr#themisLoadingMessage
                   p#themisLoadingHint It may take a few seconds
                   td.center-text(style="padding-top: 0px;")
+                    div#themisModeSwitch(style="margin-top:0.75rem; text-align:left;")
+                      label(style="font-size:0.9rem; color:#111827; margin-right:0.75rem;")
+                        input#themisModeAuto(type="radio" name="themisMode" value="auto" checked)
+                        | Automatic
+                      label(style="font-size:0.9rem; color:#111827;")
+                        input#themisModeManual(type="radio" name="themisMode" value="manual")
+                        | User Tests
                     button#callThemisButton RUN THEMIS
                     div#themisLoadingImage
                       img(src="/img/load.gif" class="load_image")
                     div#themisVocabContainer(
                       data-uri='#{(vocab.isDefinedBy)?vocab.isDefinedBy:vocab.uri}'
-                      data-source-url='/dataset/vocabs/#{vocab.prefix}/versions/#{utils.dateToYMD(lastVersion.issued)}.n3'
+                      data-source-url='#{issuedYMD ? ("/dataset/vocabs/" + vocab.prefix + "/versions/" + issuedYMD + ".n3") : ""}'
+                      data-vocab-prefix='#{vocab.prefix}'
+                      data-version-name='#{(lastVersion && lastVersion.name) ? lastVersion.name : ""}'
                     )
               div#themis-editor-container(style="display:none; margin-top:1rem;")
                 p#themisEditorMeta(style="margin-bottom:0.5rem; font-size:0.9rem; color:#4b5563;") Example tests generated. You can edit them before execution.
-                textarea#themisTestEditor(spellcheck='false')
+
+                div#themisUploadContainer(style="margin-bottom:0.75rem;")
+                  input#themisTestFile(type="file" accept=".txt,text/plain")
+                  p#themisFileMeta(style="margin-top:0.4rem; margin-bottom:0; font-size:0.85rem; color:#4b5563;") No file selected.
+
+                textarea#themisTestEditor(spellcheck='false' style="display:none;")
+                
+
+
                 div(style="margin-top:0.5rem;")
                   button#executeThemisButton(type='button') EXECUTE THEMIS
               div#themis-results
@@ -401,6 +437,8 @@ block content
                                 th Result
                                 th Problem
                             tbody#themisResultsBody
+                          div(style="margin-top:0.75rem; text-align:right;")
+                            button#downloadThemisButton(type='button' style="display:none;") DOWNLOAD RESULTS
                             
       section#post.postMediumDarkBlue.ontology-tab-panel(data-onto-panel='incoming-links')
         h2(style="width:50%; float:left;" title="Vocabularies using #{vocab.prefix}. The relation type between a vocabulary and #{vocab.prefix} is indicated by the color.") #{inData.nodes?inData.nodes.length-1:0} Incoming Links
