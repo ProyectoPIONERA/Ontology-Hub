@@ -151,49 +151,27 @@ block content
                         tr.repo-row
                           td Repository
                           td
-                            .repo-line
-                              a.repo-url(href='#{vocab.repositoryUri}', target='_blank', rel='noopener noreferrer') #{vocab.repositoryUri}
-                              - var repoArtifactLabels = {requirements:"Requirements", conceptualization:"Conceptualization", shapes:"SHACL Shapes", examples:"Examples", tests:"Tests"};
-                              - var repoArtifactTypes = ["requirements", "conceptualization", "shapes", "examples", "tests"];
-                              - var hasRepoArtifacts = Object.keys(artifacts || {}).some(function(k){ return (artifacts[k] || []).length; });
-                              
-                              if hasRepoArtifacts 
-                                details.repo-artifacts
-                                  summary.repo-artifacts__summary Artifacts
-                                  .repo-artifacts__body
-                                    each t in repoArtifactTypes 
-                                      - var files = (artifacts[t] || []);
-                                      if files.length
-                                        .repo-artifacts__group
-                                          p.repo-artifacts__group-title= repoArtifactLabels[t] || t
-                                          table.repo-artifacts__table
-                                            tbody
-                                              each f in files
-                                                - var url = '/dataset/vocabs/' + vocab.prefix + '/artifacts/' + t + '/' + encodeURIComponent(f);
-                                                - var lower = (f || '').toLowerCase();
-                                                - var isDrawio = lower.endsWith('.drawio');
-                                                - var isRDF = lower.endsWith('.rdf');
-
-                                                tr
-                                                  td(style='padding:0.12rem 0.6rem 0.12rem 0;')
-                                                    if(!isDrawio && !isRDF)
-                                                      a.repo-artifacts__file(
-                                                        href=url
-                                                        target='_blank'
-                                                        rel='noopener noreferrer'
-                                                      )= f
-                                                    else 
-                                                      span.repo-artifacts__file.repo-artifacts__file--disabled(
-                                                        title='Ete tipo de archivo no tiene visualización previa'
-                                                      )= f
-                                                  td(style='padding:0.12rem 0 0.12rem 0.2rem; white-space:nowrap;')
-                                                    a.repo-artifacts__download(
-                                                      href=url + '?download=1'
-                                                      title='Descargar'
-                                                      aria-label='Descargar ' + f
-                                                    ) &#8681;
-
-
+                            a(href='#{vocab.repositoryUri}', target='_blank', rel='noopener noreferrer') #{vocab.repositoryUri}
+                            a.repo-artifacts-toggle(href='#', onclick='return toggleArtifactRows(this);', style='margin-left:0.75rem;') ▸ Artifacts
+                        - var repoArtifactLabels = {requirements:"Requirements", conceptualization:"Conceptualization", shapes:"SHACL Shapes", examples:"Examples", tests:"Tests"};
+                        - var repoArtifactTypes = ["requirements", "conceptualization", "shapes", "examples", "tests"];
+                        each t in repoArtifactTypes
+                          - var files = (artifacts[t] || []);
+                          if files.length
+                            tr.artifact-row(style='display:none;')
+                              td.artifact-key= repoArtifactLabels[t] || t
+                              td
+                                each f in files
+                                  - var url = '/dataset/vocabs/' + vocab.prefix + '/artifacts/' + t + '/' + encodeURIComponent(f);
+                                  - var lower = (f || '').toLowerCase();
+                                  - var isDrawio = lower.endsWith('.drawio');
+                                  - var isRDF = lower.endsWith('.rdf');
+                                  div.artifact-file-row
+                                    if(!isDrawio && !isRDF)
+                                      a.repo-artifacts__file(href=url, target='_blank', rel='noopener noreferrer')= f
+                                    else
+                                      span.repo-artifacts__file.repo-artifacts__file--disabled= f
+                                    a.repo-artifacts__download(href=url + '?download=1', title='Download', aria-label='Download ' + f) &#8681;
             aside.wrpl
               .h-padding
                 -if(typeof(lastVersion)!='undefined')
@@ -687,4 +665,22 @@ block content
                                                                                                      // timeline_data variable.
                   tl.layout(); // display the Timeline
           });
+
+      script. 
+        function toggleArtifactRows(link){
+          var tbody = link.closest('tbody');
+          if(!tbody) return false;
+
+          var rows = tbody.querySelectorAll('tr.artifact-row');
+          if(!rows.length) return false;
+
+          var open = link.getAttribute('data-open') === '1';
+          for(var i = 0; i < rows.length; i++){
+            rows[i].style.display = open ? 'none' : 'table-row';
+          }
+
+          link.setAttribute('data-open', open ? '0' : '1');
+          link.textContent = (open ? '▸ ' : '▾ ') + 'Artifacts';
+          return false;
+        }
           
