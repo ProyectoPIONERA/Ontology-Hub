@@ -1429,6 +1429,57 @@ footer div .wrpl dl {
   padding-top: 0.25rem !important;
 }
 
+.repo-artifacts-toggle{
+  margin-left: 1.25rem;
+  text-decoration: none !important;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.repo-artifacts-toggle:hover,
+.repo-artifacts-toggle:focus{
+  text-decoration: none !important;
+}
+
+/* Indent only artifact rows without shifting other metadata rows */
+tr.artifact-row {
+  display: table-row;
+}
+
+tr.artifact-row td {
+  vertical-align: top;
+}
+
+tr.artifact-row td.artifact-key {
+  font-weight: 400;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+tr.artifact-row td:last-child {
+  padding-left: 0;
+}
+
+.artifact-file-row{
+  display: grid;
+  grid-template-columns: 1fr 28px;
+  align-items: center;
+  column-gap: 8px;
+  margin-bottom: 0.35rem;
+  max-width: 430px;
+}
+
+.artifact-file-row .repo-artifacts__file,
+.artifact-file-row .repo-artifacts__file--disabled{
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.artifact-file-row .repo-artifacts__download{
+  margin-left: 0 !important;
+  justify-self: end;
+}
+
 
 
 @media only screen and (min-width: 1400px) {
