@@ -50,7 +50,7 @@ const ElasticService = {
                         // Espera a que el índice esté listo
                         await client.cluster.health({
                             index: indexName,
-                            waitForStatus: 'yellow',
+                            wait_for_status: 'yellow',
                             timeout: '30s'
                         });
 

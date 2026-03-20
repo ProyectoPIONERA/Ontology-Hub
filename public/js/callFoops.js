@@ -1,14 +1,8 @@
 function runFoopsFromToolbar(uri) {
-  if (typeof window.activateOntologyTab === "function") {
-    window.activateOntologyTab("foops");
-  }
   window.__foopsPendingUri = uri;
 
-  var runButton = document.getElementById("callFoopsButton");
-  if (runButton) {
-    setTimeout(function () {
-      runButton.click();
-    }, 0);
+  if(typeof window.activateOntologyTab === "function"){
+    window.activateOntologyTab("foops");
   }
 }
 
