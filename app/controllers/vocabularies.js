@@ -1480,12 +1480,11 @@ function parseOntology(req, res, scripts, data, extension, requirements, concept
     } else {
       // Store the ontology content in a file in the tmp folder
       const randomName = crypto.randomBytes(16).toString('hex');
-      const fullPath = path.join("./versions/temp", `${randomName}${extension}`);
+      const tempDir = path.resolve("./versions/temp");
+      fs.mkdirSync(tempDir, { recursive: true });
 
-      if (!fs.existsSync("./versions/temp")) {
-        fs.mkdirSync("./versions/temp");
-      }
-      fs.writeFileSync(fullPath, data, 'utf8');
+      const fullPath = path.join(tempDir, `${randomName}${extension}`);
+      fs.writeFileSync(fullPath, data, "utf8");
 
       //vocab does not exist yet*/
       Language.listAll(function (err, langs) {
