@@ -149,10 +149,8 @@ const ElasticService = {
             // Convertimos documento de Mongoose a objeto plano
             let doc = data.toObject ? data.toObject() : JSON.parse(JSON.stringify(data));
 
-            // Forzamos que el campo 'type' exista para que las agregaciones funcionen
             if (!doc.type) doc.type = type;
 
-            // Fix for vocabulary: titles and descriptions are objects in Mongo but text in Elastic
             if (type === 'vocabulary') {
                 if (Array.isArray(doc.titles)) {
                     doc.titles = doc.titles.map(t => (t && typeof t === 'object' && t.value) ? t.value : t);
@@ -162,9 +160,7 @@ const ElasticService = {
                 }
             }
 
-            // Fix for terms: localName comes as { ngram: '...' }
-            // lov_class (and likely others) expects String (Text)
-            // lov_property expects Object (based on logs)
+
             if (doc.localName && typeof doc.localName === 'object' && doc.localName.ngram) {
                 if (type !== 'property') {
                     doc.localName = doc.localName.ngram;

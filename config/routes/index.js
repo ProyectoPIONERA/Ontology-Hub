@@ -1,4 +1,5 @@
 var express = require("express");
+const cors = require("cors");
 var mongoose = require("mongoose");
 
 var users = require("../../app/controllers/users"),
@@ -31,6 +32,7 @@ var nodemailer = require("nodemailer");
 var env = process.env.NODE_ENV || "development";
 var config = require("../config")[env];
 var router = express.Router();
+router.use(cors());
 
 // Configure app name
 agents.configureName(config.app_name, config.app_name_shorcut);
