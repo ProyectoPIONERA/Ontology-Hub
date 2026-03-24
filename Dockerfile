@@ -88,6 +88,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 RUN npm install n3
+run npm install cors
 
 # Copy application files
 COPY . .
