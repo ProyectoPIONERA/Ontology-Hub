@@ -676,6 +676,43 @@ exports.artifactFile = function(req, res){
 
 
 exports.create = function (req, res, scripts, lov, patterns, python_patterns) {
+  if (req.body && typeof req.body.payload === "string") {
+    try {
+      req.body = JSON.parse(req.body.payload);
+    } catch (e) {
+      return res.status(400).send({
+        redirect: "500",
+        err: "Invalid payload format",
+      });
+    }
+  }
+
+  function normalizeLangValueArray(value) {
+    if (!value) return [];
+    if (Array.isArray(value)) return value;
+    if (typeof value === "object") {
+      return Object.keys(value)
+        .sort((a, b) => Number(a) - Number(b))
+        .map((k) => value[k]);
+    }
+    return [];
+  }
+
+  req.body.titles = normalizeLangValueArray(req.body.titles).filter(
+    (item) => item && typeof item.value === "string" && item.value.trim().length > 0
+  );
+  req.body.descriptions = normalizeLangValueArray(req.body.descriptions).filter(
+    (item) => item && typeof item.value === "string" && item.value.trim().length > 0
+  );
+
+  // Prevent creating invalid vocab records that later crash index/show views.
+  if (!req.body.titles.length) {
+    return res.status(400).send({
+      redirect: "500",
+      err: "At least one title is required",
+    });
+  }
+
   var vocab = new Vocabulary(req.body);
   if (!fs.existsSync("./versions/")) {
     fs.mkdirSync("./versions/");
@@ -1567,20 +1604,20 @@ async function createVocab(req, res, error, stdout, stderr, scripts, lov, patter
       try {
         console.log(`[Indexer] Procesando ontología: ${target_path}`);
 
-        // 1. Download artifacts (from HEAD)
-        if (req.body.requirements) {
+        // 1. Download/store artifacts (uploaded file has priority over URL)
+        if (!saveUploadedArtifact(req, "requirementsFile", "./versions/" + vocab._id + "/requirements") && req.body.requirements) {
           await downloadArtifact(req.body.requirements, "./versions/" + vocab._id + "/requirements");
         }
-        if (req.body.conceptualization) {
+        if (!saveUploadedArtifact(req, "conceptualizationFile", "./versions/" + vocab._id + "/conceptualization") && req.body.conceptualization) {
           await downloadArtifact(req.body.conceptualization, "./versions/" + vocab._id + "/conceptualization");
         }
-        if (req.body.shapes) {
+        if (!saveUploadedArtifact(req, "shapesFile", "./versions/" + vocab._id + "/shapes") && req.body.shapes) {
           await downloadArtifact(req.body.shapes, "./versions/" + vocab._id + "/shapes");
         }
-        if (req.body.examples) {
+        if (!saveUploadedArtifact(req, "examplesFile", "./versions/" + vocab._id + "/examples") && req.body.examples) {
           await downloadArtifact(req.body.examples, "./versions/" + vocab._id + "/examples");
         }
-        if (req.body.tests) {
+        if (!saveUploadedArtifact(req, "testsFile", "./versions/" + vocab._id + "/tests") && req.body.tests) {
           await downloadArtifact(req.body.tests, "./versions/" + vocab._id + "/tests");
         }
 
@@ -1664,6 +1701,44 @@ async function createVocab(req, res, error, stdout, stderr, scripts, lov, patter
   }
 }
 
+function safeUploadedName(name, fallback) {
+  const base = path.basename(name || fallback || "artifact.bin");
+  return base.replace(/[<>:"/\\|?*\x00-\x1F]/g, "_");
+}
+
+function nextAvailablePath(localPath, fileName) {
+  const parsed = path.parse(fileName);
+  let candidate = path.join(localPath, fileName);
+  let i = 1;
+  while (fs.existsSync(candidate)) {
+    candidate = path.join(localPath, `${parsed.name}_${i}${parsed.ext}`);
+    i += 1;
+  }
+  return candidate;
+}
+
+function saveUploadedArtifact(req, fieldName, localPath) {
+  const files =
+    req.files && Array.isArray(req.files[fieldName]) ? req.files[fieldName] : [];
+  if (!files.length) return false;
+
+  fs.mkdirSync(localPath, { recursive: true });
+  const file = files[0];
+  const safeName = safeUploadedName(file.originalname, file.fieldname);
+  const targetPath = nextAvailablePath(localPath, safeName);
+
+  if (file.buffer) {
+    fs.writeFileSync(targetPath, file.buffer);
+    return true;
+  }
+
+  if (file.path && fs.existsSync(file.path)) {
+    fs.copyFileSync(file.path, targetPath);
+    return true;
+  }
+
+  return false;
+}
 
 async function downloadArtifact(artifactPath, localPath) {
   fs.mkdirSync(localPath, { recursive: true });
