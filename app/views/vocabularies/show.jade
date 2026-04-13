@@ -48,10 +48,6 @@ block content
               li.wrpl
                 a.ontology-tab.is-active(href='#' data-onto-target='general' role='tab' aria-selected='true') General
               li.wrpl
-                a.ontology-tab(href='#' data-onto-target='incoming-links' role='tab' aria-selected='false') Incoming Links
-              li.wrpl
-                a.ontology-tab(href='#' data-onto-target='version-history' role='tab' aria-selected='false') Version History
-              li.wrpl
                 a.ontology-tab(href='#' data-onto-target='astrea' role='tab' aria-selected='false') Astrea
               li.wrpl
                 a.ontology-tab(href='#' data-onto-target='foops' role='tab' aria-selected='false') Foops
@@ -147,21 +143,29 @@ block content
                         tr
                           td Comment
                           td !{utils.displayReviews(vocab.reviews)}
+                      - var repoArtifactLabels = {requirements:"Requirements", conceptualization:"Conceptualization", shapes:"SHACL Shapes", examples:"Examples", tests:"Tests"};
+                      - var repoArtifactTypes = ["requirements", "conceptualization", "shapes", "examples", "tests"];
+                      - var hasArtifacts = false;
+                      each t in repoArtifactTypes
+                        - if ((artifacts[t] || []).length > 0) hasArtifacts = true;
                       if vocab.repositoryUri
                         tr.repo-row
                           td Repository
                           td
                             a(href='#{vocab.repositoryUri}', target='_blank', rel='noopener noreferrer') #{vocab.repositoryUri}
+                      if hasArtifacts
+                        tr.repo-row
+                          td Artifacts
+                          td
                             a.repo-artifacts-toggle(href='#', onclick='return toggleArtifactRows(this);', style='margin-left:0.75rem;') ▸ Artifacts
-                        - var repoArtifactLabels = {requirements:"Requirements", conceptualization:"Conceptualization", shapes:"SHACL Shapes", examples:"Examples", tests:"Tests"};
-                        - var repoArtifactTypes = ["requirements", "conceptualization", "shapes", "examples", "tests"];
                         each t in repoArtifactTypes
                           - var files = (artifacts[t] || []);
-                          if files.length
+                          - var visibleFiles = files.filter(function(name){ return !/^readme(\..*)?$/i.test((name || '').trim()); });
+                          if visibleFiles.length
                             tr.artifact-row(style='display:none;')
                               td.artifact-key= repoArtifactLabels[t] || t
                               td
-                                each f in files
+                                each f in visibleFiles
                                   - var url = '/dataset/vocabs/' + vocab.prefix + '/artifacts/' + t + '/' + encodeURIComponent(f);
                                   - var lower = (f || '').toLowerCase();
                                   - var isDrawio = lower.endsWith('.drawio');
@@ -418,7 +422,7 @@ block content
                           div(style="margin-top:0.75rem; text-align:right;")
                             button#downloadThemisButton(type='button' style="display:none;") DOWNLOAD RESULTS
                             
-      section#post.postMediumDarkBlue.ontology-tab-panel(data-onto-panel='incoming-links')
+      section#post.postMediumDarkBlue.ontology-tab-panel.is-active(data-onto-panel='general')
         h2(style="width:50%; float:left;" title="Vocabularies using #{vocab.prefix}. The relation type between a vocabulary and #{vocab.prefix} is indicated by the color.") #{inData.nodes?inData.nodes.length-1:0} Incoming Links
         h2(style="width:50%; float:left;" title="Vocabularies used by #{vocab.prefix}. The relation type between #{vocab.prefix} and a vocabulary is indicated by the color.")  #{outData.nodes?outData.nodes.length-1:0} Outgoing Links
         .visus
@@ -623,7 +627,7 @@ block content
         };
          var timeline = new vis.Timeline(container, items, options);*/
       
-      section#post.postMediumDarkBlue.ontology-tab-panel(data-onto-panel='version-history')
+      section#post.postMediumDarkBlue.ontology-tab-panel.is-active(data-onto-panel='general')
         h2 Vocabulary Version History
         #timeline
         script.

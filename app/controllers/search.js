@@ -13,7 +13,8 @@ var placeholders = [
 
 var mongoose = require("mongoose"),
   LogSearch = mongoose.model("LogSearch"),
-  LogSearchTerm = mongoose.model("LogSearchTerm");
+  LogSearchTerm = mongoose.model("LogSearchTerm"),
+  Vocabulary = mongoose.model("Vocabulary");
 
 var app_name;
 var app_name_shorcut;
@@ -551,16 +552,16 @@ exports.apiAutocompleteVocabs = function (req, res, esclient) {
       "Query parameter missing. Syntax: ?q=querytext"
     );
   } else {
-    return execAutocompleteVocabularies(
-      esclient,
-      req.query.q,
-      req.query.page_size,
-      req.query.page,
-      function (err, results) {
-        //shall we log this or not?
-        return standardCallback(req, res, err, results);
-      }
-    );
+      return execAutocompleteVocabularies(
+        esclient,
+        req.query.q,
+        req.query.page_size,
+        req.query.page,
+        req.query.include_versions,
+        function (err, results) {
+          return standardCallback(req, res, err, results);
+        }
+      );
   }
 };
 
@@ -1117,17 +1118,16 @@ function execAutocompleteVocabularies(
   queryString,
   page_size,
   page,
+  include_versions,
   callback
 ) {
-  if (!page || (!parseInt(page) && page !== "0") || parseInt(page) < 1)
-    page = 1;
+  if (!page || (!parseInt(page) && page !== "0") || parseInt(page) < 1) page = 1;
   page = parseInt(page, 10) || 1;
-  if (
-    !page_size ||
-    (!parseInt(page_size) && page_size !== "0") ||
-    parseInt(page_size) < 1
-  )
+
+  if (!page_size || (!parseInt(page_size) && page_size !== "0") || parseInt(page_size) < 1)
     page_size = 10;
+  page_size = parseInt(page_size, 10) || 10;
+
   var q = {
     from: (page - 1) * page_size,
     size: page_size,
@@ -1139,40 +1139,66 @@ function execAutocompleteVocabularies(
       },
     },
   };
-  return (
-    client
-      //.search(indexName, "vocabulary", q)
-      .search({
-        index: indexName,
-        type: "vocabulary",
-        body: q,
-      })
-      .then((data) => {
-        var hit, parsed, result, x;
-        //parsed = JSON.parse(data).hits;
-        parsed = data.hits;
-        result = {
-          total_results: parsed.total,
-          page: page,
-          page_size: page_size,
-          results: (function () {
-            var results = [];
-            for (var i = 0; i < parsed.hits.length; i++) {
-              hit = parsed.hits[i];
-              x = hit.fields;
-              x.score = hit._score;
-              results.push(x);
-            }
-            return results;
-          })(),
-        };
-        return callback(null, result);
-      })
-      .catch((error) => {
-        return callback(error, null);
-      })
-  );
+
+  return client
+    .search({
+      index: indexName,
+      body: q,
+    })
+    .then(async (data) => {
+      var parsed = data.hits;
+
+      var results = [];
+      for (var i = 0; i < parsed.hits.length; i++) {
+        var hit = parsed.hits[i];
+        var x = hit.fields || {};
+        x.score = hit._score;
+        results.push(x);
+      }
+
+      const mustIncludeVersions = true;
+
+      if (mustIncludeVersions && results.length > 0) {
+        const prefixes = results
+          .map((r) => (Array.isArray(r.prefix) ? r.prefix[0] : r.prefix))
+          .filter(Boolean);
+
+        if (prefixes.length > 0) {
+          const vocabDocs = await Vocabulary.find(
+            { prefix: { $in: prefixes } },
+            { prefix: 1, versions: 1, _id: 0 }
+          ).lean();
+
+          const versionsByPrefix = {};
+          for (const doc of vocabDocs) {
+            versionsByPrefix[doc.prefix] = (doc.versions || []).map((v) => ({
+              name: v.name,
+              issued: v.issued,
+              isReviewed: v.isReviewed,
+            }));
+          }
+
+          for (const r of results) {
+            const p = Array.isArray(r.prefix) ? r.prefix[0] : r.prefix;
+            r.versions = versionsByPrefix[p] || [];
+          }
+        }
+      }
+
+      var result = {
+        total_results: parsed.total,
+        page: page,
+        page_size: page_size,
+        results: results,
+      };
+
+      return callback(null, result);
+    })
+    .catch((error) => {
+      return callback(error, null);
+    });
 }
+
 
 /* return suggestions close to the input term */
 function execSuggestTerms(client, queryString, suggest_size, type, callback) {
