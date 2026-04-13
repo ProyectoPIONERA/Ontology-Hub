@@ -481,6 +481,14 @@ router.get("/dataset/vocabs/:vocabPx/artifacts/:type/:fileName", function (req, 
   
 });
 
+router.post(
+  "/dataset/api/v2/vocabulary/artifacts/shapes",
+  upload.single("file"),
+  function (req, res) {
+    vocabularies.apiCreateShapeArtifact(req, res);
+  }
+);
+
 router.get("/dataset/vocabs/:vocabPx", (req, res) => {
   vocabularies.show(req, res, config.lov);
 });

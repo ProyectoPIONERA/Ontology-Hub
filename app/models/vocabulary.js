@@ -287,7 +287,7 @@ VocabularySchema.statics = {
   },
 
   listPrefixNspUriTitles: function (cb) {
-    this.find({}, { prefix: 1, nsp: 1, uri: 1, titles: 1, _id: 0 })
+    this.find({}, { _id: 1, prefix: 1, nsp: 1, uri: 1, titles: 1, "versions.name": 1, "versions.issued": 1, "versions.isReviewed": 1 })
       .sort({ prefix: 1 })
       .then((query) => {
         cb(null, query);

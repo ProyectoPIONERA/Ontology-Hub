@@ -7,6 +7,7 @@ var mongoose = require("mongoose"),
   Statvocabulary = mongoose.model("Statvocabulary"),
   Stattag = mongoose.model("Stattag"),
   LogSearch = mongoose.model("LogSearch"),
+  User = mongoose.model("User"),
   utils = require("../../lib/utils"),
   fs = require("fs"),
   _ = require("underscore"),
@@ -86,21 +87,37 @@ exports.apiListVocabs = function (req, res) {
         app_name_shorcut: app_name_shorcut,
         app_name: app_name,
       });
-    //store log in DB
+
+    const enriched = vocabs.map((v) => {
+      const obj = v.toObject ? v.toObject() : v;
+      const shaclFiles = listArtifactFiles(obj._id, "shapes");
+
+      // si no quieres devolver _id al cliente
+      delete obj._id;
+
+      return {
+        ...obj,
+        artifacts: {
+          shapes: shaclFiles,
+        },
+      };
+    });
+
     var log = new LogSearch({
       searchURL: req.originalUrl,
       date: new Date(),
       category: "vocabularyList",
       method: "api",
-      nbResults: vocabs.length,
+      nbResults: enriched.length,
     });
+
     log
       .save()
       .then(() => {
-        return standardCallback(req, res, err, vocabs);
+        return standardCallback(req, res, err, enriched);
       })
       .catch((err) => {
-        return standardCallback(req, res, err, vocabs);
+        return standardCallback(req, res, err, enriched);
       });
   });
 };
@@ -674,11 +691,100 @@ exports.artifactFile = function(req, res){
   });
 };
 
+exports.apiCreateShapeArtifact = async function (req, res) {
+  try {
+    const user = String(req.body.user || "").trim();
+    const password = String(req.body.password || "");
+    const prefix = String(req.body.prefix || "").trim();
+    const url = String(req.body.url || "").trim();
+
+    if (!user || !password || !prefix) {
+      return res.status(400).json({ error: "Missing required fields: user, password, prefix" });
+    }
+
+    // 1) Auth usuario
+    const dbUser = await User.findOne({ email: user });
+    if (!dbUser || !dbUser.authenticate(password)) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    // 2) Resolver vocab por prefix
+    const vocab = await Vocabulary.findOne({ prefix: prefix }, { _id: 1, prefix: 1 });
+    if (!vocab) {
+      return res.status(404).json({ error: "Vocabulary not found" });
+    }
+
+    // 3) Carpeta destino: versions/<vocabId>/shapes
+    const targetDir = path.resolve(__dirname, "..", "..", "versions", String(vocab._id), "shapes");
+    fs.mkdirSync(targetDir, { recursive: true });
+
+    let savedFileName = null;
+
+    // 4A) Si viene archivo binario
+    if (req.file && req.file.buffer) {
+      const original = path.basename(req.file.originalname || "shape.ttl")
+        .replace(/[<>:\"/\\\\|?*\\x00-\\x1F]/g, "_");
+      const finalName = original || "shape.ttl";
+      const targetPath = path.join(targetDir, finalName);
+
+      fs.writeFileSync(targetPath, req.file.buffer);
+      savedFileName = finalName;
+    }
+    // 4B) Si no viene archivo, usar URL opcional
+    else if (url) {
+      const resp = await fetch(url);
+      if (!resp.ok) {
+        return res.status(400).json({ error: "Cannot download SHACL from url" });
+      }
+
+      const ab = await resp.arrayBuffer();
+      let nameFromUrl = "shape.ttl";
+      try {
+        const u = new URL(url);
+        const bn = path.basename(u.pathname || "");
+        if (bn) nameFromUrl = bn;
+      } catch (_) {}
+
+      nameFromUrl = path.basename(nameFromUrl).replace(/[<>:\"/\\\\|?*\\x00-\\x1F]/g, "_");
+      const targetPath = path.join(targetDir, nameFromUrl);
+
+      fs.writeFileSync(targetPath, Buffer.from(ab));
+      savedFileName = nameFromUrl;
+    } else {
+      return res.status(400).json({ error: "Provide either file or url" });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      prefix: vocab.prefix,
+      artifactType: "shapes",
+      file: savedFileName
+    });
+  } catch (err) {
+    return res.status(500).json({ error: "Internal error", details: err.message });
+  }
+};
+
+
 
 exports.create = function (req, res, scripts, lov, patterns, python_patterns) {
   if (req.body && typeof req.body.payload === "string") {
+    const rawBody = req.body;
     try {
-      req.body = JSON.parse(req.body.payload);
+      const parsedPayload = JSON.parse(req.body.payload);
+      // Keep multipart scalar fields (when present) and overlay with parsed payload.
+      req.body = Object.assign({}, rawBody, parsedPayload);
+      delete req.body.payload;
+
+      // Do not let empty payload values override artifact URLs sent in multipart fields.
+      const artifactFields = ["requirements", "conceptualization", "shapes", "examples", "tests"];
+      artifactFields.forEach((field) => {
+        const mergedValue = typeof req.body[field] === "string" ? req.body[field].trim() : "";
+        const rawValue = typeof rawBody[field] === "string" ? rawBody[field].trim() : "";
+        if (!mergedValue && rawValue) {
+          req.body[field] = rawValue;
+        }
+      });
     } catch (e) {
       return res.status(400).send({
         redirect: "500",
@@ -704,6 +810,19 @@ exports.create = function (req, res, scripts, lov, patterns, python_patterns) {
   req.body.descriptions = normalizeLangValueArray(req.body.descriptions).filter(
     (item) => item && typeof item.value === "string" && item.value.trim().length > 0
   );
+  // Preserve artifact URLs from the form before creating the Mongoose document.
+  // In some flows (repository-based creation), we rely on these values later.
+  req._artifactUrls = {
+    requirements:
+      typeof req.body.requirements === "string" ? req.body.requirements.trim() : "",
+    conceptualization:
+      typeof req.body.conceptualization === "string"
+        ? req.body.conceptualization.trim()
+        : "",
+    shapes: typeof req.body.shapes === "string" ? req.body.shapes.trim() : "",
+    examples: typeof req.body.examples === "string" ? req.body.examples.trim() : "",
+    tests: typeof req.body.tests === "string" ? req.body.tests.trim() : "",
+  };
 
   // Prevent creating invalid vocab records that later crash index/show views.
   if (!req.body.titles.length) {
@@ -1604,21 +1723,23 @@ async function createVocab(req, res, error, stdout, stderr, scripts, lov, patter
       try {
         console.log(`[Indexer] Procesando ontología: ${target_path}`);
 
+        const artifactUrls = req._artifactUrls || {};
+
         // 1. Download/store artifacts (uploaded file has priority over URL)
-        if (!saveUploadedArtifact(req, "requirementsFile", "./versions/" + vocab._id + "/requirements") && req.body.requirements) {
-          await downloadArtifact(req.body.requirements, "./versions/" + vocab._id + "/requirements");
+        if (!saveUploadedArtifact(req, "requirementsFile", "./versions/" + vocab._id + "/requirements") && artifactUrls.requirements) {
+          await downloadArtifact(artifactUrls.requirements, "./versions/" + vocab._id + "/requirements");
         }
-        if (!saveUploadedArtifact(req, "conceptualizationFile", "./versions/" + vocab._id + "/conceptualization") && req.body.conceptualization) {
-          await downloadArtifact(req.body.conceptualization, "./versions/" + vocab._id + "/conceptualization");
+        if (!saveUploadedArtifact(req, "conceptualizationFile", "./versions/" + vocab._id + "/conceptualization") && artifactUrls.conceptualization) {
+          await downloadArtifact(artifactUrls.conceptualization, "./versions/" + vocab._id + "/conceptualization");
         }
-        if (!saveUploadedArtifact(req, "shapesFile", "./versions/" + vocab._id + "/shapes") && req.body.shapes) {
-          await downloadArtifact(req.body.shapes, "./versions/" + vocab._id + "/shapes");
+        if (!saveUploadedArtifact(req, "shapesFile", "./versions/" + vocab._id + "/shapes") && artifactUrls.shapes) {
+          await downloadArtifact(artifactUrls.shapes, "./versions/" + vocab._id + "/shapes");
         }
-        if (!saveUploadedArtifact(req, "examplesFile", "./versions/" + vocab._id + "/examples") && req.body.examples) {
-          await downloadArtifact(req.body.examples, "./versions/" + vocab._id + "/examples");
+        if (!saveUploadedArtifact(req, "examplesFile", "./versions/" + vocab._id + "/examples") && artifactUrls.examples) {
+          await downloadArtifact(artifactUrls.examples, "./versions/" + vocab._id + "/examples");
         }
-        if (!saveUploadedArtifact(req, "testsFile", "./versions/" + vocab._id + "/tests") && req.body.tests) {
-          await downloadArtifact(req.body.tests, "./versions/" + vocab._id + "/tests");
+        if (!saveUploadedArtifact(req, "testsFile", "./versions/" + vocab._id + "/tests") && artifactUrls.tests) {
+          await downloadArtifact(artifactUrls.tests, "./versions/" + vocab._id + "/tests");
         }
 
         // 2. Extract license (from HEAD)

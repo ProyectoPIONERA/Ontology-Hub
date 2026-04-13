@@ -181,22 +181,27 @@ block content
                         tr
                           td Requirements Artifact
                           td
+                            input#inputVocabRequirements(type='text' name='requirements' value=requirementsValue placeholder='Optional URL' readonly=repositoryUri ? true : false)
                             input#inputVocabRequirementsFile(type='file' name='requirementsFile')
                         tr
                           td Conceptualization Artifact
                           td
+                            input#inputVocabConceptualization(type='text' name='conceptualization' value=conceptualizationValue placeholder='Optional URL' readonly=repositoryUri ? true : false)
                             input#inputVocabConceptualizationFile(type='file' name='conceptualizationFile')
                         tr
                           td Shapes Artifact
                           td
+                            input#inputVocabShapes(type='text' name='shapes' value=shapesValue placeholder='Optional URL' readonly=repositoryUri ? true : false)
                             input#inputVocabShapesFile(type='file' name='shapesFile')
                         tr
                           td Examples Artifact
                           td
+                            input#inputVocabExamples(type='text' name='examples' value=examplesValue placeholder='Optional URL' readonly=repositoryUri ? true : false)
                             input#inputVocabExamplesFile(type='file' name='examplesFile')
                         tr
                           td Tests Artifact
                           td
+                            input#inputVocabTests(type='text' name='tests' value=testsValue placeholder='Optional URL' readonly=repositoryUri ? true : false)
                             input#inputVocabTestsFile(type='file' name='testsFile')
               #greenContainer.contents.clear.col-1.wrplGreen
                 .metadataFrame
@@ -696,6 +701,13 @@ block content
           function sendMultipartForm(payloadObj){
             var multipartData = new FormData();
             multipartData.append('payload', JSON.stringify(payloadObj));
+            // Send artifact URL fields explicitly to avoid losing them if payload
+            // serialization skips/empties them in some flows.
+            multipartData.append('requirements', ($('#inputVocabRequirements').val() || '').trim());
+            multipartData.append('conceptualization', ($('#inputVocabConceptualization').val() || '').trim());
+            multipartData.append('shapes', ($('#inputVocabShapes').val() || '').trim());
+            multipartData.append('examples', ($('#inputVocabExamples').val() || '').trim());
+            multipartData.append('tests', ($('#inputVocabTests').val() || '').trim());
             appendArtifactFile(multipartData, 'inputVocabRequirementsFile', 'requirementsFile');
             appendArtifactFile(multipartData, 'inputVocabConceptualizationFile', 'conceptualizationFile');
             appendArtifactFile(multipartData, 'inputVocabShapesFile', 'shapesFile');
