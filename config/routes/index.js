@@ -275,7 +275,7 @@ router.post(
   upload.fields([
     { name: "requirementsFile", maxCount: 1 },
     { name: "conceptualizationFile", maxCount: 1 },
-    { name: "shapesFile", maxCount: 1 },
+    { name: "shapesFile", maxCount: 20 },
     { name: "examplesFile", maxCount: 1 },
     { name: "testsFile", maxCount: 1 },
   ]),

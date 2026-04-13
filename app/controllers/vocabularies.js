@@ -1725,14 +1725,16 @@ async function createVocab(req, res, error, stdout, stderr, scripts, lov, patter
 
         const artifactUrls = req._artifactUrls || {};
 
-        // 1. Download/store artifacts (uploaded file has priority over URL)
+        // 1. Download/store artifacts
         if (!saveUploadedArtifact(req, "requirementsFile", "./versions/" + vocab._id + "/requirements") && artifactUrls.requirements) {
           await downloadArtifact(artifactUrls.requirements, "./versions/" + vocab._id + "/requirements");
         }
         if (!saveUploadedArtifact(req, "conceptualizationFile", "./versions/" + vocab._id + "/conceptualization") && artifactUrls.conceptualization) {
           await downloadArtifact(artifactUrls.conceptualization, "./versions/" + vocab._id + "/conceptualization");
         }
-        if (!saveUploadedArtifact(req, "shapesFile", "./versions/" + vocab._id + "/shapes") && artifactUrls.shapes) {
+        // Shapes: keep uploaded files and URL-based files together when both are provided.
+        saveUploadedArtifact(req, "shapesFile", "./versions/" + vocab._id + "/shapes");
+        if (artifactUrls.shapes) {
           await downloadArtifact(artifactUrls.shapes, "./versions/" + vocab._id + "/shapes");
         }
         if (!saveUploadedArtifact(req, "examplesFile", "./versions/" + vocab._id + "/examples") && artifactUrls.examples) {
@@ -1844,21 +1846,25 @@ function saveUploadedArtifact(req, fieldName, localPath) {
   if (!files.length) return false;
 
   fs.mkdirSync(localPath, { recursive: true });
-  const file = files[0];
-  const safeName = safeUploadedName(file.originalname, file.fieldname);
-  const targetPath = nextAvailablePath(localPath, safeName);
+  let savedCount = 0;
 
-  if (file.buffer) {
-    fs.writeFileSync(targetPath, file.buffer);
-    return true;
-  }
+  files.forEach((file) => {
+    const safeName = safeUploadedName(file.originalname, file.fieldname);
+    const targetPath = nextAvailablePath(localPath, safeName);
 
-  if (file.path && fs.existsSync(file.path)) {
-    fs.copyFileSync(file.path, targetPath);
-    return true;
-  }
+    if (file.buffer) {
+      fs.writeFileSync(targetPath, file.buffer);
+      savedCount += 1;
+      return;
+    }
 
-  return false;
+    if (file.path && fs.existsSync(file.path)) {
+      fs.copyFileSync(file.path, targetPath);
+      savedCount += 1;
+    }
+  });
+
+  return savedCount > 0;
 }
 
 async function downloadArtifact(artifactPath, localPath) {
@@ -1875,18 +1881,20 @@ async function downloadArtifact(artifactPath, localPath) {
   const filesToDownload = files.filter(item => item.type === "file" && item.download_url);
   if (filesToDownload.length === 0) return [];
 
-  await Promise.all(
+  const downloadedNames = await Promise.all(
     filesToDownload.map(async (file) => {
       const r = await fetch(file.download_url);
       if (!r.ok) throw new Error("Download failed: " + file.download_url);
 
       const ab = await r.arrayBuffer();
-      fs.writeFileSync(path.join(localPath, file.name), Buffer.from(ab)); // binario SIEMPRE
-      return file.name;
+      const safeName = safeUploadedName(file.name, "artifact.bin");
+      const finalPath = nextAvailablePath(localPath, safeName);
+      fs.writeFileSync(finalPath, Buffer.from(ab)); // binario SIEMPRE
+      return path.basename(finalPath);
     })
   );
 
-  return filesToDownload.map(f => f.name);
+  return downloadedNames;
 }
 
 

@@ -192,7 +192,9 @@ block content
                           td Shapes Artifact
                           td
                             input#inputVocabShapes(type='text' name='shapes' value=shapesValue placeholder='Optional URL' readonly=repositoryUri ? true : false)
-                            input#inputVocabShapesFile(type='file' name='shapesFile')
+                            #shapesFileInputs
+                              input#inputVocabShapesFile(type='file' name='shapesFile')
+                            a#addAnotherShapeFile(href='#' style='display:inline-block;margin-top:6px;') + Add another SHACL file
                         tr
                           td Examples Artifact
                           td
@@ -691,10 +693,23 @@ block content
 
         function submitForm(formData) {
           $("#loading-div-background").show();
-          function appendArtifactFile(multipartData, inputId, fieldName){
+          function appendArtifactFiles(multipartData, inputId, fieldName, allowMultiple){
             var input = document.getElementById(inputId);
             if(input && input.files && input.files.length > 0){
-              multipartData.append(fieldName, input.files[0]);
+              var total = allowMultiple ? input.files.length : 1;
+              for (var i = 0; i < total; i++) {
+                multipartData.append(fieldName, input.files[i]);
+              }
+            }
+          }
+          function appendArtifactFilesBySelector(multipartData, selector, fieldName){
+            var inputs = document.querySelectorAll(selector);
+            for (var i = 0; i < inputs.length; i++) {
+              var input = inputs[i];
+              if(!input || !input.files || input.files.length < 1) continue;
+              for (var j = 0; j < input.files.length; j++) {
+                multipartData.append(fieldName, input.files[j]);
+              }
             }
           }
 
@@ -708,11 +723,11 @@ block content
             multipartData.append('shapes', ($('#inputVocabShapes').val() || '').trim());
             multipartData.append('examples', ($('#inputVocabExamples').val() || '').trim());
             multipartData.append('tests', ($('#inputVocabTests').val() || '').trim());
-            appendArtifactFile(multipartData, 'inputVocabRequirementsFile', 'requirementsFile');
-            appendArtifactFile(multipartData, 'inputVocabConceptualizationFile', 'conceptualizationFile');
-            appendArtifactFile(multipartData, 'inputVocabShapesFile', 'shapesFile');
-            appendArtifactFile(multipartData, 'inputVocabExamplesFile', 'examplesFile');
-            appendArtifactFile(multipartData, 'inputVocabTestsFile', 'testsFile');
+            appendArtifactFiles(multipartData, 'inputVocabRequirementsFile', 'requirementsFile', false);
+            appendArtifactFiles(multipartData, 'inputVocabConceptualizationFile', 'conceptualizationFile', false);
+            appendArtifactFilesBySelector(multipartData, '#shapesFileInputs input[name=\"shapesFile\"]', 'shapesFile');
+            appendArtifactFiles(multipartData, 'inputVocabExamplesFile', 'examplesFile', false);
+            appendArtifactFiles(multipartData, 'inputVocabTestsFile', 'testsFile', false);
 
             $.ajax({
               type: "POST",
@@ -906,6 +921,32 @@ block content
                 $('#newTagError').text(msg).show();
               }
             });
+          });
+
+          $('#addAnotherShapeFile').click(function(e){
+            e.preventDefault();
+            var container = document.getElementById('shapesFileInputs');
+            if(!container) return;
+
+            var row = document.createElement('div');
+            row.style.marginTop = '6px';
+
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.name = 'shapesFile';
+
+            var remove = document.createElement('a');
+            remove.href = '#';
+            remove.textContent = ' Remove';
+            remove.style.marginLeft = '8px';
+            remove.addEventListener('click', function(ev){
+              ev.preventDefault();
+              row.remove();
+            });
+
+            row.appendChild(input);
+            row.appendChild(remove);
+            container.appendChild(row);
           });
         
           $('.fieldAgentAddAction').click(function(e){
