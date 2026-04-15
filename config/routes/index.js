@@ -272,6 +272,13 @@ router.get(
 router.post(
   "/edition/vocabs",
   auth.requiresLogin,
+  upload.fields([
+    { name: "requirementsFile", maxCount: 1 },
+    { name: "conceptualizationFile", maxCount: 1 },
+    { name: "shapesFile", maxCount: 20 },
+    { name: "examplesFile", maxCount: 1 },
+    { name: "testsFile", maxCount: 1 },
+  ]),
   (req, res) => {
     vocabularies.create(
       req,
@@ -473,6 +480,14 @@ router.get("/dataset/vocabs/:vocabPx/artifacts/:type/:fileName", function (req, 
   
   
 });
+
+router.post(
+  "/dataset/api/v2/vocabulary/artifacts/shapes",
+  upload.single("file"),
+  function (req, res) {
+    vocabularies.apiCreateShapeArtifact(req, res);
+  }
+);
 
 router.get("/dataset/vocabs/:vocabPx", (req, res) => {
   vocabularies.show(req, res, config.lov);

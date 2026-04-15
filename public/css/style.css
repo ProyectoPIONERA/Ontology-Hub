@@ -1457,7 +1457,7 @@ tr.artifact-row td.artifact-key {
 }
 
 tr.artifact-row td:last-child {
-  padding-left: 0;
+  padding-left: 20px;
 }
 
 .artifact-file-row{

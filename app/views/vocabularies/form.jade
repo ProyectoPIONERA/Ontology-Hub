@@ -21,18 +21,13 @@ block content
           article
             form(method='post' action=action name='TheForm' id='TheForm')
               #greenContainer.contents.clear.col-1.wrplGreen
+                - var requirementsValue = (typeof requirements !== 'undefined' && requirements) ? requirements : '';
+                - var conceptualizationValue = (typeof conceptualization !== 'undefined' && conceptualization) ? conceptualization : '';
+                - var shapesValue = (typeof shapes !== 'undefined' && shapes) ? shapes : '';
+                - var examplesValue = (typeof examples !== 'undefined' && examples) ? examples : '';
+                - var testsValue = (typeof tests !== 'undefined' && tests) ? tests : '';
                 - if (ontologyPath)
                   input(type='hidden', name='ontologyPath', id='ontologyPath', value="#{ontologyPath}")
-                - if (requirements)
-                  input(type='hidden', name='requirements', id='requirements', value="#{requirements}")
-                - if (conceptualization)
-                  input(type='hidden', name='conceptualization', id='conceptualization', value="#{conceptualization}")
-                - if (shapes)
-                  input(type='hidden', name='shapes', id='shapes', value="#{shapes}")
-                - if (examples)
-                  input(type='hidden', name='examples', id='examples', value="#{examples}")
-                - if (tests)
-                  input(type='hidden', name='tests', id='tests', value="#{tests}")
                 input(type='hidden', name='_csrf', value="#{csrf_token}")
                 input(type='hidden', value="1000" disabled="disabled", id='cptOverall')
                 input(type="hidden", name="lastModifiedInLOVAt", value="#{utils.dateToYMD(new Date())}")
@@ -183,6 +178,33 @@ block content
                           td Homepage 
                           td
                             input#inputVocabHomepage(type='text' name="homepage" value=vocab.homepage placeholder='Optional')
+                        tr
+                          td Requirements Artifact
+                          td
+                            input#inputVocabRequirements(type='text' name='requirements' value=requirementsValue placeholder='Optional URL' readonly=repositoryUri ? true : false)
+                            input#inputVocabRequirementsFile(type='file' name='requirementsFile')
+                        tr
+                          td Conceptualization Artifact
+                          td
+                            input#inputVocabConceptualization(type='text' name='conceptualization' value=conceptualizationValue placeholder='Optional URL' readonly=repositoryUri ? true : false)
+                            input#inputVocabConceptualizationFile(type='file' name='conceptualizationFile')
+                        tr
+                          td Shapes Artifact
+                          td
+                            input#inputVocabShapes(type='text' name='shapes' value=shapesValue placeholder='Optional URL' readonly=repositoryUri ? true : false)
+                            #shapesFileInputs
+                              input#inputVocabShapesFile(type='file' name='shapesFile')
+                            a#addAnotherShapeFile(href='#' style='display:inline-block;margin-top:6px;') + Add another SHACL file
+                        tr
+                          td Examples Artifact
+                          td
+                            input#inputVocabExamples(type='text' name='examples' value=examplesValue placeholder='Optional URL' readonly=repositoryUri ? true : false)
+                            input#inputVocabExamplesFile(type='file' name='examplesFile')
+                        tr
+                          td Tests Artifact
+                          td
+                            input#inputVocabTests(type='text' name='tests' value=testsValue placeholder='Optional URL' readonly=repositoryUri ? true : false)
+                            input#inputVocabTestsFile(type='file' name='testsFile')
               #greenContainer.contents.clear.col-1.wrplGreen
                 .metadataFrame
                   div(class='metadataContainerVocab')
@@ -671,51 +693,72 @@ block content
 
         function submitForm(formData) {
           $("#loading-div-background").show();
-            if (loadFile){
-              formData['file'] = {'fileName': svgDiagramFile.name};
-              let fr = new FileReader();
-              fr.onload = function () {
-                formData['file']['fileContent'] = fr.result;
-                $.ajax({
-                    type: "POST",
-                    url: $('#TheForm').attr('action'),
-                    // The key needs to match your method's input parameter (case-sensitive).
-                    data: JSON.stringify(formData, null, '\t'),
-                    contentType: "application/json; charset=utf-8",
-                    dataType: "json",
-                    success: function(data){
-                      if(data.err){
-                        alert(data.err);
-                      }
-                      window.location.replace(data.redirect);
-                    },
-                    error: function(error, status, errMsg) {
-                      document.getElementById('jsonResult').innerHTML = errMsg;
-                      $("#loading-div-background").hide();
-                    }
-                });
+          function appendArtifactFiles(multipartData, inputId, fieldName, allowMultiple){
+            var input = document.getElementById(inputId);
+            if(input && input.files && input.files.length > 0){
+              var total = allowMultiple ? input.files.length : 1;
+              for (var i = 0; i < total; i++) {
+                multipartData.append(fieldName, input.files[i]);
               }
-              fr.readAsText(svgDiagramFile);
             }
-            else {
-              $.ajax({
-                  type: "POST",
-                  url: $('#TheForm').attr('action'),
-                  // The key needs to match your method's input parameter (case-sensitive).
-                  data: JSON.stringify(formData, null, '\t'),
-                  contentType: "application/json; charset=utf-8",
-                  dataType: "json",
-                  success: function(data){
-                    if(data.err){
-                      alert(data.err);
-                    }
-                    window.location.replace(data.redirect);
-                  },
-                  error: function(error, status, errMsg) {
-                    document.getElementById('jsonResult').innerHTML = errMsg;
-                    $("#loading-div-background").hide();
-                  }
-              });
+          }
+          function appendArtifactFilesBySelector(multipartData, selector, fieldName){
+            var inputs = document.querySelectorAll(selector);
+            for (var i = 0; i < inputs.length; i++) {
+              var input = inputs[i];
+              if(!input || !input.files || input.files.length < 1) continue;
+              for (var j = 0; j < input.files.length; j++) {
+                multipartData.append(fieldName, input.files[j]);
+              }
+            }
+          }
+
+          function sendMultipartForm(payloadObj){
+            var multipartData = new FormData();
+            multipartData.append('payload', JSON.stringify(payloadObj));
+            // Send artifact URL fields explicitly to avoid losing them if payload
+            // serialization skips/empties them in some flows.
+            multipartData.append('requirements', ($('#inputVocabRequirements').val() || '').trim());
+            multipartData.append('conceptualization', ($('#inputVocabConceptualization').val() || '').trim());
+            multipartData.append('shapes', ($('#inputVocabShapes').val() || '').trim());
+            multipartData.append('examples', ($('#inputVocabExamples').val() || '').trim());
+            multipartData.append('tests', ($('#inputVocabTests').val() || '').trim());
+            appendArtifactFiles(multipartData, 'inputVocabRequirementsFile', 'requirementsFile', false);
+            appendArtifactFiles(multipartData, 'inputVocabConceptualizationFile', 'conceptualizationFile', false);
+            appendArtifactFilesBySelector(multipartData, '#shapesFileInputs input[name=\"shapesFile\"]', 'shapesFile');
+            appendArtifactFiles(multipartData, 'inputVocabExamplesFile', 'examplesFile', false);
+            appendArtifactFiles(multipartData, 'inputVocabTestsFile', 'testsFile', false);
+
+            $.ajax({
+              type: "POST",
+              url: $('#TheForm').attr('action'),
+              data: multipartData,
+              processData: false,
+              contentType: false,
+              dataType: "json",
+              success: function(data){
+                if(data.err){
+                  alert(data.err);
+                }
+                window.location.replace(data.redirect);
+              },
+              error: function(error, status, errMsg) {
+                document.getElementById('jsonResult').innerHTML = errMsg;
+                $("#loading-div-background").hide();
+              }
+            });
+          }
+
+          if (loadFile){
+            formData['file'] = {'fileName': svgDiagramFile.name};
+            let fr = new FileReader();
+            fr.onload = function () {
+              formData['file']['fileContent'] = fr.result;
+              sendMultipartForm(formData);
+            }
+            fr.readAsText(svgDiagramFile);
+          } else {
+            sendMultipartForm(formData);
           }
         }
         
@@ -878,6 +921,32 @@ block content
                 $('#newTagError').text(msg).show();
               }
             });
+          });
+
+          $('#addAnotherShapeFile').click(function(e){
+            e.preventDefault();
+            var container = document.getElementById('shapesFileInputs');
+            if(!container) return;
+
+            var row = document.createElement('div');
+            row.style.marginTop = '6px';
+
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.name = 'shapesFile';
+
+            var remove = document.createElement('a');
+            remove.href = '#';
+            remove.textContent = ' Remove';
+            remove.style.marginLeft = '8px';
+            remove.addEventListener('click', function(ev){
+              ev.preventDefault();
+              row.remove();
+            });
+
+            row.appendChild(input);
+            row.appendChild(remove);
+            container.appendChild(row);
           });
         
           $('.fieldAgentAddAction').click(function(e){
