@@ -696,10 +696,18 @@ exports.apiCreateShapeArtifact = async function (req, res) {
     const user = String(req.body.user || "").trim();
     const password = String(req.body.password || "");
     const prefix = String(req.body.prefix || "").trim();
-    const url = String(req.body.url || "").trim();
+    const vocabUrl = String(req.body.vocabUrl || req.body.url || "").trim();
 
-    if (!user || !password || !prefix) {
-      return res.status(400).json({ error: "Missing required fields: user, password, prefix" });
+    if (!user || !password) {
+      return res.status(400).json({ error: "Missing required fields: user, password" });
+    }
+
+    if (!prefix && !vocabUrl) {
+      return res.status(400).json({ error: "Provide prefix (recommended) or vocabUrl" });
+    }
+
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ error: "Missing SHACL binary file in field 'file'" });
     }
 
     // 1) Auth usuario
@@ -708,8 +716,25 @@ exports.apiCreateShapeArtifact = async function (req, res) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // 2) Resolver vocab por prefix
-    const vocab = await Vocabulary.findOne({ prefix: prefix }, { _id: 1, prefix: 1 });
+    // 2) Resolver vocabulario por prefix (preferido) o URL
+    let vocab = null;
+
+    if (prefix) {
+      vocab = await Vocabulary.findOne({ prefix: prefix }, { _id: 1, prefix: 1 });
+    } else {
+      vocab = await Vocabulary.findOne(
+        {
+          $or: [
+            { uri: vocabUrl },
+            { nsp: vocabUrl },
+            { isDefinedBy: vocabUrl },
+            { repositoryUri: vocabUrl }
+          ]
+        },
+        { _id: 1, prefix: 1 }
+      );
+    }
+
     if (!vocab) {
       return res.status(404).json({ error: "Vocabulary not found" });
     }
@@ -718,52 +743,27 @@ exports.apiCreateShapeArtifact = async function (req, res) {
     const targetDir = path.resolve(__dirname, "..", "..", "versions", String(vocab._id), "shapes");
     fs.mkdirSync(targetDir, { recursive: true });
 
-    let savedFileName = null;
+    // 4) Guardar binario SHACL
+    const original = path
+      .basename(req.file.originalname || "shape.ttl")
+      .replace(/[<>:\"/\\\\|?*\x00-\x1F]/g, "_");
 
-    // 4A) Si viene archivo binario
-    if (req.file && req.file.buffer) {
-      const original = path.basename(req.file.originalname || "shape.ttl")
-        .replace(/[<>:\"/\\\\|?*\\x00-\\x1F]/g, "_");
-      const finalName = original || "shape.ttl";
-      const targetPath = path.join(targetDir, finalName);
+    const finalName = original || "shape.ttl";
+    const targetPath = path.join(targetDir, finalName);
 
-      fs.writeFileSync(targetPath, req.file.buffer);
-      savedFileName = finalName;
-    }
-    // 4B) Si no viene archivo, usar URL opcional
-    else if (url) {
-      const resp = await fetch(url);
-      if (!resp.ok) {
-        return res.status(400).json({ error: "Cannot download SHACL from url" });
-      }
-
-      const ab = await resp.arrayBuffer();
-      let nameFromUrl = "shape.ttl";
-      try {
-        const u = new URL(url);
-        const bn = path.basename(u.pathname || "");
-        if (bn) nameFromUrl = bn;
-      } catch (_) {}
-
-      nameFromUrl = path.basename(nameFromUrl).replace(/[<>:\"/\\\\|?*\\x00-\\x1F]/g, "_");
-      const targetPath = path.join(targetDir, nameFromUrl);
-
-      fs.writeFileSync(targetPath, Buffer.from(ab));
-      savedFileName = nameFromUrl;
-    } else {
-      return res.status(400).json({ error: "Provide either file or url" });
-    }
+    fs.writeFileSync(targetPath, req.file.buffer);
 
     return res.status(200).json({
       ok: true,
       prefix: vocab.prefix,
       artifactType: "shapes",
-      file: savedFileName
+      file: finalName
     });
   } catch (err) {
     return res.status(500).json({ error: "Internal error", details: err.message });
   }
 };
+
 
 
 
