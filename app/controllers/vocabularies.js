@@ -1788,6 +1788,30 @@ async function createVocab(req, res, error, stdout, stderr, scripts, lov, patter
         console.log(`[Indexer] ${totalIndexed} términos indexados en Elasticsearch.`);
 
         /* 4. Actualizar MongoDB */
+        const detectedLangCodes = Array.from(
+          new Set(
+            []
+              .concat(Array.isArray(vocab.titles) ? vocab.titles : [])
+              .concat(Array.isArray(vocab.descriptions) ? vocab.descriptions : [])
+              .map((entry) => (entry && typeof entry.lang === "string" ? entry.lang.trim().toLowerCase() : ""))
+              .filter(Boolean)
+          )
+        );
+
+        let versionLanguageIds = [];
+        if (detectedLangCodes.length > 0) {
+          const languageDocs = await Language.find(
+            {
+              $or: [
+                { iso639P1Code: { $in: detectedLangCodes } },
+                { iso639P3PCode: { $in: detectedLangCodes } },
+              ],
+            },
+            { _id: 1 }
+          ).lean();
+          versionLanguageIds = languageDocs.map((doc) => String(doc._id));
+        }
+
         const versionData = {
           issued: versionIssued,
           name: "v" + issuedStr,
@@ -1796,7 +1820,8 @@ async function createVocab(req, res, error, stdout, stderr, scripts, lov, patter
           propertyNumber: extracted.properties.length,
           datatypeNumber: extracted.datatypes.length,
           instanceNumber: extracted.individuals.length,
-          license: extractedLicense
+          license: extractedLicense,
+          languageIds: versionLanguageIds
         };
 
         Vocabulary.addVersion(vocab.prefix, versionData, (err) => {
