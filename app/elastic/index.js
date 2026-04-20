@@ -1,4 +1,4 @@
-const { Client } = require('@elastic/elasticsearch');
+﻿const { Client } = require('@elastic/elasticsearch');
 const fs = require('fs');
 const path = require('path');
 
@@ -81,6 +81,12 @@ const ElasticService = {
         }
 
         const { queryString, page = 1, pageSize = 10, fields = ["*"], tag, lang } = options;
+        const tagValues = (typeof tag === "string" ? tag.split(",") : [])
+            .map((t) => t.trim())
+            .filter(Boolean);
+        const langValues = (typeof lang === "string" ? lang.split(",") : [])
+            .map((l) => l.trim().toLowerCase())
+            .filter(Boolean);
 
         // Ajuste de campo de ordenamiento dinámico
         let sortField = "name.keyword";
@@ -104,18 +110,18 @@ const ElasticService = {
                                     type: "best_fields"
                                 }
                             } : { match_all: {} },
-                            filter: (tag || lang) ? [
-                                ...(tag ? [{ term: { "tags.keyword": tag } }] : []),
-                                ...(lang ? [{ term: { "langs.keyword": lang } }] : [])
+                            filter: (tagValues.length || langValues.length) ? [
+                                ...(tagValues.length ? [{ terms: { "tags": tagValues } }] : []),
+                                ...(langValues.length ? [{ terms: { "langs": langValues } }] : [])
                             ] : []
                         }
                     },
-                    // unmapped_type evita errores 400 si el campo no existe en el índice
+                    // unmapped_type evita errores 400 si el campo no existe en el Ã­ndice
                     sort: [{ [sortField]: { order: "asc", unmapped_type: "keyword" } }],
                     aggregations: {
-                        tags: { terms: { field: "tags.keyword", size: 10, missing: "N/A" } },
-                        types: { terms: { field: "type.keyword", size: 10, missing: "N/A" } },
-                        langs: { terms: { field: "langs.keyword", size: 10, missing: "N/A" } }
+                        tags: { terms: { field: "tags", size: 10 } },
+                        types: { terms: { field: "type.keyword", size: 10 } },
+                        langs: { terms: { field: "langs", size: 10 } }
                     }
                 }
             });
@@ -152,6 +158,32 @@ const ElasticService = {
             if (!doc.type) doc.type = type;
 
             if (type === 'vocabulary') {
+                const langs = new Set();
+                if (Array.isArray(doc.titles)) {
+                    doc.titles.forEach((t) => {
+                        if (t && typeof t.lang === "string" && t.lang.trim()) langs.add(t.lang.trim().toLowerCase());
+                    });
+                }
+                if (Array.isArray(doc.descriptions)) {
+                    doc.descriptions.forEach((d) => {
+                        if (d && typeof d.lang === "string" && d.lang.trim()) langs.add(d.lang.trim().toLowerCase());
+                    });
+                }
+                if (Array.isArray(doc.versions)) {
+                    doc.versions.forEach((v) => {
+                        if (!v || !Array.isArray(v.languageIds)) return;
+                        v.languageIds.forEach((l) => {
+                            if (typeof l === "string" && l.trim() && !/^[a-fA-F0-9]{24}$/.test(l.trim())) langs.add(l.trim().toLowerCase());
+                            else if (l && typeof l === "object") {
+                                if (typeof l.iso639P1Code === "string" && l.iso639P1Code.trim()) langs.add(l.iso639P1Code.trim().toLowerCase());
+                                else if (typeof l.iso639P3PCode === "string" && l.iso639P3PCode.trim()) langs.add(l.iso639P3PCode.trim().toLowerCase());
+                                else if (typeof l.label === "string" && l.label.trim()) langs.add(l.label.trim().toLowerCase());
+                            }
+                        });
+                    });
+                }
+                doc.langs = Array.from(langs);
+
                 if (Array.isArray(doc.titles)) {
                     doc.titles = doc.titles.map(t => (t && typeof t === 'object' && t.value) ? t.value : t);
                 }
