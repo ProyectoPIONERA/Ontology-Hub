@@ -1070,6 +1070,44 @@ exports.detectGlobalPatterns = function (patterns, python_patterns, cb) {
 
 exports.update = async function (req, res) {
   try {
+    if (req.body && typeof req.body.payload === "string") {
+      const rawBody = req.body;
+      try {
+        const parsedPayload = JSON.parse(req.body.payload);
+        req.body = Object.assign({}, rawBody, parsedPayload);
+        delete req.body.payload;
+      } catch (e) {
+        return res.status(400).send({
+          redirect: "500",
+          err: "Invalid payload format",
+        });
+      }
+    }
+
+    function normalizeLangValueArray(value) {
+      if (!value) return [];
+      if (Array.isArray(value)) return value;
+      if (typeof value === "object") {
+        return Object.keys(value)
+          .sort((a, b) => Number(a) - Number(b))
+          .map((k) => value[k]);
+      }
+      return [];
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, "titles")) {
+      req.body.titles = normalizeLangValueArray(req.body.titles).filter(
+        (item) =>
+          item && typeof item.value === "string" && item.value.trim().length > 0
+      );
+    }
+    if (Object.prototype.hasOwnProperty.call(req.body, "descriptions")) {
+      req.body.descriptions = normalizeLangValueArray(req.body.descriptions).filter(
+        (item) =>
+          item && typeof item.value === "string" && item.value.trim().length > 0
+      );
+    }
+
     let vocab = req.vocab;
     const oldPrefix = vocab.prefix; // Guardamos el prefijo anterior para comparar
 
@@ -1082,7 +1120,7 @@ exports.update = async function (req, res) {
 
     // 2. Actualizar en Elasticsearch (Índice de Vocabularios)
     // El upsert se encarga de sobrescribir el documento usando el mismo ID
-    await ElasticService.upsert('vocabulary', vocab._id, vocab);
+    await ElasticService.upsert("vocabulary", vocab._id, vocab);
 
     // 3. ¿Cambió el prefijo?
     // Si el prefijo cambió, debemos actualizar todos los términos asociados
@@ -1090,15 +1128,24 @@ exports.update = async function (req, res) {
     if (oldPrefix !== newPrefix) {
       console.log(`[Elastic] Prefijo cambiado de ${oldPrefix} a ${newPrefix}. Actualizando términos...`);
 
-      const termIndices = ['lov_class', 'lov_property', 'lov_datatype', 'lov_instance'];
+      const termIndices = [
+        "lov_class",
+        "lov_property",
+        "lov_datatype",
+        "lov_instance",
+      ];
 
-      await ElasticService.updateByQuery(termIndices, {
+      await ElasticService.updateByQuery(
+        termIndices,
+        {
           source: "ctx._source.vocabularyPrefix = params.newPrefix",
           lang: "painless",
-          params: { newPrefix: newPrefix }
-        }, {
+          params: { newPrefix: newPrefix },
+        },
+        {
           term: { "vocabularyPrefix.keyword": oldPrefix }
-        });
+        }
+      );
     }
 
     // Respuesta para el frontend (manejando el redirect desde el cliente)
@@ -1106,9 +1153,9 @@ exports.update = async function (req, res) {
 
   } catch (err) {
     console.error("[update vocab error]", err);
-    return res.status(500).render("500", {
-      app_name_shorcut: "LOV",
-      app_name: "Linked Open Vocabularies"
+    return res.status(500).send({
+      redirect: "500",
+      err: "Error updating vocabulary",
     });
   }
 };
