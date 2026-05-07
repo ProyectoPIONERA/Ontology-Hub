@@ -823,6 +823,9 @@ function fetchTextFromUrlNoRedirect(targetUrl, callback) {
       Accept: "text/turtle,text/rdf+turtle,text/plain,*/*;q=0.8",
     },
   };
+  if (parsed.protocol === "https:") {
+    reqOptions.rejectUnauthorized = false;
+  }
 
   var req = client.request(reqOptions, function (resp) {
     var chunks = [];
@@ -926,6 +929,9 @@ function fetchTextFromUrl(targetUrl, callback, redirectsLeft) {
       Accept: "text/plain,text/turtle,text/rdf+turtle,*/*;q=0.8",
     },
   };
+  if (parsed.protocol === "https:") {
+    reqOptions.rejectUnauthorized = false;
+  }
 
   var sourceReq = client.request(reqOptions, function (sourceRes) {
     if (
