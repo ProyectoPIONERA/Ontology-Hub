@@ -65,7 +65,9 @@ exports.remove = function (req, res) {
       // if the version has a file attached, then delete it
       if (versionFile) {
         fs.unlink(versionFile, function (err) {
-          if (err) throw err;
+          if (err) {
+            req.flash("error", "Error deleting the version file");
+          }
           return res.redirect(
             "/edition/vocabs/" + vocab.prefix + "/versions"
           );
@@ -202,14 +204,12 @@ exports.edit = function (req, res, lov) {
           targetDateStr +
           ".n3";
         fs.rename(source_path, target_path, function (err) {
-          if (err) throw err;
-          // delete the temporary file, so that the explicitly set temporary upload dir does not get filled with unwanted files
-          fs.unlink(source_path, function (err) {
-            if (err) throw err;
-            return res.redirect(
-              "/edition/vocabs/" + vocab.prefix + "/versions"
-            );
-          });
+          if (err) {
+            req.flash("error", "Error renaming the version file");
+          }
+          return res.redirect(
+            "/edition/vocabs/" + vocab.prefix + "/versions"
+          );
         });
       }
     })
@@ -252,7 +252,12 @@ exports.new = function (req, res, scripts, lov, patterns, python_patterns) {
       "./versions/" + vocab._id + "/" + vocab._id + "_" + issuedStr + ".n3"; //req.files.file.name;
     // move the file from the temporary location to the intended location
     fs.appendFile(target_path, file_content, function (err) {
-      if (err) throw err;
+      if (err) {
+        return res.render("500", {
+          app_name_shorcut: app_name_shorcut,
+          app_name: app_name,
+        });
+      }
 
       var versionPublicPath =
         lov +

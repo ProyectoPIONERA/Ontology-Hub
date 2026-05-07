@@ -24,6 +24,13 @@ var urlLib = require("url");
 var negotiate = require("express-negotiate");
 const multer = require("multer");
 const upload = multer();
+const vocabArtifactUpload = upload.fields([
+  { name: "requirementsFile", maxCount: 1 },
+  { name: "conceptualizationFile", maxCount: 1 },
+  { name: "shapesFile", maxCount: 20 },
+  { name: "examplesFile", maxCount: 1 },
+  { name: "testsFile", maxCount: 1 },
+]);
 var elasticsearch = require("@elastic/elasticsearch");
 //var elasticsearch = require("elasticsearch");
 var fs = require("fs");
@@ -272,13 +279,7 @@ router.get(
 router.post(
   "/edition/vocabs",
   auth.requiresLogin,
-  upload.fields([
-    { name: "requirementsFile", maxCount: 1 },
-    { name: "conceptualizationFile", maxCount: 1 },
-    { name: "shapesFile", maxCount: 20 },
-    { name: "examplesFile", maxCount: 1 },
-    { name: "testsFile", maxCount: 1 },
-  ]),
+  vocabArtifactUpload,
   (req, res) => {
     vocabularies.create(
       req,
@@ -291,10 +292,18 @@ router.post(
   }
 );
 
+router.post(
+  "/edition/vocabs/:vocabPxEdition",
+  auth.requiresLogin,
+  vocabArtifactUpload,
+  vocabularies.update
+);
+
 //save initial metadata + version
 router.put(
   "/edition/vocabs/:vocabPxEdition",
   auth.requiresLogin,
+  vocabArtifactUpload,
   vocabularies.update
 );
 
@@ -814,6 +823,9 @@ function fetchTextFromUrlNoRedirect(targetUrl, callback) {
       Accept: "text/turtle,text/rdf+turtle,text/plain,*/*;q=0.8",
     },
   };
+  if (parsed.protocol === "https:") {
+    reqOptions.rejectUnauthorized = false;
+  }
 
   var req = client.request(reqOptions, function (resp) {
     var chunks = [];
@@ -917,6 +929,9 @@ function fetchTextFromUrl(targetUrl, callback, redirectsLeft) {
       Accept: "text/plain,text/turtle,text/rdf+turtle,*/*;q=0.8",
     },
   };
+  if (parsed.protocol === "https:") {
+    reqOptions.rejectUnauthorized = false;
+  }
 
   var sourceReq = client.request(reqOptions, function (sourceRes) {
     if (
