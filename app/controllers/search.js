@@ -185,45 +185,65 @@ exports.searchVocabulary = async function (req, res) {
 /**
  * Search for vocabulary used by the /patterns UI
  */
-exports.searchVocabularyPatterns = function (req, res, esclient) {
-  return execSearchVocabulary(
-    esclient,
-    req.query.q,
-    req.query.page_size,
-    req.query.page,
-    req.query.tag,
-    req.query.tag_limit,
-    req.query.lang,
-    req.query.lang_limit,
-    function (err, results) {
-      if (err)
-        return res.render("500", {
-          app_name_shorcut: app_name_shorcut,
-          app_name: app_name,
-        });
-      //store log in DB
-      /*var log = new LogSearch({searchWords: req.query.q,
-      searchURL: req.originalUrl,
-      date: new Date(),
-      category: "vocabularySearch",
-      method: "ui",
-      nbResults: results.total_results  });//console.log(log);
-    log.save(function (err){if(err)console.log(err)});*/
-      var arr = [];
-      for (var i = 0; i < results.results.length; i++) {
-        arr.push(results.results[i]._source.prefix);
+exports.searchVocabularyPatterns = async function (req, res) {
+  const query = req.query.q || "";
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.page_size) || 15;
+  const tag = req.query.tag;
+  const lang = req.query.lang;
+  const tagLimit = parseInt(req.query.tag_limit);
+  const langLimit = parseInt(req.query.lang_limit);
+
+  const options = {
+    queryString: query,
+    page: page,
+    pageSize: pageSize,
+    tag: tag,
+    lang: lang,
+    fields: ["prefix.autocomplete^12", "titles^3", "descriptions^1.5"]
+  };
+
+  try {
+    const searchResponse = await ElasticService.search("vocabulary", options);
+    const allTagBuckets = (searchResponse.aggregations && searchResponse.aggregations.tags && searchResponse.aggregations.tags.buckets) || [];
+    const allLangBuckets = (searchResponse.aggregations && searchResponse.aggregations.langs && searchResponse.aggregations.langs.buckets) || [];
+
+    const results = {
+      results: searchResponse.results || [],
+      total_results: searchResponse.total_results || 0,
+      queryString: query,
+      page: page,
+      page_size: pageSize,
+      filters: {
+        tag: tag || undefined,
+        lang: lang || undefined
+      },
+      aggregations: {
+        tags: { buckets: Number.isInteger(tagLimit) && tagLimit >= 0 ? allTagBuckets.slice(0, tagLimit) : allTagBuckets },
+        langs: { buckets: Number.isInteger(langLimit) && langLimit >= 0 ? allLangBuckets.slice(0, langLimit) : allLangBuckets }
       }
-      res.render("patterns/index", {
-        results: results,
-        placeholder:
-          placeholders[Math.floor(Math.random() * placeholders.length)],
-        resultsList: arr,
-        utils: utils,
-        app_name_shorcut: app_name_shorcut,
-        app_name: app_name,
-      });
+    };
+
+    var arr = [];
+    for (var i = 0; i < results.results.length; i++) {
+      arr.push(results.results[i]._source.prefix);
     }
-  );
+
+    res.render("patterns/index", {
+      results: results,
+      placeholder: placeholders[Math.floor(Math.random() * placeholders.length)],
+      resultsList: arr,
+      utils: utils,
+      app_name_shorcut: app_name_shorcut,
+      app_name: app_name,
+    });
+  } catch (err) {
+    console.error("Pattern Search Error:", err);
+    return res.status(500).render("500", {
+      app_name_shorcut: app_name_shorcut,
+      app_name: app_name,
+    });
+  }
 };
 
 /**
