@@ -1,0 +1,15 @@
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix : <> .
+<https://saref.etsi.org/saref4grid/v2.1.1/> a prov:Entity;
+	 dc:title "SAREF4GRID: an extension of SAREF for the Smart Grid domain";
+	 prov:wasAttributedTo <http://w3id.org/people/mpoveda>;
+	 dc:creator <http://w3id.org/people/mpoveda>;
+	 prov:wasAttributedTo <http://www.garcia-castro.com/foaf.rdf#me>;
+	 dc:creator <http://www.garcia-castro.com/foaf.rdf#me>;
+	 prov:wasAttributedTo <https://www.linkedin.com/in/sergio-mario-carulli-p%C3%A9rez-7632b5217/>;
+	 dc:creator <https://www.linkedin.com/in/sergio-mario-carulli-p%C3%A9rez-7632b5217/>;
+	 prov:wasAttributedTo <https://github.com/dgarijo/Widoco/>,<http://www.essepuntato.it/lode/>;
+	 prov:wasRevisionOf <https://saref.etsi.org/saref4grid/v1.1.1/>;
+.

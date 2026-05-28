@@ -1,0 +1,533 @@
+<h2 id="overv" class="list">SAREF4GRID: an extension of SAREF for the Smart Grid domain: Overview <span class="backlink"> back to <a href="#toc">ToC</a></span></h2>
+<span class="markdown">
+This ontology has the following classes and properties.</span>
+<h4>Classes</h4>
+<ul xmlns:widoco="https://w3id.org/widoco/vocab#"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    class="hlist">
+   <li>
+      <a href="#ActionOperation"
+         title="https://saref.etsi.org/saref4grid/ActionOperation">Action Operation</a>
+   </li>
+   <li>
+      <a href="#ActionService" title="https://saref.etsi.org/saref4grid/ActionService">Action Service</a>
+   </li>
+   <li>
+      <a href="#ActivityCalendar"
+         title="https://saref.etsi.org/saref4grid/ActivityCalendar">Activity Calendar</a>
+   </li>
+   <li>
+      <a href="#BreakerState" title="https://saref.etsi.org/saref4grid/BreakerState">Breaker State</a>
+   </li>
+   <li>
+      <a href="#Clock" title="https://saref.etsi.org/saref4grid/Clock">Clock</a>
+   </li>
+   <li>
+      <a href="#ComplexActionOperationInput"
+         title="https://saref.etsi.org/saref4grid/ComplexActionOperationInput">Complex Action Operation Input</a>
+   </li>
+   <li>
+      <a href="#CosemOperationInput"
+         title="https://saref.etsi.org/saref4grid/CosemOperationInput">Cosem Operation Input</a>
+   </li>
+   <li>
+      <a href="#DayProfile" title="https://saref.etsi.org/saref4grid/DayProfile">Day Profile</a>
+   </li>
+   <li>
+      <a href="#DaySchedule" title="https://saref.etsi.org/saref4grid/DaySchedule">Day Scheduled</a>
+   </li>
+   <li>
+      <a href="#http://www.owl-ontologies.com/oneM2M#Device" title="http://www.owl-ontologies.com/oneM2M#Device">Device</a>
+   </li>
+   <li>
+      <a href="#EnergyAndPowerProperty"
+         title="https://saref.etsi.org/saref4grid/EnergyAndPowerProperty">Energy Power Property</a>
+   </li>
+   <li>
+      <a href="#EntryDescriptor"
+         title="https://saref.etsi.org/saref4grid/EntryDescriptor">Entry Descriptor</a>
+   </li>
+   <li>
+      <a href="#Firmware" title="https://saref.etsi.org/saref4grid/Firmware">Firmware</a>
+   </li>
+   <li>
+      <a href="#GetOperation" title="https://saref.etsi.org/saref4grid/GetOperation">Get Operation</a>
+   </li>
+   <li>
+      <a href="#GetOperationDataOutput"
+         title="https://saref.etsi.org/saref4grid/GetOperationDataOutput">Get Operation Data Output</a>
+   </li>
+   <li>
+      <a href="#GetOperationObjectOutput"
+         title="https://saref.etsi.org/saref4grid/GetOperationObjectOutput">Get Operation Object Output</a>
+   </li>
+   <li>
+      <a href="#GetOperationOutput"
+         title="https://saref.etsi.org/saref4grid/GetOperationOutput">Get Operation Output</a>
+   </li>
+   <li>
+      <a href="#GetOperationPropertyInput"
+         title="https://saref.etsi.org/saref4grid/GetOperationPropertyInput">Get Operation Property Input</a>
+   </li>
+   <li>
+      <a href="#GetService" title="https://saref.etsi.org/saref4grid/GetService">Get Service</a>
+   </li>
+   <li>
+      <a href="#GridMeter" title="https://saref.etsi.org/saref4grid/GridMeter">Meter</a>
+   </li>
+   <li>
+      <a href="#MeterProperty" title="https://saref.etsi.org/saref4grid/MeterProperty">Meter Property</a>
+   </li>
+   <li>
+      <a href="#NetworkInterface"
+         title="https://saref.etsi.org/saref4grid/NetworkInterface">Network Interface</a>
+   </li>
+   <li>
+      <a href="#http://www.owl-ontologies.com/oneM2M#OperationInput"
+         title="http://www.owl-ontologies.com/oneM2M#OperationInput">Operation Input</a>
+   </li>
+   <li>
+      <a href="#http://www.owl-ontologies.com/oneM2M#OperationOutput"
+         title="http://www.owl-ontologies.com/oneM2M#OperationOutput">Operation Output</a>
+   </li>
+   <li>
+      <a href="#PowerLine" title="https://saref.etsi.org/saref4grid/PowerLine">Power Line</a>
+   </li>
+   <li>
+      <a href="#PresetAdjustingTime"
+         title="https://saref.etsi.org/saref4grid/PresetAdjustingTime">Preset Adjusting Time</a>
+   </li>
+   <li>
+      <a href="#ProfileGeneric"
+         title="https://saref.etsi.org/saref4grid/ProfileGeneric">Profile Generic</a>
+   </li>
+   <li>
+      <a href="#QualityProperty"
+         title="https://saref.etsi.org/saref4grid/QualityProperty">Quality Property</a>
+   </li>
+   <li>
+      <a href="#RangeDescriptor"
+         title="https://saref.etsi.org/saref4grid/RangeDescriptor">Range Descriptor</a>
+   </li>
+   <li>
+      <a href="#RegularDayProfile"
+         title="https://saref.etsi.org/saref4grid/RegularDayProfile">Regular Day Profile</a>
+   </li>
+   <li>
+      <a href="#Script" title="https://saref.etsi.org/saref4grid/Script">Script</a>
+   </li>
+   <li>
+      <a href="#ScriptTable" title="https://saref.etsi.org/saref4grid/ScriptTable">Script Table</a>
+   </li>
+   <li>
+      <a href="#SeasonProfile" title="https://saref.etsi.org/saref4grid/SeasonProfile">Season Profile</a>
+   </li>
+   <li>
+      <a href="#SelectiveAccess"
+         title="https://saref.etsi.org/saref4grid/SelectiveAccess">Selective Access</a>
+   </li>
+   <li>
+      <a href="#http://www.owl-ontologies.com/oneM2M#Service" title="http://www.owl-ontologies.com/oneM2M#Service">Service</a>
+   </li>
+   <li>
+      <a href="#SetOperation" title="https://saref.etsi.org/saref4grid/SetOperation">Set Operation</a>
+   </li>
+   <li>
+      <a href="#SetOperationDataInput"
+         title="https://saref.etsi.org/saref4grid/SetOperationDataInput">Set Operation Data Input</a>
+   </li>
+   <li>
+      <a href="#SetOperationObisInput"
+         title="https://saref.etsi.org/saref4grid/SetOperationObisInput">Set Operation Obis Input</a>
+   </li>
+   <li>
+      <a href="#SetOperationObjectInput"
+         title="https://saref.etsi.org/saref4grid/SetOperationObjectInput">Set Operation Object Input</a>
+   </li>
+   <li>
+      <a href="#SetService" title="https://saref.etsi.org/saref4grid/SetService">Set Service</a>
+   </li>
+   <li>
+      <a href="#SimpleActionOperationInput"
+         title="https://saref.etsi.org/saref4grid/SimpleActionOperationInput">Simple Action Operation Input</a>
+   </li>
+   <li>
+      <a href="#SingleScheduledAction"
+         title="https://saref.etsi.org/saref4grid/SingleScheduledAction">Single Scheduled Action</a>
+   </li>
+   <li>
+      <a href="#SpecialDayEntry"
+         title="https://saref.etsi.org/saref4grid/SpecialDayEntry">Special Day Entry</a>
+   </li>
+   <li>
+      <a href="#SpecialDayProfile"
+         title="https://saref.etsi.org/saref4grid/SpecialDayProfile">Special Day Profile</a>
+   </li>
+</ul><h4>Object Properties</h4><ul xmlns:widoco="https://w3id.org/widoco/vocab#"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    class="hlist">
+   <li>
+      <a href="#executesScript" title="https://saref.etsi.org/saref4grid/executesScript">executes script</a>
+   </li>
+   <li>
+      <a href="#hasActiveSeasonProfile"
+         title="https://saref.etsi.org/saref4grid/hasActiveSeasonProfile">has active season profile</a>
+   </li>
+   <li>
+      <a href="#hasActivityCalendar"
+         title="https://saref.etsi.org/saref4grid/hasActivityCalendar">has activity calendar</a>
+   </li>
+   <li>
+      <a href="#hasClock" title="https://saref.etsi.org/saref4grid/hasClock">has clock</a>
+   </li>
+   <li>
+      <a href="#hasDayProfile" title="https://saref.etsi.org/saref4grid/hasDayProfile">has day profile</a>
+   </li>
+   <li>
+      <a href="#hasDaySchedule" title="https://saref.etsi.org/saref4grid/hasDaySchedule">has day schedule</a>
+   </li>
+   <li>
+      <a href="#hasFirmware" title="https://saref.etsi.org/saref4grid/hasFirmware">has firmware</a>
+   </li>
+   <li>
+      <a href="#hasFridayProfile"
+         title="https://saref.etsi.org/saref4grid/hasFridayProfile">has friday profile</a>
+   </li>
+   <li>
+      <a href="#hasMondayProfile"
+         title="https://saref.etsi.org/saref4grid/hasMondayProfile">has monday profile</a>
+   </li>
+   <li>
+      <a href="#hasNetworkInterface"
+         title="https://saref.etsi.org/saref4grid/hasNetworkInterface">has network interface</a>
+   </li>
+   <li>
+      <a href="#hasPassiveSeasonProfile"
+         title="https://saref.etsi.org/saref4grid/hasPassiveSeasonProfile">has passive season profile</a>
+   </li>
+   <li>
+      <a href="#hasProfileGeneric"
+         title="https://saref.etsi.org/saref4grid/hasProfileGeneric">has profile generic</a>
+   </li>
+   <li>
+      <a href="#hasSaturdayProfile"
+         title="https://saref.etsi.org/saref4grid/hasSaturdayProfile">has saturday profile</a>
+   </li>
+   <li>
+      <a href="#hasScriptTable" title="https://saref.etsi.org/saref4grid/hasScriptTable">has script table</a>
+   </li>
+   <li>
+      <a href="#hasSelectiveAccess"
+         title="https://saref.etsi.org/saref4grid/hasSelectiveAccess">has selective access</a>
+   </li>
+   <li>
+      <a href="#http://www.owl-ontologies.com/oneM2M#hasService" title="http://www.owl-ontologies.com/oneM2M#hasService">has service</a>
+   </li>
+   <li>
+      <a href="#hasSingleScheduledAction"
+         title="https://saref.etsi.org/saref4grid/hasSingleScheduledAction">has single scheduled action</a>
+   </li>
+   <li>
+      <a href="#hasSpecialDayProfile"
+         title="https://saref.etsi.org/saref4grid/hasSpecialDayProfile">has special day profile</a>
+   </li>
+   <li>
+      <a href="#hasSundayProfile"
+         title="https://saref.etsi.org/saref4grid/hasSundayProfile">has sunday profile</a>
+   </li>
+   <li>
+      <a href="#hasThursdayProfile"
+         title="https://saref.etsi.org/saref4grid/hasThursdayProfile">has thursday profile</a>
+   </li>
+   <li>
+      <a href="#hasTuesdayProfile"
+         title="https://saref.etsi.org/saref4grid/hasTuesdayProfile">has tuesday profile</a>
+   </li>
+   <li>
+      <a href="#hasWednesdayProfile"
+         title="https://saref.etsi.org/saref4grid/hasWednesdayProfile">has wednesday profile</a>
+   </li>
+   <li>
+      <a href="#relatedClock" title="https://saref.etsi.org/saref4grid/relatedClock">related clock</a>
+   </li>
+   <li>
+      <a href="#relatedObservation"
+         title="https://saref.etsi.org/saref4grid/relatedObservation">related observation</a>
+   </li>
+   <li>
+      <a href="#relatedPropertyValue"
+         title="https://saref.etsi.org/saref4grid/relatedPropertyValue">related property value</a>
+   </li>
+   <li>
+      <a href="#storesScript" title="https://saref.etsi.org/saref4grid/storesScript">stores script</a>
+   </li>
+</ul><h4>Data Properties</h4><ul xmlns:widoco="https://w3id.org/widoco/vocab#"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    class="hlist">
+   <li>
+      <a href="#hasActionValue" title="https://saref.etsi.org/saref4grid/hasActionValue">has action value</a>
+   </li>
+   <li>
+      <a href="#hasActivatePassiveCalendarTime"
+         title="https://saref.etsi.org/saref4grid/hasActivatePassiveCalendarTime">has activate passive calendar time</a>
+   </li>
+   <li>
+      <a href="#hasCalendarNameActive"
+         title="https://saref.etsi.org/saref4grid/hasCalendarNameActive">has calendar name active</a>
+   </li>
+   <li>
+      <a href="#hasCalendarNamePassive"
+         title="https://saref.etsi.org/saref4grid/hasCalendarNamePassive">has calendar name passive</a>
+   </li>
+   <li>
+      <a href="#hasCapturePeriod"
+         title="https://saref.etsi.org/saref4grid/hasCapturePeriod">has capture period</a>
+   </li>
+   <li>
+      <a href="#hasClockBase" title="https://saref.etsi.org/saref4grid/hasClockBase">has clock base</a>
+   </li>
+   <li>
+      <a href="#hasControlMode" title="https://saref.etsi.org/saref4grid/hasControlMode">has control mode</a>
+   </li>
+   <li>
+      <a href="#hasControlState"
+         title="https://saref.etsi.org/saref4grid/hasControlState">has control state</a>
+   </li>
+   <li>
+      <a href="#hasDayId" title="https://saref.etsi.org/saref4grid/hasDayId">has day id</a>
+   </li>
+   <li>
+      <a href="#hasDaylightSavingsBegin"
+         title="https://saref.etsi.org/saref4grid/hasDaylightSavingsBegin">has daylight savings begin</a>
+   </li>
+   <li>
+      <a href="#hasDaylightSavingsDeviation"
+         title="https://saref.etsi.org/saref4grid/hasDaylightSavingsDeviation">has daylight savings deviation</a>
+   </li>
+   <li>
+      <a href="#hasDaylightSavingsEnabled"
+         title="https://saref.etsi.org/saref4grid/hasDaylightSavingsEnabled">has daylight savings enabled</a>
+   </li>
+   <li>
+      <a href="#hasDaylightSavingsEnd"
+         title="https://saref.etsi.org/saref4grid/hasDaylightSavingsEnd">has daylight savings end</a>
+   </li>
+   <li>
+      <a href="#hasExecutionTime"
+         title="https://saref.etsi.org/saref4grid/hasExecutionTime">has execution time</a>
+   </li>
+   <li>
+      <a href="#hasFirmwareVersion"
+         title="https://saref.etsi.org/saref4grid/hasFirmwareVersion">has firmware version</a>
+   </li>
+   <li>
+      <a href="#hasIndex" title="https://saref.etsi.org/saref4grid/hasIndex">has index</a>
+   </li>
+   <li>
+      <a href="#hasInputDataType"
+         title="https://saref.etsi.org/saref4grid/hasInputDataType">has input data type</a>
+   </li>
+   <li>
+      <a href="#hasInputObjectType"
+         title="https://saref.etsi.org/saref4grid/hasInputObjectType">has input object type</a>
+   </li>
+   <li>
+      <a href="#hasMACAddress" title="https://saref.etsi.org/saref4grid/hasMACAddress">has m a c address</a>
+   </li>
+   <li>
+      <a href="#hasObis" title="https://saref.etsi.org/saref4grid/hasObis">has obis</a>
+   </li>
+   <li>
+      <a href="#hasOutputDataType"
+         title="https://saref.etsi.org/saref4grid/hasOutputDataType">has output data type</a>
+   </li>
+   <li>
+      <a href="#hasOutputObjectType"
+         title="https://saref.etsi.org/saref4grid/hasOutputObjectType">has output object type</a>
+   </li>
+   <li>
+      <a href="#hasOutputState" title="https://saref.etsi.org/saref4grid/hasOutputState">has output state</a>
+   </li>
+   <li>
+      <a href="#hasPresetTime" title="https://saref.etsi.org/saref4grid/hasPresetTime">has preset time</a>
+   </li>
+   <li>
+      <a href="#hasProductId" title="https://saref.etsi.org/saref4grid/hasProductId">has product id</a>
+   </li>
+   <li>
+      <a href="#hasSeasonProfileName"
+         title="https://saref.etsi.org/saref4grid/hasSeasonProfileName">has season profile name</a>
+   </li>
+   <li>
+      <a href="#hasSeasonStart" title="https://saref.etsi.org/saref4grid/hasSeasonStart">has season start</a>
+   </li>
+   <li>
+      <a href="#hasSpecialDate" title="https://saref.etsi.org/saref4grid/hasSpecialDate">has special date</a>
+   </li>
+   <li>
+      <a href="#hasSpecialDayDate"
+         title="https://saref.etsi.org/saref4grid/hasSpecialDayDate">has special day date</a>
+   </li>
+   <li>
+      <a href="#hasStartTime" title="https://saref.etsi.org/saref4grid/hasStartTime">has start time</a>
+   </li>
+   <li>
+      <a href="#hasStatus" title="https://saref.etsi.org/saref4grid/hasStatus">has status</a>
+   </li>
+   <li>
+      <a href="#hasTime" title="https://saref.etsi.org/saref4grid/hasTime">has time</a>
+   </li>
+   <li>
+      <a href="#hasTimeZone" title="https://saref.etsi.org/saref4grid/hasTimeZone">has time zone</a>
+   </li>
+   <li>
+      <a href="#hasValidityIntervalEnd"
+         title="https://saref.etsi.org/saref4grid/hasValidityIntervalEnd">has validity interval end</a>
+   </li>
+   <li>
+      <a href="#hasValidityIntervalStart"
+         title="https://saref.etsi.org/saref4grid/hasValidityIntervalStart">has validity interval start</a>
+   </li>
+   <li>
+      <a href="#hasVendorId" title="https://saref.etsi.org/saref4grid/hasVendorId">has vendor id</a>
+   </li>
+   <li>
+      <a href="#obtainFromEntry"
+         title="https://saref.etsi.org/saref4grid/obtainFromEntry">obtain from entry</a>
+   </li>
+   <li>
+      <a href="#obtainFromValue"
+         title="https://saref.etsi.org/saref4grid/obtainFromValue">obtain from value</a>
+   </li>
+   <li>
+      <a href="#obtainInputForProperty"
+         title="https://saref.etsi.org/saref4grid/obtainInputForProperty">obtain input for property</a>
+   </li>
+   <li>
+      <a href="#obtainInputFromObis"
+         title="https://saref.etsi.org/saref4grid/obtainInputFromObis">obtain input from obis</a>
+   </li>
+   <li>
+      <a href="#obtainToEntry" title="https://saref.etsi.org/saref4grid/obtainToEntry">obtain to entry</a>
+   </li>
+   <li>
+      <a href="#obtainToValue" title="https://saref.etsi.org/saref4grid/obtainToValue">obtain to value</a>
+   </li>
+</ul><h4>Named Individuals</h4><ul xmlns:widoco="https://w3id.org/widoco/vocab#"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    class="hlist">
+   <li>
+      <a href="#ActiveEnergy" title="https://saref.etsi.org/saref4grid/ActiveEnergy">Active Energy</a>
+   </li>
+   <li>
+      <a href="#ActivePower" title="https://saref.etsi.org/saref4grid/ActivePower">Active Power</a>
+   </li>
+   <li>
+      <a href="#ApparentPower" title="https://saref.etsi.org/saref4grid/ApparentPower">Apparent Power</a>
+   </li>
+   <li>
+      <a href="#BillingPeriod" title="https://saref.etsi.org/saref4grid/BillingPeriod">Billing Period</a>
+   </li>
+   <li>
+      <a href="#Current" title="https://saref.etsi.org/saref4grid/Current">Current</a>
+   </li>
+   <li>
+      <a href="#DemandRegister"
+         title="https://saref.etsi.org/saref4grid/DemandRegister">Demand Register</a>
+   </li>
+   <li>
+      <a href="#DurationLongPowerFailure"
+         title="https://saref.etsi.org/saref4grid/DurationLongPowerFailure">Duration Long Power Failure</a>
+   </li>
+   <li>
+      <a href="#DurationVoltageSag"
+         title="https://saref.etsi.org/saref4grid/DurationVoltageSag">Duration Voltage Sag</a>
+   </li>
+   <li>
+      <a href="#DurationVoltageSwell"
+         title="https://saref.etsi.org/saref4grid/DurationVoltageSwell">Duration Voltage Swell</a>
+   </li>
+   <li>
+      <a href="#https://www.linkedin.com/in/sergio-mario-carulli-pérez-7632b5217/"
+         title="https://www.linkedin.com/in/sergio-mario-carulli-p%C3%A9rez-7632b5217/">
+         <span>https://www.linkedin.com/in/sergio-mario-carulli-p%C3%A9rez-7632b5217/</span>
+      </a>
+   </li>
+   <li>
+      <a href="#https://www.upm.es/" title="https://www.upm.es/">
+         <span>https://www.upm.es/</span>
+      </a>
+   </li>
+   <li>
+      <a href="#LongPowerFailuresNumber"
+         title="https://saref.etsi.org/saref4grid/LongPowerFailuresNumber">Long Power Failures Number</a>
+   </li>
+   <li>
+      <a href="#Manufacturer" title="https://saref.etsi.org/saref4grid/Manufacturer">Manufacturer</a>
+   </li>
+   <li>
+      <a href="#http://www.garcia-castro.com/foaf.rdf#me" title="http://www.garcia-castro.com/foaf.rdf#me">
+         <span>me</span>
+      </a>
+   </li>
+   <li>
+      <a href="#http://w3id.org/people/mpoveda" title="http://w3id.org/people/mpoveda">
+         <span>mpoveda</span>
+      </a>
+   </li>
+   <li>
+      <a href="#Network" title="https://saref.etsi.org/saref4grid/Network">Network</a>
+   </li>
+   <li>
+      <a href="#Phase" title="https://saref.etsi.org/saref4grid/Phase">Phase</a>
+   </li>
+   <li>
+      <a href="#PhaseAngle" title="https://saref.etsi.org/saref4grid/PhaseAngle">Phase Angle</a>
+   </li>
+   <li>
+      <a href="#PowerFactor" title="https://saref.etsi.org/saref4grid/PowerFactor">Power Factor</a>
+   </li>
+   <li>
+      <a href="#PowerLimit" title="https://saref.etsi.org/saref4grid/PowerLimit">Power Limit</a>
+   </li>
+   <li>
+      <a href="#PowerQuality" title="https://saref.etsi.org/saref4grid/PowerQuality">Power Quality</a>
+   </li>
+   <li>
+      <a href="#ProfileStatus" title="https://saref.etsi.org/saref4grid/ProfileStatus">Profile Status</a>
+   </li>
+   <li>
+      <a href="#Quadrant" title="https://saref.etsi.org/saref4grid/Quadrant">Quadrant</a>
+   </li>
+   <li>
+      <a href="#ReactiveEnergy"
+         title="https://saref.etsi.org/saref4grid/ReactiveEnergy">Reactive Energy</a>
+   </li>
+   <li>
+      <a href="#ReactivePower" title="https://saref.etsi.org/saref4grid/ReactivePower">Reactive Power</a>
+   </li>
+   <li>
+      <a href="#ScreenDisplay" title="https://saref.etsi.org/saref4grid/ScreenDisplay">Screen Display</a>
+   </li>
+   <li>
+      <a href="#Threshold" title="https://saref.etsi.org/saref4grid/Threshold">Threshold</a>
+   </li>
+   <li>
+      <a href="#TimeThreshold" title="https://saref.etsi.org/saref4grid/TimeThreshold">Time Threshold</a>
+   </li>
+   <li>
+      <a href="#TransformerRatio"
+         title="https://saref.etsi.org/saref4grid/TransformerRatio">Transformer Ratio</a>
+   </li>
+   <li>
+      <a href="#Voltage" title="https://saref.etsi.org/saref4grid/Voltage">Voltage</a>
+   </li>
+   <li>
+      <a href="#VoltageSagNumber"
+         title="https://saref.etsi.org/saref4grid/VoltageSagNumber">Voltage Sag Number</a>
+   </li>
+   <li>
+      <a href="#VoltageSwellNumber"
+         title="https://saref.etsi.org/saref4grid/VoltageSwellNumber">Voltage Swell Number</a>
+   </li>
+</ul>

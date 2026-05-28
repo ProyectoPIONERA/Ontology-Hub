@@ -21,6 +21,9 @@ var users = require("../../app/controllers/users"),
 var http = require("http");
 var https = require("https");
 var urlLib = require("url");
+var path = require("path");
+var crypto = require("crypto");
+var childProcess = require("child_process");
 var negotiate = require("express-negotiate");
 const multer = require("multer");
 const upload = multer();
@@ -912,6 +915,317 @@ function resolveSourceUrl(req, sourceUrl) {
   return req.protocol + "://" + req.get("host") + clean;
 }
 
+function sanitizeWidocoToken(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .substring(0, 60);
+}
+
+function getWidocoGeneratedRoot() {
+  return path.resolve(__dirname, "..", "..", "public", "generated", "widoco");
+}
+
+function cleanupWidocoRuns(maxAgeMs) {
+  var root = getWidocoGeneratedRoot();
+  if (!fs.existsSync(root)) return;
+  var now = Date.now();
+  var entries = fs.readdirSync(root, { withFileTypes: true });
+  for (var i = 0; i < entries.length; i += 1) {
+    var entry = entries[i];
+    if (!entry.isDirectory()) continue;
+    var full = path.join(root, entry.name);
+    try {
+      var stat = fs.statSync(full);
+      if (now - stat.mtimeMs > maxAgeMs) {
+        fs.rmSync(full, { recursive: true, force: true });
+      }
+    } catch (e) {}
+  }
+}
+
+function resolveWidocoRunDir(runId) {
+  var clean = String(runId || "").trim();
+  if (!/^[a-z0-9._-]+$/i.test(clean)) return "";
+  return path.join(getWidocoGeneratedRoot(), clean);
+}
+
+function resolveWidocoManifestPath(runDir) {
+  return path.join(runDir, "widoco-manifest.json");
+}
+
+function buildWidocoRunResponse(runId, manifest) {
+  var outputUrl = manifest && manifest.outputUrl ? String(manifest.outputUrl) : "";
+  if (!outputUrl) return null;
+  return {
+    runId: runId,
+    version: manifest.version || "v1.4.25",
+    outputUrl: outputUrl,
+    previewUrl: manifest.previewUrl || outputUrl,
+    zipUrl: "/dataset/api/v2/docs/widoco/" + encodeURIComponent(runId) + ".zip",
+    prefix: manifest.prefix || "",
+    ontologyVersion: manifest.ontologyVersion || "",
+    generatedAt: manifest.generatedAt || "",
+  };
+}
+
+function findLatestWidocoRun(prefix, ontologyVersion) {
+  var root = getWidocoGeneratedRoot();
+  if (!fs.existsSync(root)) return null;
+  var cleanPrefix = sanitizeWidocoToken(prefix || "");
+  var cleanOntologyVersion = sanitizeWidocoToken(ontologyVersion || "");
+  var dirs = fs.readdirSync(root, { withFileTypes: true })
+    .filter(function (d) { return d.isDirectory(); })
+    .map(function (d) { return d.name; });
+
+  var candidates = [];
+  for (var i = 0; i < dirs.length; i += 1) {
+    var runId = dirs[i];
+    if (cleanPrefix && runId.indexOf(cleanPrefix + "-") !== 0) {
+      continue;
+    }
+    var runDir = path.join(root, runId);
+    var manifestPath = resolveWidocoManifestPath(runDir);
+    var manifest = null;
+    try {
+      if (fs.existsSync(manifestPath)) {
+        manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+      }
+    } catch (e) {
+      manifest = null;
+    }
+
+    if (!manifest || !manifest.outputUrl) {
+      var fallbackOutput = "";
+      var fallbackCandidates = [
+        path.join(runDir, "index-en.html"),
+        path.join(runDir, "index.html"),
+        path.join(runDir, "doc", "index-en.html"),
+        path.join(runDir, "doc", "index.html"),
+      ];
+      for (var k = 0; k < fallbackCandidates.length; k += 1) {
+        if (fs.existsSync(fallbackCandidates[k])) {
+          fallbackOutput = "/" + path.relative(
+            path.resolve(__dirname, "..", "..", "public"),
+            fallbackCandidates[k]
+          ).split(path.sep).join("/");
+          break;
+        }
+      }
+      if (!fallbackOutput) {
+        continue;
+      }
+      manifest = {
+        prefix: cleanPrefix || "",
+        version: "v1.4.25",
+        ontologyVersion: "",
+        outputUrl: fallbackOutput,
+        previewUrl: fallbackOutput,
+        generatedAt: "",
+      };
+    } else {
+      if (cleanPrefix && sanitizeWidocoToken(manifest.prefix || "") !== cleanPrefix) {
+        continue;
+      }
+      if (cleanOntologyVersion && sanitizeWidocoToken(manifest.ontologyVersion || "") !== cleanOntologyVersion) {
+        continue;
+      }
+    }
+
+    var createdMs = Date.parse(manifest.generatedAt || "") || 0;
+    if (!createdMs) {
+      try {
+        createdMs = fs.statSync(runDir).mtimeMs || 0;
+      } catch (e2) {}
+    }
+    candidates.push({
+      runId: runId,
+      manifest: manifest,
+      createdMs: createdMs,
+    });
+  }
+
+  if (!candidates.length) return null;
+  candidates.sort(function (a, b) { return b.createdMs - a.createdMs; });
+  return buildWidocoRunResponse(candidates[0].runId, candidates[0].manifest);
+}
+
+function resolveWidocoJarPath() {
+  if (config.widoco && config.widoco.jarPath) {
+    return path.resolve(config.widoco.jarPath);
+  }
+  return path.resolve(
+    __dirname,
+    "..",
+    "..",
+    "tools",
+    "widoco-1.4.25-jar-with-dependencies.jar"
+  );
+}
+
+function runWidocoGeneration(params, callback) {
+  var ontoFile = String(params.ontoFile || "").trim();
+  var prefix = sanitizeWidocoToken(params.prefix || "ontology");
+  var version = sanitizeWidocoToken(params.version || "v1.4.25");
+
+  if (!ontoFile) {
+    return callback(new Error("Missing ontology input for WIDOCO"));
+  }
+
+  var jarPath = resolveWidocoJarPath();
+  if (!fs.existsSync(jarPath)) {
+    return callback(
+      new Error("WIDOCO jar not found at: " + jarPath)
+    );
+  }
+
+  var runId =
+    prefix +
+    "-" +
+    Date.now() +
+    "-" +
+    crypto.randomBytes(4).toString("hex");
+
+  var generatedRoot = getWidocoGeneratedRoot();
+  cleanupWidocoRuns(72 * 60 * 60 * 1000);
+  var outFolder = path.join(generatedRoot, runId);
+  fs.mkdirSync(outFolder, { recursive: true });
+
+  function runWithOntologyInput(finalOntFilePath) {
+    var args = [
+      "-jar",
+      jarPath,
+      "-ontFile",
+      finalOntFilePath,
+      "-outFolder",
+      outFolder,
+      "-webVowl",
+      "-rewriteAll",
+    ];
+
+    var settled = false;
+    function finish(err, payload) {
+      if (settled) return;
+      settled = true;
+      callback(err, payload);
+    }
+
+    var runner = childProcess.execFile("java", args, { timeout: 180000 }, function (err, stdout, stderr) {
+      if (err) {
+        err.stdout = stdout;
+        err.stderr = stderr;
+        return finish(err);
+      }
+
+      function findWidocoIndexHtml(rootDir) {
+        var preferred = [
+          path.join(rootDir, "index-en.html"),
+          path.join(rootDir, "index.html"),
+          path.join(rootDir, "doc", "index-en.html"),
+          path.join(rootDir, "doc", "index.html"),
+        ];
+        for (var i = 0; i < preferred.length; i += 1) {
+          if (fs.existsSync(preferred[i])) return preferred[i];
+        }
+
+        function walk(dir) {
+          var entries = fs.readdirSync(dir, { withFileTypes: true });
+          for (var j = 0; j < entries.length; j += 1) {
+            var entry = entries[j];
+            var full = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+              var found = walk(full);
+              if (found) return found;
+              continue;
+            }
+            if (/^index(-[a-z]{2})?\.html$/i.test(entry.name)) {
+              return full;
+            }
+          }
+          return "";
+        }
+
+        return walk(rootDir);
+      }
+
+      function findWidocoPreviewHtml(rootDir) {
+        var preferred = [
+          path.join(rootDir, "sections", "crossref-en.html"),
+          path.join(rootDir, "sections", "crossref.html"),
+          path.join(rootDir, "webvowl", "index.html"),
+          path.join(rootDir, "webvowl", "webvowl-en.html"),
+          path.join(rootDir, "sections", "overview-en.html"),
+          path.join(rootDir, "sections", "overview.html"),
+        ];
+        for (var i = 0; i < preferred.length; i += 1) {
+          if (fs.existsSync(preferred[i])) return preferred[i];
+        }
+        return "";
+      }
+
+      var htmlPath = findWidocoIndexHtml(outFolder);
+      if (!fs.existsSync(htmlPath)) {
+        return finish(new Error("WIDOCO did not generate index html."));
+      }
+      var previewPath = findWidocoPreviewHtml(outFolder) || htmlPath;
+
+      var relPath = path.relative(path.resolve(__dirname, "..", "..", "public"), htmlPath)
+        .split(path.sep)
+        .join("/");
+      var relPreviewPath = path.relative(path.resolve(__dirname, "..", "..", "public"), previewPath)
+        .split(path.sep)
+        .join("/");
+
+      try {
+        fs.writeFileSync(
+          resolveWidocoManifestPath(outFolder),
+          JSON.stringify({
+            runId: runId,
+            prefix: prefix,
+            version: version,
+            ontologyVersion: sanitizeWidocoToken(params.ontologyVersion || ""),
+            outputUrl: "/" + relPath,
+            previewUrl: "/" + relPreviewPath,
+            generatedAt: new Date().toISOString(),
+          }, null, 2),
+          { encoding: "utf8" }
+        );
+      } catch (e) {}
+
+      return finish(null, {
+        runId: runId,
+        version: version,
+        outputUrl: "/" + relPath,
+        previewUrl: "/" + relPreviewPath,
+        zipUrl: "/dataset/api/v2/docs/widoco/" + encodeURIComponent(runId) + ".zip",
+        outputPath: htmlPath,
+        command: "java " + args.join(" "),
+        stdout: stdout || "",
+        stderr: stderr || "",
+      });
+    });
+
+    runner.on("error", function (err) {
+      finish(err);
+    });
+  }
+
+  if (/^https?:\/\//i.test(ontoFile)) {
+    return fetchTextFromUrlNoRedirect(ontoFile, function (err, sourceText) {
+      if (err) {
+        return callback(err);
+      }
+      var tempOntPath = path.join(outFolder, "ontology-source.n3");
+      fs.writeFileSync(tempOntPath, sourceText, { encoding: "utf8" });
+      return runWithOntologyInput(tempOntPath);
+    });
+  }
+
+  return runWithOntologyInput(ontoFile);
+}
+
 function fetchTextFromUrl(targetUrl, callback, redirectsLeft) {
   var redirects = typeof redirectsLeft === "number" ? redirectsLeft : 3;
   var parsed = urlLib.parse(targetUrl);
@@ -1198,6 +1512,91 @@ router.post("/dataset/api/v2/validators/themis", function (req, res) {
   return runThemisResultsWithFallback(uri, testfile, sourceUrl, req, res);
 });
 
+router.post("/dataset/api/v2/docs/widoco", function (req, res) {
+  var uri = req.body && req.body.uri ? String(req.body.uri).trim() : "";
+  var sourceUrlRaw = req.body && req.body.sourceUrl ? String(req.body.sourceUrl).trim() : "";
+  var sourceUrl = resolveSourceUrl(req, sourceUrlRaw);
+  var prefix = req.body && req.body.prefix ? String(req.body.prefix).trim() : "ontology";
+  var version = req.body && req.body.version ? String(req.body.version).trim() : "v1.4.25";
+  var ontoFile = sourceUrl || uri;
+
+  if (!ontoFile) {
+    return res.status(400).json({ error: "Missing required body param: uri or sourceUrl" });
+  }
+
+  return runWidocoGeneration(
+    {
+      ontoFile: ontoFile,
+      prefix: prefix,
+      version: version,
+      ontologyVersion: req.body && req.body.ontologyVersion ? String(req.body.ontologyVersion).trim() : "",
+    },
+    function (err, result) {
+      if (err) {
+        return res.status(502).json({
+          error: err.message || "WIDOCO generation failed",
+          stderr: err.stderr || "",
+          stdout: err.stdout || "",
+        });
+      }
+
+      return res.status(200).json(result);
+    }
+  );
+});
+
+router.get("/dataset/api/v2/docs/widoco/latest", function (req, res) {
+  var prefix = req.query && req.query.prefix ? String(req.query.prefix).trim() : "";
+  var ontologyVersion = req.query && req.query.ontologyVersion
+    ? String(req.query.ontologyVersion).trim()
+    : "";
+
+  if (!prefix) {
+    return res.status(400).json({ error: "Missing required query param: prefix" });
+  }
+
+  var latest = findLatestWidocoRun(prefix, ontologyVersion);
+  if (!latest) {
+    return res.status(404).json({ error: "No WIDOCO documentation generated yet." });
+  }
+  return res.status(200).json(latest);
+});
+
+router.get("/dataset/api/v2/docs/widoco/:runId.zip", function (req, res) {
+  var runDir = resolveWidocoRunDir(req.params.runId);
+  if (!runDir) {
+    return res.status(400).send("Invalid run id");
+  }
+  if (!fs.existsSync(runDir)) {
+    return res.status(404).send("Run not found");
+  }
+
+  var zipPath = path.join(runDir, "widoco-output.zip");
+  var pyCode = [
+    "import os, sys, zipfile",
+    "root, out = sys.argv[1], sys.argv[2]",
+    "with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as zf:",
+    "  for base, _, files in os.walk(root):",
+    "    for f in files:",
+    "      if f == 'widoco-output.zip':",
+    "        continue",
+    "      p = os.path.join(base, f)",
+    "      zf.write(p, os.path.relpath(p, root))",
+  ].join(";");
+
+  return childProcess.execFile(
+    "python3",
+    ["-c", pyCode, runDir, zipPath],
+    { timeout: 30000 },
+    function (err) {
+      if (err) {
+        return res.status(500).send("Unable to build WIDOCO zip.");
+      }
+      return res.download(zipPath, "widoco-" + req.params.runId + ".zip");
+    }
+  );
+});
+
 
 router.get("/dataset/api/v2/patterns", function (req, res) {
   vocabularies.detectPatterns(
@@ -1314,7 +1713,6 @@ router.post("/dataset/sparql", function (req, res, next) {
 
 
 const { spawn } = require('child_process');
-const path = require('path');
 const { hostname } = require("os");
 
 

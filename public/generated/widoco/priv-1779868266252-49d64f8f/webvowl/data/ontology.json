@@ -1,0 +1,400 @@
+{
+  "_comment" : "Created with OWL2VOWL (version 0.3.5), http://vowl.visualdataweb.org",
+  "header" : {
+    "languages" : [ "undefined" ],
+    "baseIris" : [ "http://www.w3.org/2000/01/rdf-schema", "https://auroral.iot.linkeddata.es/def/core", "http://www.w3.org/2001/XMLSchema", "https://auroral.iot.linkeddata.es/def/priv" ],
+    "title" : {
+      "undefined" : "The AURORAL Privacy Ontology"
+    },
+    "iri" : "https://auroral.iot.linkeddata.es/def/priv#",
+    "version" : "0.0.1",
+    "author" : [ "Ra?l Garc?a Castro", "Alba Fern?ndez Izquierdo", "Andrea Cimmino" ],
+    "description" : {
+      "undefined" : "This ontology aims at modelling the privacy for the AURORAL project."
+    },
+    "other" : {
+      "license" : [ {
+        "identifier" : "license",
+        "language" : "undefined",
+        "value" : "http://purl.org/NET/rdflicense/cc-by4.0",
+        "type" : "iri"
+      } ],
+      "creator" : [ {
+        "identifier" : "creator",
+        "language" : "undefined",
+        "value" : "Andrea Cimmino",
+        "type" : "label"
+      }, {
+        "identifier" : "creator",
+        "language" : "undefined",
+        "value" : "Ra?l Garc?a Castro",
+        "type" : "label"
+      }, {
+        "identifier" : "creator",
+        "language" : "undefined",
+        "value" : "Alba Fern?ndez Izquierdo",
+        "type" : "label"
+      } ],
+      "versionInfo" : [ {
+        "identifier" : "versionInfo",
+        "language" : "undefined",
+        "value" : "0.0.1",
+        "type" : "label"
+      } ],
+      "title" : [ {
+        "identifier" : "title",
+        "language" : "undefined",
+        "value" : "The AURORAL Privacy Ontology",
+        "type" : "label"
+      } ]
+    }
+  },
+  "namespace" : [ ],
+  "class" : [ {
+    "id" : "0",
+    "type" : "owl:Class"
+  }, {
+    "id" : "2",
+    "type" : "rdfs:Datatype"
+  }, {
+    "id" : "5",
+    "type" : "rdfs:Datatype"
+  }, {
+    "id" : "7",
+    "type" : "rdfs:Datatype"
+  }, {
+    "id" : "9",
+    "type" : "rdfs:Datatype"
+  }, {
+    "id" : "11",
+    "type" : "owl:Class"
+  }, {
+    "id" : "4",
+    "type" : "owl:Class"
+  }, {
+    "id" : "15",
+    "type" : "owl:Class"
+  }, {
+    "id" : "13",
+    "type" : "owl:Class"
+  }, {
+    "id" : "19",
+    "type" : "owl:Class"
+  }, {
+    "id" : "1",
+    "type" : "owl:Class"
+  } ],
+  "classAttribute" : [ {
+    "iri" : "https://auroral.iot.linkeddata.es/def/priv#Permission",
+    "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+    "instances" : 0,
+    "label" : {
+      "IRI-based" : "Permission",
+      "undefined" : "Permission"
+    },
+    "comment" : {
+      "undefined" : "The ability to exercise an Action over an Asset. The Permission MAY also have the duty property that expresses an agreed Action that MUST be exercised (as a pre-condition to be granted the Permission)."
+    },
+    "id" : "0",
+    "superClasses" : [ "1" ]
+  }, {
+    "iri" : "http://www.w3.org/2001/XMLSchema#string",
+    "baseIri" : "http://www.w3.org/2001/XMLSchema",
+    "id" : "2",
+    "label" : {
+      "IRI-based" : "string"
+    }
+  }, {
+    "iri" : "http://www.w3.org/2001/XMLSchema#string",
+    "baseIri" : "http://www.w3.org/2001/XMLSchema",
+    "id" : "5",
+    "label" : {
+      "IRI-based" : "string"
+    }
+  }, {
+    "iri" : "http://www.w3.org/2001/XMLSchema#string",
+    "baseIri" : "http://www.w3.org/2001/XMLSchema",
+    "id" : "7",
+    "label" : {
+      "IRI-based" : "string"
+    }
+  }, {
+    "iri" : "http://www.w3.org/2001/XMLSchema#string",
+    "baseIri" : "http://www.w3.org/2001/XMLSchema",
+    "id" : "9",
+    "label" : {
+      "IRI-based" : "string"
+    }
+  }, {
+    "iri" : "https://auroral.iot.linkeddata.es/def/priv#Action",
+    "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+    "instances" : 0,
+    "label" : {
+      "IRI-based" : "Action",
+      "undefined" : "Action"
+    },
+    "individuals" : [ {
+      "iri" : "https://auroral.iot.linkeddata.es/def/priv#Accessibility",
+      "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+      "labels" : {
+        "IRI-based" : "Accessibility",
+        "undefined" : "Accessibility"
+      }
+    }, {
+      "iri" : "https://auroral.iot.linkeddata.es/def/priv#Visibility",
+      "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+      "labels" : {
+        "IRI-based" : "Visibility",
+        "undefined" : "Visibility"
+      }
+    } ],
+    "comment" : {
+      "undefined" : "The possible actions of a rule: the visibility, accessibility"
+    },
+    "id" : "11"
+  }, {
+    "iri" : "https://auroral.iot.linkeddata.es/def/priv#Policy",
+    "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+    "instances" : 0,
+    "label" : {
+      "IRI-based" : "Policy",
+      "undefined" : "Policy"
+    },
+    "comment" : {
+      "undefined" : "A non-empty group of Permissions (via the permission property) and/or Prohibitions (via the prohibition property) and/or Duties (via the obligation property)"
+    },
+    "id" : "4"
+  }, {
+    "iri" : "https://auroral.iot.linkeddata.es/def/priv#Prohibition",
+    "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+    "instances" : 0,
+    "label" : {
+      "IRI-based" : "Prohibition",
+      "undefined" : "Prohibition"
+    },
+    "comment" : {
+      "undefined" : "The inability to exercise an Action over an Asset."
+    },
+    "id" : "15",
+    "superClasses" : [ "1" ]
+  }, {
+    "iri" : "https://auroral.iot.linkeddata.es/def/core#Item",
+    "baseIri" : "https://auroral.iot.linkeddata.es/def/core",
+    "instances" : 0,
+    "label" : {
+      "IRI-based" : "Item",
+      "undefined" : "Item"
+    },
+    "comment" : {
+      "undefined" : "A physical or virtual thing"
+    },
+    "attributes" : [ "external" ],
+    "id" : "13"
+  }, {
+    "iri" : "https://auroral.iot.linkeddata.es/def/priv#RuleTarget",
+    "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+    "instances" : 0,
+    "label" : {
+      "IRI-based" : "RuleTarget",
+      "undefined" : "Rule Target"
+    },
+    "individuals" : [ {
+      "iri" : "https://auroral.iot.linkeddata.es/def/priv#Friends",
+      "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+      "labels" : {
+        "IRI-based" : "Friends",
+        "undefined" : "Friends"
+      }
+    }, {
+      "iri" : "https://auroral.iot.linkeddata.es/def/priv#None",
+      "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+      "labels" : {
+        "IRI-based" : "None",
+        "undefined" : "None"
+      }
+    }, {
+      "iri" : "https://auroral.iot.linkeddata.es/def/priv#All",
+      "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+      "labels" : {
+        "IRI-based" : "All",
+        "undefined" : "All"
+      }
+    } ],
+    "comment" : {
+      "undefined" : "The targets for which are generating the rules"
+    },
+    "id" : "19"
+  }, {
+    "iri" : "https://auroral.iot.linkeddata.es/def/priv#Rule",
+    "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+    "instances" : 0,
+    "label" : {
+      "IRI-based" : "Rule",
+      "undefined" : "Rule"
+    },
+    "subClasses" : [ "0", "15" ],
+    "comment" : {
+      "undefined" : "An abstract concept that represents the common characteristics of Permissions, Prohibitions, and Duties."
+    },
+    "id" : "1"
+  } ],
+  "property" : [ {
+    "id" : "3",
+    "type" : "owl:someValuesFrom"
+  }, {
+    "id" : "6",
+    "type" : "owl:someValuesFrom"
+  }, {
+    "id" : "8",
+    "type" : "owl:someValuesFrom"
+  }, {
+    "id" : "10",
+    "type" : "rdfs:SubClassOf"
+  }, {
+    "id" : "12",
+    "type" : "owl:allValuesFrom"
+  }, {
+    "id" : "14",
+    "type" : "owl:someValuesFrom"
+  }, {
+    "id" : "16",
+    "type" : "owl:objectProperty"
+  }, {
+    "id" : "17",
+    "type" : "owl:objectProperty"
+  }, {
+    "id" : "18",
+    "type" : "owl:objectProperty"
+  }, {
+    "id" : "20",
+    "type" : "owl:objectProperty"
+  }, {
+    "id" : "21",
+    "type" : "rdfs:SubClassOf"
+  } ],
+  "propertyAttribute" : [ {
+    "iri" : "https://auroral.iot.linkeddata.es/def/priv#hasName",
+    "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+    "range" : "5",
+    "label" : {
+      "IRI-based" : "hasName",
+      "undefined" : "has name"
+    },
+    "domain" : "4",
+    "attributes" : [ "someValues", "datatype" ],
+    "id" : "3"
+  }, {
+    "iri" : "https://auroral.iot.linkeddata.es/def/priv#hasDescription",
+    "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+    "range" : "7",
+    "label" : {
+      "IRI-based" : "hasDescription",
+      "undefined" : "has description"
+    },
+    "domain" : "4",
+    "attributes" : [ "someValues", "datatype" ],
+    "id" : "6"
+  }, {
+    "iri" : "https://auroral.iot.linkeddata.es/def/priv#hasDescription",
+    "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+    "range" : "9",
+    "label" : {
+      "IRI-based" : "hasDescription",
+      "undefined" : "has description"
+    },
+    "domain" : "1",
+    "attributes" : [ "someValues", "datatype" ],
+    "id" : "8"
+  }, {
+    "range" : "1",
+    "domain" : "0",
+    "attributes" : [ "object", "anonymous" ],
+    "id" : "10"
+  }, {
+    "iri" : "https://auroral.iot.linkeddata.es/def/priv#hasPolicy",
+    "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+    "range" : "4",
+    "label" : {
+      "IRI-based" : "hasPolicy",
+      "undefined" : "has policy"
+    },
+    "domain" : "13",
+    "comment" : {
+      "undefined" : "A relatioship between the item and its policy"
+    },
+    "attributes" : [ "allValues", "object" ],
+    "id" : "12"
+  }, {
+    "iri" : "https://auroral.iot.linkeddata.es/def/priv#hasDescription",
+    "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+    "range" : "2",
+    "label" : {
+      "IRI-based" : "hasDescription",
+      "undefined" : "has description"
+    },
+    "domain" : "11",
+    "attributes" : [ "someValues", "datatype" ],
+    "id" : "14"
+  }, {
+    "iri" : "https://auroral.iot.linkeddata.es/def/priv#definesRule",
+    "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+    "range" : "1",
+    "label" : {
+      "IRI-based" : "definesRule",
+      "undefined" : "defines rule"
+    },
+    "domain" : "4",
+    "comment" : {
+      "undefined" : "A relationship between policy and the rules it defines"
+    },
+    "attributes" : [ "object" ],
+    "id" : "16"
+  }, {
+    "iri" : "https://auroral.iot.linkeddata.es/def/priv#hasAction",
+    "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+    "range" : "11",
+    "label" : {
+      "IRI-based" : "hasAction",
+      "undefined" : "has action"
+    },
+    "domain" : "1",
+    "comment" : {
+      "undefined" : "A relationship between the rule and the actions it defines"
+    },
+    "attributes" : [ "object" ],
+    "id" : "17"
+  }, {
+    "iri" : "https://auroral.iot.linkeddata.es/def/priv#hasRuleTarget",
+    "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+    "range" : "19",
+    "label" : {
+      "IRI-based" : "hasRuleTarget",
+      "undefined" : "has rule target"
+    },
+    "domain" : "1",
+    "comment" : {
+      "undefined" : "A relationship between the rule and its targets"
+    },
+    "attributes" : [ "object" ],
+    "id" : "18"
+  }, {
+    "iri" : "https://auroral.iot.linkeddata.es/def/priv#hasPolicy",
+    "baseIri" : "https://auroral.iot.linkeddata.es/def/priv",
+    "range" : "4",
+    "label" : {
+      "IRI-based" : "hasPolicy",
+      "undefined" : "has policy"
+    },
+    "domain" : "13",
+    "comment" : {
+      "undefined" : "A relatioship between the item and its policy"
+    },
+    "attributes" : [ "object" ],
+    "id" : "20"
+  }, {
+    "range" : "1",
+    "domain" : "15",
+    "attributes" : [ "object", "anonymous" ],
+    "id" : "21"
+  } ]
+}

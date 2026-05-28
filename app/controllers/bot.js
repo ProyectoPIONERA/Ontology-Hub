@@ -11,6 +11,10 @@ var jarPath =
 var app_name;
 var app_name_shorcut;
 
+function shellEscapeArg(value) {
+  return "'" + String(value).replace(/'/g, "'\\''") + "'";
+}
+
 exports.configureName = function (an, ans) {
   app_name = an;
   app_name_shorcut = ans;
@@ -49,12 +53,11 @@ exports.isInLOV = function (req, res, scripts) {
         //vocab does not exist yet
         /* run the bot on the URL */
         var command =
-          scripts +
-          "/bin/suggest " +
-          req.query.q +
+          shellEscapeArg(scripts + "/bin/suggest") +
           " " +
-          scripts +
-          "/lov.config";
+          shellEscapeArg(req.query.q) +
+          " " +
+          shellEscapeArg(scripts + "/lov.config");
         var exec = require("child_process").exec;
         child = exec(command, function (error, stdout, stderr) {
           if (stderr.length < 4) stdout = JSON.parse(stdout);

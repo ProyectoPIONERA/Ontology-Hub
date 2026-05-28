@@ -1,0 +1,1380 @@
+@prefix : <https://saref.etsi.org/saref4grid/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <https://saref.etsi.org/saref4grid/> .
+
+<https://saref.etsi.org/saref4grid/> rdf:type owl:Ontology ;
+                                      owl:versionIRI <https://saref.etsi.org/saref4grid/v2.1.1/> ;
+                                      owl:imports <https://saref.etsi.org/core/v4.1.1/> ;
+                                      <http://purl.org/dc/terms/creator> <http://w3id.org/people/mpoveda> ,
+                                                                         <http://www.garcia-castro.com/foaf.rdf#me> ,
+                                                                         <https://www.linkedin.com/in/sergio-mario-carulli-p%C3%A9rez-7632b5217/> ;
+                                      <http://purl.org/dc/terms/description> "This ontology extends the SAREF ontology for the smart grid domain."@en ;
+                                      <http://purl.org/dc/terms/issued> "2025-04-25"^^xsd:date ;
+                                      <http://purl.org/dc/terms/license> <https://forge.etsi.org/etsi-software-license> ;
+                                      <http://purl.org/dc/terms/modified> "2024-06-05"^^xsd:date ;
+                                      <http://purl.org/dc/terms/publisher> <https://www.etsi.org/> ;
+                                      <http://purl.org/dc/terms/source> <https://saref.etsi.org/sources/saref4grid/> ;
+                                      <http://purl.org/dc/terms/title> "SAREF4GRID: an extension of SAREF for the Smart Grid domain"@en ;
+                                      <http://purl.org/vocab/vann/preferredNamespacePrefix> "s4grid" ;
+                                      <http://purl.org/vocab/vann/preferredNamespaceUri> "https://saref.etsi.org/saref4grid/" ;
+                                      rdfs:comment "The development of the SAREF4GRID ontology has been partially funded by the IA4TES project (MIA.2021.M04.0008), funded by the Spanish Ministry of Economic Affairs and Digital Transformation and by the NextGenerationEU program" ;
+                                      rdfs:seeAlso <https://www.etsi.org/deliver/etsi_ts/103400_103499/10341012/01.01.01_60/ts_10341012v010101p.pdf> ;
+                                      owl:priorVersion <https://saref.etsi.org/saref4grid/v1.1.1/> ;
+                                      owl:versionInfo "v2.1.1" .
+
+#################################################################
+#    Annotation properties
+#################################################################
+
+###  http://purl.org/dc/terms/creator
+<http://purl.org/dc/terms/creator> rdf:type owl:AnnotationProperty .
+
+
+###  http://purl.org/dc/terms/description
+<http://purl.org/dc/terms/description> rdf:type owl:AnnotationProperty .
+
+
+###  http://purl.org/dc/terms/issued
+<http://purl.org/dc/terms/issued> rdf:type owl:AnnotationProperty .
+
+
+###  http://purl.org/dc/terms/license
+<http://purl.org/dc/terms/license> rdf:type owl:AnnotationProperty .
+
+
+###  http://purl.org/dc/terms/modified
+<http://purl.org/dc/terms/modified> rdf:type owl:AnnotationProperty .
+
+
+###  http://purl.org/dc/terms/publisher
+<http://purl.org/dc/terms/publisher> rdf:type owl:AnnotationProperty .
+
+
+###  http://purl.org/dc/terms/source
+<http://purl.org/dc/terms/source> rdf:type owl:AnnotationProperty .
+
+
+###  http://purl.org/dc/terms/title
+<http://purl.org/dc/terms/title> rdf:type owl:AnnotationProperty .
+
+
+###  http://purl.org/vocab/vann/preferredNamespacePrefix
+<http://purl.org/vocab/vann/preferredNamespacePrefix> rdf:type owl:AnnotationProperty .
+
+
+###  http://purl.org/vocab/vann/preferredNamespaceUri
+<http://purl.org/vocab/vann/preferredNamespaceUri> rdf:type owl:AnnotationProperty .
+
+
+#################################################################
+#    Datatypes
+#################################################################
+
+###  http://www.w3.org/2001/XMLSchema#time
+xsd:time rdf:type rdfs:Datatype .
+
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://schema.org/affiliation
+<http://schema.org/affiliation> rdf:type owl:ObjectProperty .
+
+
+###  http://www.owl-ontologies.com/oneM2M#hasService
+<http://www.owl-ontologies.com/oneM2M#hasService> rdf:type owl:ObjectProperty ;
+                                                  rdfs:isDefinedBy <https://git.onem2m.org/MAS/BaseOntology> ;
+                                                  rdfs:label "has service"@en .
+
+
+###  https://saref.etsi.org/saref4grid/executesScript
+:executesScript rdf:type owl:ObjectProperty ;
+                rdfs:range :Script ;
+                rdfs:comment "[COSEM] Defines the script to be executed"@en ;
+                rdfs:label "executes script"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasActiveSeasonProfile
+:hasActiveSeasonProfile rdf:type owl:ObjectProperty ;
+                        rdfs:domain :ActivityCalendar ;
+                        rdfs:range :SeasonProfile ;
+                        rdfs:comment "[COSEM] Contains a list of active season profiles. These season profiles form an active calendar"@en ;
+                        rdfs:label "has active season profile"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasActivityCalendar
+:hasActivityCalendar rdf:type owl:ObjectProperty ;
+                     rdfs:domain :GridMeter ;
+                     rdfs:range :ActivityCalendar ;
+                     rdfs:comment "The activity calendar of a meter"@en ;
+                     rdfs:label "has activity calendar"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasClock
+:hasClock rdf:type owl:ObjectProperty ;
+          rdfs:domain :GridMeter ;
+          rdfs:range :Clock ;
+          rdfs:comment "The clock of the meter"@en ;
+          rdfs:label "has clock"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasDayProfile
+:hasDayProfile rdf:type owl:ObjectProperty ;
+               rdfs:domain :SeasonProfile ;
+               rdfs:range :DayProfile ;
+               rdfs:comment "[COSEM] Day profile for every day of the week of a season"@en ;
+               rdfs:label "has day profile"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasDaySchedule
+:hasDaySchedule rdf:type owl:ObjectProperty ;
+                rdfs:domain :DayProfile ;
+                rdfs:range :DaySchedule ;
+                rdfs:comment "The day schedule of a day profile"@en ;
+                rdfs:label "has day schedule"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasFirmware
+:hasFirmware rdf:type owl:ObjectProperty ;
+             rdfs:domain :GridMeter ;
+             rdfs:range :Firmware ;
+             rdfs:comment "The firmware of the meter"@en ;
+             rdfs:label "has firmware"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasFridayProfile
+:hasFridayProfile rdf:type owl:ObjectProperty ;
+                  rdfs:subPropertyOf :hasDayProfile ;
+                  rdfs:comment "It defines the day profile valid each Friday of the season"@en ;
+                  rdfs:label "has friday profile"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasMondayProfile
+:hasMondayProfile rdf:type owl:ObjectProperty ;
+                  rdfs:subPropertyOf :hasDayProfile ;
+                  rdfs:comment "It defines the day profile valid each Monday of the season"@en ;
+                  rdfs:label "has monday profile"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasNetworkInterface
+:hasNetworkInterface rdf:type owl:ObjectProperty ;
+                     rdfs:domain :GridMeter ;
+                     rdfs:range :NetworkInterface ;
+                     rdfs:comment "The network interface of the meter"@en ;
+                     rdfs:label "has network interface"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasPassiveSeasonProfile
+:hasPassiveSeasonProfile rdf:type owl:ObjectProperty ;
+                         rdfs:domain :ActivityCalendar ;
+                         rdfs:range :SeasonProfile ;
+                         rdfs:comment "[COSEM] Contains a list of passive season profiles. These season profiles form a passive calendar"@en ;
+                         rdfs:label "has passive season profile"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasProfileGeneric
+:hasProfileGeneric rdf:type owl:ObjectProperty ;
+                   rdfs:domain :GridMeter ;
+                   rdfs:range :ProfileGeneric ;
+                   rdfs:comment "The profile generic of a meter"@en ;
+                   rdfs:label "has profile generic"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasSaturdayProfile
+:hasSaturdayProfile rdf:type owl:ObjectProperty ;
+                    rdfs:subPropertyOf :hasDayProfile ;
+                    rdfs:comment "It defines the day profile valid each Saturday of the season"@en ;
+                    rdfs:label "has saturday profile"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasScriptTable
+:hasScriptTable rdf:type owl:ObjectProperty ;
+                rdfs:domain :GridMeter ;
+                rdfs:range :ScriptTable ;
+                rdfs:comment "The script table of a meter"@en ;
+                rdfs:label "has script table"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasSelectiveAccess
+:hasSelectiveAccess rdf:type owl:ObjectProperty ;
+                    rdfs:domain :GetOperation ;
+                    rdfs:range :SelectiveAccess ;
+                    rdfs:comment "The selective access of a profile generic get service"@en ;
+                    rdfs:label "has selective access"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasSingleScheduledAction
+:hasSingleScheduledAction rdf:type owl:ObjectProperty ;
+                          rdfs:domain :GridMeter ;
+                          rdfs:range :SingleScheduledAction ;
+                          rdfs:comment "The single scheduled action of a meter"@en ;
+                          rdfs:label "has single scheduled action"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasSpecialDayProfile
+:hasSpecialDayProfile rdf:type owl:ObjectProperty ;
+                      rdfs:subPropertyOf :hasDayProfile ;
+                      rdfs:comment "It defines when there is a festivity and therefore a normal day behaves as a special date"@en ;
+                      rdfs:label "has special day profile"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasSundayProfile
+:hasSundayProfile rdf:type owl:ObjectProperty ;
+                  rdfs:subPropertyOf :hasDayProfile ;
+                  rdfs:comment "It defines the day profile valid each Sunday of the season"@en ;
+                  rdfs:label "has sunday profile"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasThursdayProfile
+:hasThursdayProfile rdf:type owl:ObjectProperty ;
+                    rdfs:subPropertyOf :hasDayProfile ;
+                    rdfs:comment "It defines the day profile valid each Thursday of the season"@en ;
+                    rdfs:label "has thursday profile"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasTuesdayProfile
+:hasTuesdayProfile rdf:type owl:ObjectProperty ;
+                   rdfs:subPropertyOf :hasDayProfile ;
+                   rdfs:comment "It defines the day profile valid each Tuesday of the season"@en ;
+                   rdfs:label "has tuesday profile"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasWednesdayProfile
+:hasWednesdayProfile rdf:type owl:ObjectProperty ;
+                     rdfs:subPropertyOf :hasDayProfile ;
+                     rdfs:comment "It defines the day profile valid each Wednesday of the season"@en ;
+                     rdfs:label "has wednesday profile"@en .
+
+
+###  https://saref.etsi.org/saref4grid/relatedClock
+:relatedClock rdf:type owl:ObjectProperty ;
+              rdfs:domain :ProfileGeneric ;
+              rdfs:range :Clock ;
+              rdfs:comment "The clock that is captured by a profile generic"@en ;
+              rdfs:label "related clock"@en .
+
+
+###  https://saref.etsi.org/saref4grid/relatedObservation
+:relatedObservation rdf:type owl:ObjectProperty ;
+                    rdfs:domain :ProfileGeneric ;
+                    rdfs:range <https://saref.etsi.org/core/Observation> ;
+                    rdfs:comment "The observation that is captured by a profile generic"@en ;
+                    rdfs:label "related observation"@en .
+
+
+###  https://saref.etsi.org/saref4grid/relatedPropertyValue
+:relatedPropertyValue rdf:type owl:ObjectProperty ;
+                      rdfs:domain :ProfileGeneric ;
+                      rdfs:range <https://saref.etsi.org/core/PropertyValue> ;
+                      rdfs:comment "The property value that is captured by a profile generic"@en ;
+                      rdfs:label "related property value"@en .
+
+
+###  https://saref.etsi.org/saref4grid/storesScript
+:storesScript rdf:type owl:ObjectProperty ;
+              rdfs:domain :ScriptTable ;
+              rdfs:range :Script ;
+              rdfs:comment "[COSEM] Specifies the different scripts which are stored in a script table"@en ;
+              rdfs:label "stores script"@en .
+
+
+#################################################################
+#    Data properties
+#################################################################
+
+###  http://schema.org/familyName
+<http://schema.org/familyName> rdf:type owl:DatatypeProperty .
+
+
+###  http://schema.org/givenName
+<http://schema.org/givenName> rdf:type owl:DatatypeProperty .
+
+
+###  http://schema.org/name
+<http://schema.org/name> rdf:type owl:DatatypeProperty .
+
+
+###  https://saref.etsi.org/saref4grid/hasActionValue
+:hasActionValue rdf:type owl:DatatypeProperty ;
+                rdfs:domain :SimpleActionOperationInput ;
+                rdfs:comment "It specifies the input of a method from the instance (COSEM object) of a class. The value of this property conforms to a simple type (not a structure)"@en ;
+                rdfs:label "has action value"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasActivatePassiveCalendarTime
+:hasActivatePassiveCalendarTime rdf:type owl:DatatypeProperty ;
+                                rdfs:domain :ActivityCalendar ;
+                                rdfs:range xsd:dateTime ;
+                                rdfs:comment "[COSEM] Defines the time when the passive calendar will be activated"@en ;
+                                rdfs:label "has activate passive calendar time"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasCalendarNameActive
+:hasCalendarNameActive rdf:type owl:DatatypeProperty ;
+                       rdfs:domain :ActivityCalendar ;
+                       rdfs:range xsd:string ;
+                       rdfs:comment "[COSEM] Used defined name identifying the passive calendar. Typically contains an identifier of the active calendar (currently active), which is descriptive to the set of scripts activated by the object"@en ;
+                       rdfs:label "has calendar name active"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasCalendarNamePassive
+:hasCalendarNamePassive rdf:type owl:DatatypeProperty ;
+                        rdfs:domain :ActivityCalendar ;
+                        rdfs:range xsd:string ;
+                        rdfs:comment "[COSEM] User defined name identifying the passive calendar. Typically contains an identifier of the passive calendar (will be activated), which is descriptive to the set of scripts activated by the object"@en ;
+                        rdfs:label "has calendar name passive"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasCapturePeriod
+:hasCapturePeriod rdf:type owl:DatatypeProperty ;
+                  rdfs:domain :ProfileGeneric ;
+                  rdfs:range xsd:int ;
+                  rdfs:comment "[COSEM] The capturing period of a profile generic in seconds. If its value is 0, then there is not automatic capturing; capturing is triggered externally or through capture events occur asynchronously. If its value is greater than 0, then automatic capturing is assumed"@en ;
+                  rdfs:label "has capture period"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasClockBase
+:hasClockBase rdf:type owl:DatatypeProperty ;
+              rdfs:domain :Clock ;
+              rdfs:range xsd:int ;
+              rdfs:comment "[COSEM] Defines where the basic timing information comes from: (0) not defined, (1) internal crystal, (2) mains frequency 50 Hz, (3) mains frequency 60 Hz, (4) GPS (global positioning system), (5) radio controlled"@en ;
+              rdfs:label "has clock base"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasControlMode
+:hasControlMode rdf:type owl:DatatypeProperty ;
+                rdfs:domain :BreakerState ;
+                rdfs:range xsd:int ;
+                rdfs:comment "[COSEM] Configures the behaviour of the disconnect control object for all triggers, i.e. the possible state transitions"@en ;
+                rdfs:label "has control mode"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasControlState
+:hasControlState rdf:type owl:DatatypeProperty ;
+                 rdfs:domain :BreakerState ;
+                 rdfs:range xsd:int ;
+                 rdfs:comment "Shows the internal state of the disconnect control object: (0) Disconnected, (1) Connected, (2) Ready for reconnection"@en ;
+                 rdfs:label "has control state"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasDayId
+:hasDayId rdf:type owl:DatatypeProperty ;
+          rdfs:domain :SpecialDayEntry ;
+          rdfs:range xsd:int ;
+          rdfs:comment "It defines the unique identifier of a day"@en ;
+          rdfs:label "has day id"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasDaylightSavingsBegin
+:hasDaylightSavingsBegin rdf:type owl:DatatypeProperty ;
+                         rdfs:domain :Clock ;
+                         rdfs:range xsd:dateTime ;
+                         rdfs:comment "[COSEM] Defines the local switch date and time when the local time starts to deviate from the normal time"@en ;
+                         rdfs:label "has daylight savings begin"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasDaylightSavingsDeviation
+:hasDaylightSavingsDeviation rdf:type owl:DatatypeProperty ;
+                             rdfs:domain :Clock ;
+                             rdfs:range xsd:integer ;
+                             rdfs:comment "[COSEM] Contains the number of minutes by which the deviation in generalized time shall be corrected at daylight savings begin"@en ;
+                             rdfs:label "has daylight savings deviation"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasDaylightSavingsEnabled
+:hasDaylightSavingsEnabled rdf:type owl:DatatypeProperty ;
+                           rdfs:domain :Clock ;
+                           rdfs:range xsd:boolean ;
+                           rdfs:comment "[COSEM] Enable and disable the daylight savings time feature"@en ;
+                           rdfs:label "has daylight savings enabled"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasDaylightSavingsEnd
+:hasDaylightSavingsEnd rdf:type owl:DatatypeProperty ;
+                       rdfs:domain :Clock ;
+                       rdfs:range xsd:dateTime ;
+                       rdfs:comment "[COSEM] Defines the local switch date and time when the local time ends to deviate from the local normal time"@en ;
+                       rdfs:label "has daylight savings end"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasExecutionTime
+:hasExecutionTime rdf:type owl:DatatypeProperty ;
+                  rdfs:domain :SingleScheduledAction ;
+                  rdfs:range xsd:dateTime ;
+                  rdfs:comment "[COSEM] Specifies the time and the date when the script is executed"@en ;
+                  rdfs:label "has execution time"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasFirmwareVersion
+:hasFirmwareVersion rdf:type owl:DatatypeProperty ;
+                    rdfs:domain :Firmware ;
+                    rdfs:range xsd:string ;
+                    rdfs:comment "[COSEM] Textual description of the firmware version running on the device"@en ;
+                    rdfs:label "has firmware version"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasIndex
+:hasIndex rdf:type owl:DatatypeProperty ;
+          rdfs:domain :SpecialDayEntry ;
+          rdfs:range xsd:unsignedShort ;
+          rdfs:comment "It defines the index of the special day"@en ;
+          rdfs:label "has index"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasInputDataType
+:hasInputDataType rdf:type owl:DatatypeProperty ;
+                  rdfs:domain :SetOperationDataInput ;
+                  rdfs:range xsd:string ;
+                  rdfs:comment "It identifies the type of the attribute of an instance (COSEM object) of a class from which the data is going to be obtained. The value of this property conforms to the range of a datatype property of SAREF4GRID"@en ;
+                  rdfs:label "has input data type"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasInputObjectType
+:hasInputObjectType rdf:type owl:DatatypeProperty ;
+                    rdfs:range xsd:string ;
+                    rdfs:comment "It identifies the type of the attribute of an instance (COSEM object) of a class from which the data is going to be obtained. The value of this property conforms to the range of an object property of SAREF4GRID"@en ;
+                    rdfs:label "has input object type"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasMACAddress
+:hasMACAddress rdf:type owl:DatatypeProperty ;
+               rdfs:domain :NetworkInterface ;
+               rdfs:range xsd:string ;
+               rdfs:comment "[COSEM] Holds the MAC address"@en ;
+               rdfs:label "has m a c address"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasObis
+:hasObis rdf:type owl:DatatypeProperty ;
+         rdfs:range xsd:string ;
+         rdfs:comment "[COSEM] It identifies the instance (COSEM object) of a class. The value of this property conforms to OBIS. OBject Identification System (OBIS) provides a unique identifier for all data within the metering equipment, including not only measurement values, but also abstract values used for configuration or obtaining information about the behaviour of the metering equipment"@en ;
+         rdfs:label "has obis"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasOutputDataType
+:hasOutputDataType rdf:type owl:DatatypeProperty ;
+                   rdfs:domain :GetOperationDataOutput ;
+                   rdfs:range xsd:string ;
+                   rdfs:comment "It identifies the type of the attribute of an instance (COSEM object) of a class from which the data is going to be obtained. The value of this property conforms to the range of a datatype property of SAREF4GRID"@en ;
+                   rdfs:label "has output data type"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasOutputObjectType
+:hasOutputObjectType rdf:type owl:DatatypeProperty ;
+                     rdfs:domain :GetOperationObjectOutput ;
+                     rdfs:range xsd:string ;
+                     rdfs:comment "It identifies the type of the attribute of an instance (COSEM object) of a class from which the data is going to be obtained. The value of this property conforms to the range of an object property of SAREF4GRID"@en ;
+                     rdfs:label "has output object type"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasOutputState
+:hasOutputState rdf:type owl:DatatypeProperty ;
+                rdfs:domain :BreakerState ;
+                rdfs:range xsd:boolean ;
+                rdfs:comment "[COSEM] Shows the actual physical state of the device connection to the supply: (True) Connected, (False) Disconnected"@en ;
+                rdfs:label "has output state"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasPresetTime
+:hasPresetTime rdf:type owl:DatatypeProperty ;
+               rdfs:domain :PresetAdjustingTime ;
+               rdfs:range xsd:dateTime ;
+               rdfs:comment "It pre-sets the clock time to a new value"@en ;
+               rdfs:label "has preset time"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasProductId
+:hasProductId rdf:type owl:DatatypeProperty ;
+              rdfs:domain :Firmware ;
+              rdfs:range xsd:unsignedShort ;
+              rdfs:comment "[COSEM] Vendor-assigned unique identifier for the specific product"@en ;
+              rdfs:label "has product id"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasSeasonProfileName
+:hasSeasonProfileName rdf:type owl:DatatypeProperty ;
+                      rdfs:domain :SeasonProfile ;
+                      rdfs:range xsd:string ;
+                      rdfs:comment "[COSEM] User defined name identifying the current season profile"@en ;
+                      rdfs:label "has season profile name"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasSeasonStart
+:hasSeasonStart rdf:type owl:DatatypeProperty ;
+                rdfs:domain :ActivityCalendar ;
+                rdfs:range xsd:dateTime ;
+                rdfs:comment "[COSEM] Starting time of the season profile. The current season profile is terminated by the starting time of the next season"@en ;
+                rdfs:label "has season start"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasSpecialDate
+:hasSpecialDate rdf:type owl:DatatypeProperty ;
+                rdfs:domain :SpecialDayEntry ;
+                rdfs:range xsd:date ;
+                rdfs:comment "It defines the date at which a normal day is considered a special date"@en ;
+                rdfs:label "has special date"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasSpecialDayDate
+:hasSpecialDayDate rdf:type owl:DatatypeProperty ;
+                   rdfs:domain :SpecialDayProfile ;
+                   rdfs:range xsd:date ;
+                   rdfs:comment "Dates at which a normal day is considered a special date (i.e., Christmas)"@en ;
+                   rdfs:label "has special day date"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasStartTime
+:hasStartTime rdf:type owl:DatatypeProperty ;
+              rdfs:domain :DaySchedule ;
+              rdfs:range xsd:time ;
+              rdfs:comment "[COSEM] Time when the script is going to be executed"@en ;
+              rdfs:label "has start time"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasStatus
+:hasStatus rdf:type owl:DatatypeProperty ;
+           rdfs:domain :Clock ;
+           rdfs:range xsd:int ;
+           rdfs:comment "[COSEM] Status of the clock"@en ;
+           rdfs:label "has status"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasTime
+:hasTime rdf:type owl:DatatypeProperty ;
+         rdfs:domain :Clock ;
+         rdfs:range xsd:dateTime ;
+         rdfs:comment "[COSEM] Meter’s local date and time"@en ;
+         rdfs:label "has time"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasTimeZone
+:hasTimeZone rdf:type owl:DatatypeProperty ;
+             rdfs:domain :Clock ;
+             rdfs:range xsd:long ;
+             rdfs:comment "[COSEM] The deviation of local, normal time to UTC in minutes. The value depends on the geographical location of the meter"@en ;
+             rdfs:label "has time zone"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasValidityIntervalEnd
+:hasValidityIntervalEnd rdf:type owl:DatatypeProperty ;
+                        rdfs:domain :PresetAdjustingTime ;
+                        rdfs:range xsd:dateTime ;
+                        rdfs:comment "It defines the end of a validity interval within which the new time can be activated"@en ;
+                        rdfs:label "has validity interval end"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasValidityIntervalStart
+:hasValidityIntervalStart rdf:type owl:DatatypeProperty ;
+                          rdfs:domain :PresetAdjustingTime ;
+                          rdfs:range xsd:dateTime ;
+                          rdfs:comment "It defines the start of a validity interval within which the new time can be activated"@en ;
+                          rdfs:label "has validity interval start"@en .
+
+
+###  https://saref.etsi.org/saref4grid/hasVendorId
+:hasVendorId rdf:type owl:DatatypeProperty ;
+             rdfs:domain :Firmware ;
+             rdfs:range xsd:unsignedShort ;
+             rdfs:comment "[COSEM] Unique vendor identifier assigned by the PRIME Alliance"@en ;
+             rdfs:label "has vendor id"@en .
+
+
+###  https://saref.etsi.org/saref4grid/obtainFromEntry
+:obtainFromEntry rdf:type owl:DatatypeProperty ;
+                 rdfs:domain :EntryDescriptor ;
+                 rdfs:range xsd:unsignedLong ;
+                 rdfs:comment "It defines the first entry to be retrieved from a profile generic"@en ;
+                 rdfs:label "obtain from entry"@en .
+
+
+###  https://saref.etsi.org/saref4grid/obtainFromValue
+:obtainFromValue rdf:type owl:DatatypeProperty ;
+                 rdfs:domain :RangeDescriptor ;
+                 rdfs:comment "It restricts the range of entries to be retrieved from a profile generic defining the oldest or smallest entry to retrieve"@en ;
+                 rdfs:label "obtain from value"@en .
+
+
+###  https://saref.etsi.org/saref4grid/obtainInputForProperty
+:obtainInputForProperty rdf:type owl:DatatypeProperty ;
+                        rdfs:range xsd:string ;
+                        rdfs:comment "It identifies the attribute of an instance (COSEM object) of a class from which the data is going to be obtained. The value of this property conforms to and object property or datatype property of SAREF4GRID"@en ;
+                        rdfs:label "obtain input for property"@en .
+
+
+###  https://saref.etsi.org/saref4grid/obtainInputFromObis
+:obtainInputFromObis rdf:type owl:DatatypeProperty ;
+                     rdfs:domain :CosemOperationInput ;
+                     rdfs:range xsd:string ;
+                     rdfs:comment "It identifies the instance (COSEM object) of a class from which the data is going to be obtained. The value of this property conforms to OBIS"@en ;
+                     rdfs:label "obtain input from obis"@en .
+
+
+###  https://saref.etsi.org/saref4grid/obtainToEntry
+:obtainToEntry rdf:type owl:DatatypeProperty ;
+               rdfs:domain :EntryDescriptor ;
+               rdfs:range xsd:unsignedLong ;
+               rdfs:comment "It defines the last entry to be retrieved from a profile generic"@en ;
+               rdfs:label "obtain to entry"@en .
+
+
+###  https://saref.etsi.org/saref4grid/obtainToValue
+:obtainToValue rdf:type owl:DatatypeProperty ;
+               rdfs:domain :RangeDescriptor ;
+               rdfs:comment "It restricts the range of entries to be retrieved from a profile generic defining the newest or largest entry to retrieve"@en ;
+               rdfs:label "obtain to value"@en .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://schema.org/Organization
+<http://schema.org/Organization> rdf:type owl:Class .
+
+
+###  http://schema.org/Person
+<http://schema.org/Person> rdf:type owl:Class .
+
+
+###  http://www.owl-ontologies.com/oneM2M#Device
+<http://www.owl-ontologies.com/oneM2M#Device> rdf:type owl:Class ;
+                                              rdfs:isDefinedBy <https://git.onem2m.org/MAS/BaseOntology> ;
+                                              rdfs:label "Device"@en .
+
+
+###  http://www.owl-ontologies.com/oneM2M#OperationInput
+<http://www.owl-ontologies.com/oneM2M#OperationInput> rdf:type owl:Class ;
+                                                      rdfs:isDefinedBy <https://git.onem2m.org/MAS/BaseOntology> ;
+                                                      rdfs:label "Operation Input"@en .
+
+
+###  http://www.owl-ontologies.com/oneM2M#OperationOutput
+<http://www.owl-ontologies.com/oneM2M#OperationOutput> rdf:type owl:Class ;
+                                                       rdfs:isDefinedBy <https://git.onem2m.org/MAS/BaseOntology> ;
+                                                       rdfs:label "Operation Output"@en .
+
+
+###  http://www.owl-ontologies.com/oneM2M#Service
+<http://www.owl-ontologies.com/oneM2M#Service> rdf:type owl:Class ;
+                                               owl:equivalentClass <https://saref.etsi.org/core/Service> ;
+                                               rdfs:isDefinedBy <https://git.onem2m.org/MAS/BaseOntology> ;
+                                               rdfs:label "Service"@en .
+
+
+###  https://saref.etsi.org/saref4grid/ActionOperation
+:ActionOperation rdf:type owl:Class ;
+                 rdfs:subClassOf <https://saref.etsi.org/core/Operation> ;
+                 rdfs:comment "This class is the means of an action service to communicate in a procedure-type manner over the network (i.e. transmit data to/from other devices). It is the –machine interpretable- exposure of a –human understandable- Command to a network"@en ;
+                 rdfs:label "Action Operation"@en .
+
+
+###  https://saref.etsi.org/saref4grid/ActionService
+:ActionService rdf:type owl:Class ;
+               rdfs:subClassOf <https://saref.etsi.org/core/Service> ;
+               rdfs:comment "This class is a representation of an action function to a network that makes the function discoverable, registerable, remotely controllable by other devices in the network. Actions can be performed over classes that are characterised by an OBIS code"@en ;
+               rdfs:label "Action Service"@en .
+
+
+###  https://saref.etsi.org/saref4grid/ActivityCalendar
+:ActivityCalendar rdf:type owl:Class ;
+                  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                    owl:onProperty :hasCalendarNameActive ;
+                                    owl:cardinality "1"^^xsd:nonNegativeInteger
+                                  ] ,
+                                  [ rdf:type owl:Restriction ;
+                                    owl:onProperty :hasCalendarNamePassive ;
+                                    owl:cardinality "1"^^xsd:nonNegativeInteger
+                                  ] ,
+                                  [ rdf:type owl:Restriction ;
+                                    owl:onProperty :hasActivatePassiveCalendarTime ;
+                                    owl:maxCardinality "1"^^xsd:nonNegativeInteger
+                                  ] ;
+                  rdfs:comment "[COSEM] This class allows handling various tariff structures in the meter. This class provides a list of scheduled actions, following the classical way of calendar-based schedules by defining seasons, weeks, etc"@en ;
+                  rdfs:label "Activity Calendar"@en .
+
+
+###  https://saref.etsi.org/saref4grid/BreakerState
+:BreakerState rdf:type owl:Class ;
+              rdfs:subClassOf <https://saref.etsi.org/core/State> ,
+                              [ rdf:type owl:Restriction ;
+                                owl:onProperty :hasControlMode ;
+                                owl:cardinality "1"^^xsd:nonNegativeInteger
+                              ] ,
+                              [ rdf:type owl:Restriction ;
+                                owl:onProperty :hasControlState ;
+                                owl:cardinality "1"^^xsd:nonNegativeInteger
+                              ] ,
+                              [ rdf:type owl:Restriction ;
+                                owl:onProperty :hasOutputState ;
+                                owl:cardinality "1"^^xsd:nonNegativeInteger
+                              ] ;
+              rdfs:comment "[COSEM] This class manages an internal or external disconnect unit of the meter (e.g. electricity breaker, gas valve) in order to connect or disconnect – partly or entirely – the premises of the consumer to / from the supply"@en ;
+              rdfs:label "Breaker State"@en .
+
+
+###  https://saref.etsi.org/saref4grid/Clock
+:Clock rdf:type owl:Class ;
+       rdfs:subClassOf [ rdf:type owl:Restriction ;
+                         owl:onProperty :hasClockBase ;
+                         owl:cardinality "1"^^xsd:nonNegativeInteger
+                       ] ,
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty :hasDaylightSavingsBegin ;
+                         owl:cardinality "1"^^xsd:nonNegativeInteger
+                       ] ,
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty :hasDaylightSavingsDeviation ;
+                         owl:cardinality "1"^^xsd:nonNegativeInteger
+                       ] ,
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty :hasDaylightSavingsEnabled ;
+                         owl:cardinality "1"^^xsd:nonNegativeInteger
+                       ] ,
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty :hasDaylightSavingsEnd ;
+                         owl:cardinality "1"^^xsd:nonNegativeInteger
+                       ] ,
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty :hasStatus ;
+                         owl:cardinality "1"^^xsd:nonNegativeInteger
+                       ] ,
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty :hasTime ;
+                         owl:cardinality "1"^^xsd:nonNegativeInteger
+                       ] ,
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty :hasTimeZone ;
+                         owl:cardinality "1"^^xsd:nonNegativeInteger
+                       ] ;
+       rdfs:comment "[COSEM] This class models the device clock, managing all information related to date and time including deviations of the local time to a generalized time reference (UTC) due to time zones and daylight-saving time schemes"@en ;
+       rdfs:label "Clock"@en .
+
+
+###  https://saref.etsi.org/saref4grid/ComplexActionOperationInput
+:ComplexActionOperationInput rdf:type owl:Class ;
+                             rdfs:subClassOf :CosemOperationInput ;
+                             rdfs:comment "This class indicates that the parameter needed by the action to operate is complex (i.e., structure)"@en ;
+                             rdfs:label "Complex Action Operation Input"@en .
+
+
+###  https://saref.etsi.org/saref4grid/CosemOperationInput
+:CosemOperationInput rdf:type owl:Class ;
+                     rdfs:subClassOf <http://www.owl-ontologies.com/oneM2M#OperationInput> ,
+                                     [ rdf:type owl:Restriction ;
+                                       owl:onProperty :obtainInputFromObis ;
+                                       owl:cardinality "1"^^xsd:nonNegativeInteger
+                                     ] ;
+                     rdfs:comment "This class specifies the instance at which a service (get, set or action) is going to be executed by indicating the OBIS code"@en ;
+                     rdfs:label "Cosem Operation Input"@en .
+
+
+###  https://saref.etsi.org/saref4grid/DayProfile
+:DayProfile rdf:type owl:Class ;
+            rdfs:comment "[COSEM] This class represents a list of scheduled actions which are defined by a script to be executed and the corresponding activation time"@en ;
+            rdfs:label "Day Profile"@en .
+
+
+###  https://saref.etsi.org/saref4grid/DaySchedule
+:DaySchedule rdf:type owl:Class ;
+             rdfs:subClassOf [ rdf:type owl:Restriction ;
+                               owl:onProperty :executesScript ;
+                               owl:cardinality "1"^^xsd:nonNegativeInteger
+                             ] ,
+                             [ rdf:type owl:Restriction ;
+                               owl:onProperty :hasStartTime ;
+                               owl:cardinality "1"^^xsd:nonNegativeInteger
+                             ] ;
+             rdfs:comment "Scheduled actions to be executed at a given time for a day profile"@en ;
+             rdfs:label "Day Scheduled"@en .
+
+
+###  https://saref.etsi.org/saref4grid/EnergyAndPowerProperty
+:EnergyAndPowerProperty rdf:type owl:Class ;
+                        rdfs:subClassOf <https://saref.etsi.org/core/Property> ;
+                        rdfs:comment "Class to group those properties related to the energy and power of power lines"@en ;
+                        rdfs:label "Energy Power Property"@en .
+
+
+###  https://saref.etsi.org/saref4grid/EntryDescriptor
+:EntryDescriptor rdf:type owl:Class ;
+                 rdfs:subClassOf :SelectiveAccess ;
+                 rdfs:comment "In the case of a get service of a profile generic class a selective access can be specified. This indicates the range of entries to be retrieved from the profile generic class"@en ;
+                 rdfs:label "Entry Descriptor"@en .
+
+
+###  https://saref.etsi.org/saref4grid/Firmware
+:Firmware rdf:type owl:Class ;
+          rdfs:subClassOf [ rdf:type owl:Restriction ;
+                            owl:onProperty :hasFirmwareVersion ;
+                            owl:cardinality "1"^^xsd:nonNegativeInteger
+                          ] ,
+                          [ rdf:type owl:Restriction ;
+                            owl:onProperty :hasProductId ;
+                            owl:cardinality "1"^^xsd:nonNegativeInteger
+                          ] ,
+                          [ rdf:type owl:Restriction ;
+                            owl:onProperty :hasVendorId ;
+                            owl:cardinality "1"^^xsd:nonNegativeInteger
+                          ] ;
+          rdfs:comment "[COSEM] This class holds identification information related to administration and maintenance of meters. They are not communication parameters but allow the device management"@en ;
+          rdfs:label "Firmware"@en .
+
+
+###  https://saref.etsi.org/saref4grid/GetOperation
+:GetOperation rdf:type owl:Class ;
+              rdfs:subClassOf <https://saref.etsi.org/core/Operation> ,
+                              [ rdf:type owl:Restriction ;
+                                owl:onProperty <https://saref.etsi.org/core/hasInput> ;
+                                owl:cardinality "1"^^xsd:nonNegativeInteger
+                              ] ,
+                              [ rdf:type owl:Restriction ;
+                                owl:onProperty <https://saref.etsi.org/core/hasOutput> ;
+                                owl:cardinality "1"^^xsd:nonNegativeInteger
+                              ] ;
+              rdfs:comment "This class is the means of a get service to communicate in a procedure-type manner over the network (i.e. transmit data to/from other devices). It is the –machine interpretable- exposure of a –human understandable- Command to a network"@en ;
+              rdfs:label "Get Operation"@en .
+
+
+###  https://saref.etsi.org/saref4grid/GetOperationDataOutput
+:GetOperationDataOutput rdf:type owl:Class ;
+                        rdfs:subClassOf :GetOperationOutput ,
+                                        [ rdf:type owl:Restriction ;
+                                          owl:onProperty :hasOutputDataType ;
+                                          owl:cardinality "1"^^xsd:nonNegativeInteger
+                                        ] ;
+                        rdfs:comment "This class specifies that the output of a get operation is going to be a datatype"@en ;
+                        rdfs:label "Get Operation Data Output"@en .
+
+
+###  https://saref.etsi.org/saref4grid/GetOperationObjectOutput
+:GetOperationObjectOutput rdf:type owl:Class ;
+                          rdfs:subClassOf :GetOperationOutput ,
+                                          [ rdf:type owl:Restriction ;
+                                            owl:onProperty :hasOutputObjectType ;
+                                            owl:cardinality "1"^^xsd:nonNegativeInteger
+                                          ] ;
+                          rdfs:comment "This class specifies that the output of a get operation is going to be a class"@en ;
+                          rdfs:label "Get Operation Object Output"@en .
+
+
+###  https://saref.etsi.org/saref4grid/GetOperationOutput
+:GetOperationOutput rdf:type owl:Class ;
+                    rdfs:subClassOf <http://www.owl-ontologies.com/oneM2M#OperationOutput> ;
+                    rdfs:comment "This class specifies the output of a get operation, which can be either a class or a datatype"@en ;
+                    rdfs:label "Get Operation Output"@en .
+
+
+###  https://saref.etsi.org/saref4grid/GetOperationPropertyInput
+:GetOperationPropertyInput rdf:type owl:Class ;
+                           rdfs:subClassOf :CosemOperationInput ,
+                                           [ rdf:type owl:Restriction ;
+                                             owl:onProperty :obtainInputForProperty ;
+                                             owl:cardinality "1"^^xsd:nonNegativeInteger
+                                           ] ;
+                           rdfs:comment "This class specifies the object/datatype property of an instance from which data is going to be retrieved by indicating the name of the object/datatype property"@en ;
+                           rdfs:label "Get Operation Property Input"@en .
+
+
+###  https://saref.etsi.org/saref4grid/GetService
+:GetService rdf:type owl:Class ;
+            rdfs:subClassOf <https://saref.etsi.org/core/Service> ;
+            rdfs:comment "This class is a representation of a get function to a network that makes the function discoverable, registerable, remotely controllable by other devices in the network"@en ;
+            rdfs:label "Get Service"@en .
+
+
+###  https://saref.etsi.org/saref4grid/GridMeter
+:GridMeter rdf:type owl:Class ;
+           rdfs:subClassOf <https://saref.etsi.org/core/Meter> ,
+                           [ rdf:type owl:Restriction ;
+                             owl:onProperty <https://saref.etsi.org/core/hasPropertyValue> ;
+                             owl:allValuesFrom [ rdf:type owl:Restriction ;
+                                                 owl:onProperty <https://saref.etsi.org/core/isValueOfProperty> ;
+                                                 owl:allValuesFrom :MeterProperty
+                                               ]
+                           ] ;
+           rdfs:comment "Metering device that remotely records real electricity consumption. This device allows to control all the information regarding consumption for any time range, automatically and remotely"@en ;
+           rdfs:label "Meter"@en .
+
+
+###  https://saref.etsi.org/saref4grid/MeterProperty
+:MeterProperty rdf:type owl:Class ;
+               rdfs:subClassOf <https://saref.etsi.org/core/Property> ;
+               rdfs:comment "Class to group those properties related to electric grid meters"@en ;
+               rdfs:label "Meter Property"@en .
+
+
+###  https://saref.etsi.org/saref4grid/NetworkInterface
+:NetworkInterface rdf:type owl:Class ;
+                  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                    owl:onProperty :hasMACAddress ;
+                                    owl:cardinality "1"^^xsd:nonNegativeInteger
+                                  ] ;
+                  rdfs:comment "[COSEM] This class holds the MAC address of the physical device (or, more generally, of a device or software). There shall be an instance of this class for each network interface of the physical device"@en ;
+                  rdfs:label "Network Interface"@en .
+
+
+###  https://saref.etsi.org/saref4grid/PowerLine
+:PowerLine rdf:type owl:Class ;
+           rdfs:subClassOf <https://saref.etsi.org/core/FeatureOfInterest> ;
+           rdfs:comment "Interconnected network for electricity delivery from producers to consumers"@en ;
+           rdfs:label "Power Line"@en .
+
+
+###  https://saref.etsi.org/saref4grid/PresetAdjustingTime
+:PresetAdjustingTime rdf:type owl:Class ;
+                     rdfs:subClassOf :ComplexActionOperationInput ,
+                                     [ rdf:type owl:Restriction ;
+                                       owl:onProperty :hasPresetTime ;
+                                       owl:cardinality "1"^^xsd:nonNegativeInteger
+                                     ] ,
+                                     [ rdf:type owl:Restriction ;
+                                       owl:onProperty :hasValidityIntervalEnd ;
+                                       owl:cardinality "1"^^xsd:nonNegativeInteger
+                                     ] ,
+                                     [ rdf:type owl:Restriction ;
+                                       owl:onProperty :hasValidityIntervalStart ;
+                                       owl:cardinality "1"^^xsd:nonNegativeInteger
+                                     ] ;
+                     rdfs:comment "This class represents the parameters that are needed by a clock to modify its time"@en ;
+                     rdfs:label "Preset Adjusting Time"@en .
+
+
+###  https://saref.etsi.org/saref4grid/ProfileGeneric
+:ProfileGeneric rdf:type owl:Class ;
+                rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                  owl:onProperty :hasCapturePeriod ;
+                                  owl:cardinality "1"^^xsd:nonNegativeInteger
+                                ] ;
+                rdfs:comment "[COSEM] This class provides a generalized concept allowing to store, sort and access data groups or data series, called capture objects. Capture objects are appropriate attributes or elements of (an) attribute(s) of COSEM objects. The capture objects are collected periodically or occasionally"@en ;
+                rdfs:label "Profile Generic"@en .
+
+
+###  https://saref.etsi.org/saref4grid/QualityProperty
+:QualityProperty rdf:type owl:Class ;
+                 rdfs:subClassOf <https://saref.etsi.org/core/Property> ;
+                 rdfs:comment "Class to group those properties related to the quality of power lines"@en ;
+                 rdfs:label "Quality Property"@en .
+
+
+###  https://saref.etsi.org/saref4grid/RangeDescriptor
+:RangeDescriptor rdf:type owl:Class ;
+                 rdfs:subClassOf :SelectiveAccess ;
+                 rdfs:comment "In the case of a get service of a profile generic class a selective access can be specified. This indicates the range of values to be retrieved from the profile generic class"@en ;
+                 rdfs:label "Range Descriptor"@en .
+
+
+###  https://saref.etsi.org/saref4grid/RegularDayProfile
+:RegularDayProfile rdf:type owl:Class ;
+                   rdfs:subClassOf :DayProfile ;
+                   rdfs:comment "This class represents normal dates"@en ;
+                   rdfs:label "Regular Day Profile"@en .
+
+
+###  https://saref.etsi.org/saref4grid/Script
+:Script rdf:type owl:Class ;
+        rdfs:subClassOf <https://saref.etsi.org/core/Function> ;
+        rdfs:comment "[COSEM] Lists of actions to be executed by the meter"@en ;
+        rdfs:label "Script"@en .
+
+
+###  https://saref.etsi.org/saref4grid/ScriptTable
+:ScriptTable rdf:type owl:Class ;
+             rdfs:comment "This class allows modelling the triggering of a series of actions by executing scripts"@en ;
+             rdfs:label "Script Table"@en .
+
+
+###  https://saref.etsi.org/saref4grid/SeasonProfile
+:SeasonProfile rdf:type owl:Class ;
+               rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                 owl:onProperty :hasFridayProfile ;
+                                 owl:cardinality "1"^^xsd:nonNegativeInteger
+                               ] ,
+                               [ rdf:type owl:Restriction ;
+                                 owl:onProperty :hasMondayProfile ;
+                                 owl:cardinality "1"^^xsd:nonNegativeInteger
+                               ] ,
+                               [ rdf:type owl:Restriction ;
+                                 owl:onProperty :hasSaturdayProfile ;
+                                 owl:cardinality "1"^^xsd:nonNegativeInteger
+                               ] ,
+                               [ rdf:type owl:Restriction ;
+                                 owl:onProperty :hasSundayProfile ;
+                                 owl:cardinality "1"^^xsd:nonNegativeInteger
+                               ] ,
+                               [ rdf:type owl:Restriction ;
+                                 owl:onProperty :hasThursdayProfile ;
+                                 owl:cardinality "1"^^xsd:nonNegativeInteger
+                               ] ,
+                               [ rdf:type owl:Restriction ;
+                                 owl:onProperty :hasTuesdayProfile ;
+                                 owl:cardinality "1"^^xsd:nonNegativeInteger
+                               ] ,
+                               [ rdf:type owl:Restriction ;
+                                 owl:onProperty :hasWednesdayProfile ;
+                                 owl:cardinality "1"^^xsd:nonNegativeInteger
+                               ] ,
+                               [ rdf:type owl:Restriction ;
+                                 owl:onProperty :hasSeasonProfileName ;
+                                 owl:cardinality "1"^^xsd:nonNegativeInteger
+                               ] ,
+                               [ rdf:type owl:Restriction ;
+                                 owl:onProperty :hasSeasonStart ;
+                                 owl:cardinality "1"^^xsd:nonNegativeInteger
+                               ] ;
+               rdfs:comment "[COSEM] This class represents a season which is defined by its starting date and a specific day profile to be executed"@en ;
+               rdfs:label "Season Profile"@en .
+
+
+###  https://saref.etsi.org/saref4grid/SelectiveAccess
+:SelectiveAccess rdf:type owl:Class ;
+                 rdfs:subClassOf <http://www.owl-ontologies.com/oneM2M#OperationInput> ;
+                 rdfs:comment "The get operations property-related services typically reference the entire property. However, in the case of certain properties, selective access to only part of the property may be provided"@en ;
+                 rdfs:label "Selective Access"@en .
+
+
+###  https://saref.etsi.org/saref4grid/SetOperation
+:SetOperation rdf:type owl:Class ;
+              rdfs:subClassOf <https://saref.etsi.org/core/Operation> ,
+                              [ rdf:type owl:Restriction ;
+                                owl:onProperty <https://saref.etsi.org/core/hasInput> ;
+                                owl:cardinality "1"^^xsd:nonNegativeInteger
+                              ] ;
+              rdfs:comment "This class is the means of a set service to communicate in a procedure-type manner over the network (i.e. transmit data to/from other devices). It is the –machine interpretable- exposure of a –human understandable- Command to a network"@en ;
+              rdfs:label "Set Operation"@en .
+
+
+###  https://saref.etsi.org/saref4grid/SetOperationDataInput
+:SetOperationDataInput rdf:type owl:Class ;
+                       rdfs:subClassOf :CosemOperationInput ,
+                                       [ rdf:type owl:Restriction ;
+                                         owl:onProperty :hasInputDataType ;
+                                         owl:cardinality "1"^^xsd:nonNegativeInteger
+                                       ] ,
+                                       [ rdf:type owl:Restriction ;
+                                         owl:onProperty :obtainInputForProperty ;
+                                         owl:cardinality "1"^^xsd:nonNegativeInteger
+                                       ] ;
+                       rdfs:comment "This class specifies that just the range of a datatype property of the instance is going to be modified"@en ;
+                       rdfs:label "Set Operation Data Input"@en .
+
+
+###  https://saref.etsi.org/saref4grid/SetOperationObisInput
+:SetOperationObisInput rdf:type owl:Class ;
+                       rdfs:subClassOf :CosemOperationInput ,
+                                       [ rdf:type owl:Restriction ;
+                                         owl:onProperty :hasInputObjectType ;
+                                         owl:cardinality "1"^^xsd:nonNegativeInteger
+                                       ] ;
+                       rdfs:comment "This class specifies that the whole instance is going to be modified"@en ;
+                       rdfs:label "Set Operation Obis Input"@en .
+
+
+###  https://saref.etsi.org/saref4grid/SetOperationObjectInput
+:SetOperationObjectInput rdf:type owl:Class ;
+                         rdfs:subClassOf :CosemOperationInput ,
+                                         [ rdf:type owl:Restriction ;
+                                           owl:onProperty :hasInputObjectType ;
+                                           owl:cardinality "1"^^xsd:nonNegativeInteger
+                                         ] ,
+                                         [ rdf:type owl:Restriction ;
+                                           owl:onProperty :obtainInputForProperty ;
+                                           owl:cardinality "1"^^xsd:nonNegativeInteger
+                                         ] ;
+                         rdfs:comment "This class specifies that just the range of an object property of the instance is going to be modified"@en ;
+                         rdfs:label "Set Operation Object Input"@en .
+
+
+###  https://saref.etsi.org/saref4grid/SetService
+:SetService rdf:type owl:Class ;
+            rdfs:subClassOf <https://saref.etsi.org/core/Service> ;
+            rdfs:comment "This class is a representation of a set function to a network that makes the function discoverable, registerable, remotely controllable by other devices in the network"@en ;
+            rdfs:label "Set Service"@en .
+
+
+###  https://saref.etsi.org/saref4grid/SimpleActionOperationInput
+:SimpleActionOperationInput rdf:type owl:Class ;
+                            rdfs:subClassOf :CosemOperationInput ,
+                                            [ rdf:type owl:Restriction ;
+                                              owl:onProperty :hasActionValue ;
+                                              owl:cardinality "1"^^xsd:nonNegativeInteger
+                                            ] ;
+                            rdfs:comment "This class indicates that the parameter needed by the action to operate is simple (i.e., integer, string, etc)"@en ;
+                            rdfs:label "Simple Action Operation Input"@en .
+
+
+###  https://saref.etsi.org/saref4grid/SingleScheduledAction
+:SingleScheduledAction rdf:type owl:Class ;
+                       rdfs:subClassOf [ rdf:type owl:Restriction ;
+                                         owl:onProperty :executesScript ;
+                                         owl:cardinality "1"^^xsd:nonNegativeInteger
+                                       ] ;
+                       rdfs:comment "[COSEM] This class allows modelling the execution of periodic actions within a meter; such actions are not necessarily linked to tariffication"@en ;
+                       rdfs:label "Single Scheduled Action"@en .
+
+
+###  https://saref.etsi.org/saref4grid/SpecialDayEntry
+:SpecialDayEntry rdf:type owl:Class ;
+                 rdfs:subClassOf :ComplexActionOperationInput ,
+                                 [ rdf:type owl:Restriction ;
+                                   owl:onProperty :hasDayId ;
+                                   owl:cardinality "1"^^xsd:nonNegativeInteger
+                                 ] ,
+                                 [ rdf:type owl:Restriction ;
+                                   owl:onProperty :hasIndex ;
+                                   owl:cardinality "1"^^xsd:nonNegativeInteger
+                                 ] ,
+                                 [ rdf:type owl:Restriction ;
+                                   owl:onProperty :hasSpecialDate ;
+                                   owl:cardinality "1"^^xsd:nonNegativeInteger
+                                 ] ;
+                 rdfs:comment "This class represents the parameters that are needed by an activity calendar for adding a new special day"@en ;
+                 rdfs:label "Special Day Entry"@en .
+
+
+###  https://saref.etsi.org/saref4grid/SpecialDayProfile
+:SpecialDayProfile rdf:type owl:Class ;
+                   rdfs:subClassOf :DayProfile ,
+                                   [ rdf:type owl:Restriction ;
+                                     owl:onProperty :hasSpecialDayDate ;
+                                     owl:cardinality "1"^^xsd:nonNegativeInteger
+                                   ] ;
+                   rdfs:comment "[COSEM] This class allows defining special dates. On such dates, a special switching behaviour overrides the normal one"@en ;
+                   rdfs:label "Special Day Profile"@en .
+
+
+#################################################################
+#    Individuals
+#################################################################
+
+###  http://w3id.org/people/mpoveda
+<http://w3id.org/people/mpoveda> rdf:type owl:NamedIndividual ,
+                                          <http://schema.org/Person> ;
+                                 <http://schema.org/affiliation> <https://www.upm.es/> ;
+                                 <http://schema.org/familyName> "Poveda-Villalón" ;
+                                 <http://schema.org/givenName> "María" .
+
+
+###  http://www.garcia-castro.com/foaf.rdf#me
+<http://www.garcia-castro.com/foaf.rdf#me> rdf:type owl:NamedIndividual ,
+                                                    <http://schema.org/Person> ;
+                                           <http://schema.org/affiliation> <https://www.upm.es/> ;
+                                           <http://schema.org/familyName> "García-Castro" ;
+                                           <http://schema.org/givenName> "Raúl" .
+
+
+###  https://saref.etsi.org/saref4grid/ActiveEnergy
+:ActiveEnergy rdf:type owl:NamedIndividual ,
+                       :EnergyAndPowerProperty ;
+              rdfs:comment "Property of the power line indicating its active energy"@en ;
+              rdfs:label "Active Energy"@en .
+
+
+###  https://saref.etsi.org/saref4grid/ActivePower
+:ActivePower rdf:type owl:NamedIndividual ,
+                      :EnergyAndPowerProperty ;
+             rdfs:comment "Property of the power line indicating its active power"@en ;
+             rdfs:label "Active Power"@en .
+
+
+###  https://saref.etsi.org/saref4grid/ApparentPower
+:ApparentPower rdf:type owl:NamedIndividual ,
+                        :EnergyAndPowerProperty ;
+               rdfs:comment "Property of the power line indicating its apparent power"@en ;
+               rdfs:label "Apparent Power"@en .
+
+
+###  https://saref.etsi.org/saref4grid/BillingPeriod
+:BillingPeriod rdf:type owl:NamedIndividual ,
+                        :MeterProperty ;
+               rdfs:comment "Property of the meter that indicates the period in which a given billing is being applied"@en ;
+               rdfs:label "Billing Period"@en .
+
+
+###  https://saref.etsi.org/saref4grid/Current
+:Current rdf:type owl:NamedIndividual ,
+                  :EnergyAndPowerProperty ;
+         rdfs:comment "Property of the power line indicating its current"@en ;
+         rdfs:label "Current"@en .
+
+
+###  https://saref.etsi.org/saref4grid/DemandRegister
+:DemandRegister rdf:type owl:NamedIndividual ,
+                         :EnergyAndPowerProperty ;
+                rdfs:comment "Property of the power line indicating its demand register"@en ;
+                rdfs:label "Demand Register"@en .
+
+
+###  https://saref.etsi.org/saref4grid/DurationLongPowerFailure
+:DurationLongPowerFailure rdf:type owl:NamedIndividual ,
+                                   :QualityProperty ;
+                          rdfs:comment "Property of the power line indicating the duration of the long power failures detected"@en ;
+                          rdfs:label "Duration Long Power Failure"@en .
+
+
+###  https://saref.etsi.org/saref4grid/DurationVoltageSag
+:DurationVoltageSag rdf:type owl:NamedIndividual ,
+                             :QualityProperty ;
+                    rdfs:comment "Property of the power line indicating the duration of the voltage sags detected"@en ;
+                    rdfs:label "Duration Voltage Sag"@en .
+
+
+###  https://saref.etsi.org/saref4grid/DurationVoltageSwell
+:DurationVoltageSwell rdf:type owl:NamedIndividual ,
+                               :QualityProperty ;
+                      rdfs:comment "Property of the power line indicating the duration of the voltage swells detected"@en ;
+                      rdfs:label "Duration Voltage Swell"@en .
+
+
+###  https://saref.etsi.org/saref4grid/LongPowerFailuresNumber
+:LongPowerFailuresNumber rdf:type owl:NamedIndividual ,
+                                  :MeterProperty ;
+                         rdfs:comment "Property of the meter indicating the number of long power failures detected"@en ;
+                         rdfs:label "Long Power Failures Number"@en .
+
+
+###  https://saref.etsi.org/saref4grid/Manufacturer
+:Manufacturer rdf:type owl:NamedIndividual ,
+                       :MeterProperty ;
+              rdfs:comment "Property of the meter indicating its manufacturer information"@en ;
+              rdfs:label "Manufacturer"@en .
+
+
+###  https://saref.etsi.org/saref4grid/Network
+:Network rdf:type owl:NamedIndividual ,
+                  :MeterProperty ;
+         rdfs:comment "Property of the meter indicating its network information"@en ;
+         rdfs:label "Network"@en .
+
+
+###  https://saref.etsi.org/saref4grid/Phase
+:Phase rdf:type owl:NamedIndividual ,
+                :MeterProperty ;
+       rdfs:comment "Property of the meter indicating its phase"@en ;
+       rdfs:label "Phase"@en .
+
+
+###  https://saref.etsi.org/saref4grid/PhaseAngle
+:PhaseAngle rdf:type owl:NamedIndividual ,
+                     :MeterProperty ;
+            rdfs:comment "Property of the meter indicating its phase angle"@en ;
+            rdfs:label "Phase Angle"@en .
+
+
+###  https://saref.etsi.org/saref4grid/PowerFactor
+:PowerFactor rdf:type owl:NamedIndividual ,
+                      :EnergyAndPowerProperty ;
+             rdfs:comment "Property of the power line indicating its power factor"@en ;
+             rdfs:label "Power Factor"@en .
+
+
+###  https://saref.etsi.org/saref4grid/PowerLimit
+:PowerLimit rdf:type owl:NamedIndividual ,
+                     :MeterProperty ;
+            rdfs:comment "Property of the meter indicating its power limit"@en ;
+            rdfs:label "Power Limit"@en .
+
+
+###  https://saref.etsi.org/saref4grid/PowerQuality
+:PowerQuality rdf:type owl:NamedIndividual ,
+                       :MeterProperty ;
+              rdfs:comment "Property of the meter indicating its power quality"@en ;
+              rdfs:label "Power Quality"@en .
+
+
+###  https://saref.etsi.org/saref4grid/ProfileStatus
+:ProfileStatus rdf:type owl:NamedIndividual ,
+                        :MeterProperty ;
+               rdfs:comment "Property of the meter indicating its profile generic status"@en ;
+               rdfs:label "Profile Status"@en .
+
+
+###  https://saref.etsi.org/saref4grid/Quadrant
+:Quadrant rdf:type owl:NamedIndividual ,
+                   :MeterProperty ;
+          rdfs:comment "Property of the meter indicating its quadrant"@en ;
+          rdfs:label "Quadrant"@en .
+
+
+###  https://saref.etsi.org/saref4grid/ReactiveEnergy
+:ReactiveEnergy rdf:type owl:NamedIndividual ,
+                         :EnergyAndPowerProperty ;
+                rdfs:comment "Property of the power line indicating its reactive energy"@en ;
+                rdfs:label "Reactive Energy"@en .
+
+
+###  https://saref.etsi.org/saref4grid/ReactivePower
+:ReactivePower rdf:type owl:NamedIndividual ,
+                        :EnergyAndPowerProperty ;
+               rdfs:comment "Property of the power line indicating its reactive power"@en ;
+               rdfs:label "Reactive Power"@en .
+
+
+###  https://saref.etsi.org/saref4grid/ScreenDisplay
+:ScreenDisplay rdf:type owl:NamedIndividual ,
+                        :MeterProperty ;
+               rdfs:comment "Property of the meter indicating information about its screen"@en ;
+               rdfs:label "Screen Display"@en .
+
+
+###  https://saref.etsi.org/saref4grid/Threshold
+:Threshold rdf:type owl:NamedIndividual ,
+                    :MeterProperty ;
+           rdfs:comment "Property of the meter indicating a threshold limit"@en ;
+           rdfs:label "Threshold"@en .
+
+
+###  https://saref.etsi.org/saref4grid/TimeThreshold
+:TimeThreshold rdf:type owl:NamedIndividual ,
+                        :MeterProperty ;
+               rdfs:comment "Property of the meter indicating the time outside a threshold"@en ;
+               rdfs:label "Time Threshold"@en .
+
+
+###  https://saref.etsi.org/saref4grid/TransformerRatio
+:TransformerRatio rdf:type owl:NamedIndividual ,
+                           :MeterProperty ;
+                  rdfs:comment "Property of the meter indicating the transformer turn ratio"@en ;
+                  rdfs:label "Transformer Ratio"@en .
+
+
+###  https://saref.etsi.org/saref4grid/Voltage
+:Voltage rdf:type owl:NamedIndividual ,
+                  :EnergyAndPowerProperty ;
+         rdfs:comment "Property of the power line indicating its voltage"@en ;
+         rdfs:label "Voltage"@en .
+
+
+###  https://saref.etsi.org/saref4grid/VoltageSagNumber
+:VoltageSagNumber rdf:type owl:NamedIndividual ,
+                           :MeterProperty ;
+                  rdfs:comment "Property of the meter indicating the number of voltage sags detected"@en ;
+                  rdfs:label "Voltage Sag Number"@en .
+
+
+###  https://saref.etsi.org/saref4grid/VoltageSwellNumber
+:VoltageSwellNumber rdf:type owl:NamedIndividual ,
+                             :MeterProperty ;
+                    rdfs:comment "Property of the meter indicating the number of voltage swells detected"@en ;
+                    rdfs:label "Voltage Swell Number"@en .
+
+
+###  https://www.linkedin.com/in/sergio-mario-carulli-p%C3%A9rez-7632b5217/
+<https://www.linkedin.com/in/sergio-mario-carulli-p%C3%A9rez-7632b5217/> rdf:type owl:NamedIndividual ,
+                                                                                  <http://schema.org/Person> ;
+                                                                         <http://schema.org/affiliation> <https://www.upm.es/> ;
+                                                                         <http://schema.org/familyName> "Carulli-Pérez" ;
+                                                                         <http://schema.org/givenName> "Sergio-Mario" .
+
+
+###  https://www.upm.es/
+<https://www.upm.es/> rdf:type owl:NamedIndividual ,
+                               <http://schema.org/Organization> ;
+                      <http://schema.org/name> "Universidad Politécnica de Madrid" .
+
+
+###  Generated by the OWL API (version 5.1.18) https://github.com/owlcs/owlapi/

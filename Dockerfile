@@ -51,9 +51,9 @@ FROM node:20 AS final
 COPY --from=maven_builder /maven-output/scripts /app/scripts
 
 # Install JDK 8
-COPY --from=eclipse-temurin:8-jdk /opt/java/openjdk /opt/java/openjdk
-ENV JAVA_HOME=/opt/java/openjdk
-ENV PATH="$JAVA_HOME/bin:${PATH}"
+#COPY --from=eclipse-temurin:8-jdk /opt/java/openjdk /opt/java/openjdk
+#ENV JAVA_HOME=/opt/java/openjdk
+#ENV PATH="$JAVA_HOME/bin:${PATH}"
 
 # Install MongoDB tools and build essentials
 RUN apt-get update && \
@@ -109,6 +109,11 @@ RUN pip install -r /app/Patterns/Patrones/requirements.txt
 
 RUN cp /app/config/config.example.js /app/config/config.js
 
+RUN apt-get update && apt-get install -y openjdk-17-jre && rm -rf /var/lib/apt/lists/*
+
 # Expose port and set entrypoint
 EXPOSE 3000
 ENTRYPOINT ["bash","./setup/start.sh"]
+
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH="$JAVA_HOME/bin:${PATH}"
