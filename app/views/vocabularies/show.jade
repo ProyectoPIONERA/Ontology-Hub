@@ -53,6 +53,8 @@ block content
                 a.ontology-tab(href='#' data-onto-target='foops' role='tab' aria-selected='false') Foops
               li.wrpl
                 a.ontology-tab(href='#' data-onto-target='themis' role='tab' aria-selected='false') Themis
+              li.wrpl
+                a.ontology-tab(href='#' data-onto-target='widoco' role='tab' aria-selected='false') Widoco
       section#posts.default-area.ontology-tab-panel.is-active(data-onto-panel='general')
           article
             #greenContainer.contents.clear.col-2.split.wrplGreen
@@ -200,6 +202,8 @@ block content
                         img(src='/img/foops.png' style="width:34px; height:34px; padding-left:.4em; padding-right:.4em;cursor:pointer;" title="")
                       a(type='button' onclick='runThemisFromToolbar("#{(vocab.isDefinedBy)?vocab.isDefinedBy:vocab.uri}","/dataset/vocabs/#{vocab.prefix}/versions/#{utils.dateToYMD(lastVersion.issued)}.n3")')
                         img(src='/img/themis.png' style="width:34px; height:34px; padding-left:.4em; padding-right:.4em;cursor:pointer;" title="")
+                      a(type='button' onclick='runWidocoFromToolbar("#{(vocab.isDefinedBy)?vocab.isDefinedBy:vocab.uri}","/dataset/vocabs/#{vocab.prefix}/versions/#{utils.dateToYMD(lastVersion.issued)}.n3","#{vocab.prefix}")' style="display:inline-block; min-width:76px; height:34px; line-height:34px; text-align:center; border:1px solid #d0d7da; border-radius:4px; margin-left:.4em; color:#374151; text-decoration:none; font-size:0.78rem; background:#f8fafc;")
+                        | WIDOCO
                     div(style='float:left; padding-left:0.5em; border-right:1px solid white')
                       a(href="#{lov+'/dataset/vocabs/'+vocab.prefix+'/versions/'+utils.dateToYMD(lastVersion.issued)+'.n3'}" target='_blank' style="display: table; ")
                         img(src='/img/n3_small.gif' style="width:61px; height:38px" title="#{vocab.prefix+' '+utils.dateToYMD(lastVersion.issued)}")
@@ -253,7 +257,9 @@ block content
       script(src='/js/callAstrea.js')
       script(src='/js/callThemis.js')
       script(src='/js/callFoops.js')
+      script(src='/js/callWidoco.js')
       link(rel='stylesheet', type='text/css', media='all', href='/css/callFoops.css')
+      link(rel='stylesheet', type='text/css', media='all', href='/css/callWidoco.css')
       - var issuedYMD = (lastVersion && lastVersion.issued) ? utils.dateToYMD(lastVersion.issued) : null;
       - if (!issuedYMD && lastVersion && lastVersion.name && /^v\d{4}-\d{2}-\d{2}$/.test(lastVersion.name)) {
       -   issuedYMD = lastVersion.name.substring(1);
@@ -421,6 +427,38 @@ block content
                             tbody#themisResultsBody
                           div(style="margin-top:0.75rem; text-align:right;")
                             button#downloadThemisButton(type='button' style="display:none;") DOWNLOAD RESULTS
+      section#posts_widoco.default-area.ontology-tab-panel(data-onto-panel='widoco')
+        article
+          div#greenContainer(class="contents clear col-2 split wrplGreen")
+            h2 WIDOCO DOCUMENTATION
+            div.metadataFrame.widoco-metadata-frame
+              table.widoco-metadata-table.metadata-table.noheader.flat-table-3
+                tr#widocoLoadingMessage
+                  p#widocoLoadingHint Loading WIDOCO documentation...
+                  td.center-text.widoco-center-cell
+                    div#widocoVocabContainer(
+                      data-uri='#{(vocab.isDefinedBy)?vocab.isDefinedBy:vocab.uri}'
+                      data-source-url='#{issuedYMD ? ("/dataset/vocabs/" + vocab.prefix + "/versions/" + issuedYMD + ".n3") : ""}'
+                      data-vocab-prefix='#{vocab.prefix}'
+                      data-ontology-version='#{issuedYMD || ((lastVersion && lastVersion.name) ? lastVersion.name : "")}'
+                      data-version='v1.4.25'
+                    )
+              div#widoco-results.widoco-results
+                .row.mt-3.ml-0.w-100
+                  .col-12.caja.caja-info
+                    .row.my-3
+                      .col-12
+                        a#widocoReleaseLink(href='https://github.com/dgarijo/Widoco/releases/tag/v1.4.25' target='_blank' rel='noopener noreferrer') Open generated documentation
+                        span.widoco-link-spacer
+                        a#widocoDownloadLink.widoco-download-link(href='#' target='_blank' rel='noopener noreferrer') Download ZIP
+                .row.mt-3.ml-0.w-100
+                  .col-12
+                    div#widocoPreviewFrame
+                      div#widocoPreviewPlaceholder
+                        | WIDOCO documentation is not available yet for this ontology version.
+                      iframe#widocoPreview(
+                        title='WIDOCO generated documentation'
+                      )
                             
       section#post.postMediumDarkBlue.ontology-tab-panel.is-active(data-onto-panel='general')
         h2(style="width:50%; float:left;" title="Vocabularies using #{vocab.prefix}. The relation type between a vocabulary and #{vocab.prefix} is indicated by the color.") #{inData.nodes?inData.nodes.length-1:0} Incoming Links

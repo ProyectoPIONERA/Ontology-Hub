@@ -23,6 +23,10 @@ const { ElasticService } = require('../elastic/index');
 var app_name;
 var app_name_shorcut;
 
+function shellEscapeArg(value) {
+  return "'" + String(value).replace(/'/g, "'\\''") + "'";
+}
+
 exports.configureName = function (an, ans) {
   app_name = an;
   app_name_shorcut = ans;
@@ -1222,12 +1226,11 @@ exports.edit = function (req, res, scripts) {
         });
 
       var command =
-        scripts +
-        "/bin/suggest " +
-        (req.vocab.isDefinedBy ? req.vocab.isDefinedBy : req.vocab.uri) +
+        shellEscapeArg(scripts + "/bin/suggest") +
         " " +
-        scripts +
-        "/lov.config";
+        shellEscapeArg(req.vocab.isDefinedBy ? req.vocab.isDefinedBy : req.vocab.uri) +
+        " " +
+        shellEscapeArg(scripts + "/lov.config");
       var exec = require("child_process").exec;
       child = exec(
         command,
@@ -1284,12 +1287,11 @@ exports.new = function (req, res, scripts) {
                 app_name: app_name,
               });
             var command =
-              scripts +
-              "/bin/suggest " +
-              req.body.uri +
+              shellEscapeArg(scripts + "/bin/suggest") +
               " " +
-              scripts +
-              "/lov.config";
+              shellEscapeArg(req.body.uri) +
+              " " +
+              shellEscapeArg(scripts + "/lov.config");
             var exec = require("child_process").exec;
             child = exec(command, function (error, stdout, stderr) {
               if (stderr.length < 4) {
@@ -1703,13 +1705,13 @@ function parseOntology(req, res, scripts, data, extension, requirements, concept
               app_name: app_name,
             });
           var command =
-            scripts +
-            "/bin/suggest " +
-            ontologyQuad.subject.value +
+            shellEscapeArg(scripts + "/bin/suggest") +
             " " +
-            scripts +
-            "/lov.config " +
-            fullPath;
+            shellEscapeArg(ontologyQuad.subject.value) +
+            " " +
+            shellEscapeArg(scripts + "/lov.config") +
+            " " +
+            shellEscapeArg(fullPath);
           var exec = require("child_process").exec;
           child = exec(command, function (error, stdout, stderr) {
             if (stderr.length < 4) {
