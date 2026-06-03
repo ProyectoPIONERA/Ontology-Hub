@@ -17,3 +17,4 @@ app.log
 Patterns/*
 scripts/*
 public/backup/
+public/generated/widoco/
