@@ -861,6 +861,9 @@ router.get("/dataset/api/v2/validators/astrea", function (req, res) {
   var sourceUrlRaw =
     req.query && req.query.sourceUrl ? String(req.query.sourceUrl).trim() : "";
   var sourceUrl = resolveSourceUrl(req, sourceUrlRaw);
+  if (!sourceUrl && isRdfSourceUrl(uri)) {
+    sourceUrl = uri;
+  }
   if (!uri && !sourceUrl) {
     return res.status(400).send("Missing required query param: uri or sourceUrl");
   }
@@ -903,6 +906,17 @@ router.get("/dataset/api/v2/validators/astrea", function (req, res) {
     trysource();
   }
 });
+
+function isRdfSourceUrl(targetUrl) {
+  if (!targetUrl) return false;
+  try {
+    var parsed = urlLib.parse(targetUrl);
+    var pathname = (parsed.pathname || "").toLowerCase();
+    return /\.(ttl|rdf|owl|xml|jsonld|nt|n3|nq)$/.test(pathname);
+  } catch (e) {
+    return false;
+  }
+}
 
 function resolveSourceUrl(req, sourceUrl) {
   var clean = sourceUrl ? String(sourceUrl).trim() : "";
@@ -1317,7 +1331,9 @@ function proxyThemisExample(sourceText, res) {
         res.set("Content-Type", "text/plain; charset=utf-8");
         return res.status(200).send(resp);
       }
-      return res.status(proxyRes.statusCode || 502).send(resp || "Themis upstream error");
+      return res
+        .status(proxyRes.statusCode || 502)
+        .send(formatThemisUpstreamError(resp, proxyRes.statusCode, "Themis example generation failed"));
     });
   });
 
@@ -1332,6 +1348,37 @@ function proxyThemisExample(sourceText, res) {
 
   proxyReq.write(body);
   proxyReq.end();
+}
+
+function readLocalVersionSource(sourceUrl, callback) {
+  var clean = String(sourceUrl || "").trim();
+  var parsed = urlLib.parse(clean);
+  var pathname = parsed.pathname || clean;
+  var match = pathname.match(/^\/dataset\/vocabs\/([^/]+)\/versions\/(\d{4}-\d{2}-\d{2})\.n3$/);
+  if (!match) return callback(null, null);
+
+  var vocabPrefix = decodeURIComponent(match[1]);
+  var date = match[2];
+  var Vocabulary = mongoose.model("Vocabulary");
+  Vocabulary.findOne({ prefix: vocabPrefix }, { _id: 1 }).lean().then(function (vocab) {
+    if (!vocab || !vocab._id) {
+      return callback(new Error("Version vocabulary not found: " + vocabPrefix));
+    }
+    var filePath = path.resolve(
+      __dirname,
+      "..",
+      "..",
+      "versions",
+      String(vocab._id),
+      String(vocab._id) + "_" + date + ".n3"
+    );
+    fs.readFile(filePath, "utf8", function (err, text) {
+      if (err) return callback(err);
+      return callback(null, text);
+    });
+  }).catch(function (err) {
+    callback(err);
+  });
 }
 
 function callThemisResultsUpstream(ontologyInput, testfile, cb, ontologyCode) {
@@ -1393,9 +1440,31 @@ function sendThemisResultsResponse(res, status, body) {
   }
   var upstreamStatus = status || 502;
   var upstreamBody = body && body.trim()
-    ? body
+    ? formatThemisUpstreamError(body, upstreamStatus, "Themis results failed")
     : "Themis upstream error (status " + upstreamStatus + ")";
   return res.status(upstreamStatus).send(upstreamBody);
+}
+
+function formatThemisUpstreamError(body, status, fallback) {
+  var clean = String(body || "").trim();
+  var title = fallback || "Themis upstream error";
+  var statusText = status ? " (status " + status + ")" : "";
+  if (!clean) return title + statusText;
+
+  if (/<html[\s>]/i.test(clean) || /<body[\s>]/i.test(clean)) {
+    var exceptionMatch = clean.match(/<b>exception<\/b>\s*<pre>([\s\S]*?)<\/pre>/i);
+    if (exceptionMatch && exceptionMatch[1]) {
+      var exceptionText = exceptionMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      return title + statusText + ": " + exceptionText.substring(0, 300);
+    }
+    var h1Match = clean.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+    var h1Text = h1Match && h1Match[1]
+      ? h1Match[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
+      : "";
+    return title + statusText + (h1Text ? ": " + h1Text : "");
+  }
+
+  return clean.substring(0, 1000);
 }
 
 function runThemisResultsWithFallback(uri, testfile, sourceUrl, req, res) {
@@ -1488,11 +1557,20 @@ router.post("/dataset/api/v2/validators/themis/example", function (req, res) {
   }
 
   var targetUrl = resolveSourceUrl(req, sourceUrl);
+  return readLocalVersionSource(sourceUrl, function (localErr, localText) {
+    if (localErr) {
+      return res.status(502).send(localErr.message || "Failed to read local ontology source");
+    }
+    if (localText) {
+      return proxyThemisExample(localText, res);
+    }
+
   return fetchTextFromUrl(targetUrl, function (err, text) {
     if (err) {
       return res.status(502).send(err.message || "Failed to fetch ontology source");
     }
     return proxyThemisExample(text, res);
+  });
   });
 });
 
