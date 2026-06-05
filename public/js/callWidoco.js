@@ -40,6 +40,39 @@ function fetchWidocoLatest(prefix, ontologyVersion) {
   });
 }
 
+function generateWidoco(uri, sourceUrl, prefix, ontologyVersion, version) {
+  return fetch("/dataset/api/v2/docs/widoco", {
+    method: "POST",
+    headers: {
+      Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      uri: uri || "",
+      sourceUrl: sourceUrl || "",
+      prefix: prefix || "ontology",
+      ontologyVersion: ontologyVersion || "",
+      version: version || "v1.4.25",
+    }),
+  }).then(function (response) {
+    return response.text().then(function (raw) {
+      var body = {};
+      try {
+        body = raw ? JSON.parse(raw) : {};
+      } catch (e) {
+        body = { error: raw || "Invalid response from server" };
+      }
+      if (!response.ok) {
+        var err = new Error(body.error || "WIDOCO generation failed.");
+        err.status = response.status;
+        err.body = body;
+        throw err;
+      }
+      return body;
+    });
+  });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   var container = document.getElementById("widocoVocabContainer");
   var loadingHint = document.getElementById("widocoLoadingHint");
@@ -119,10 +152,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
   var prefix = container.getAttribute("data-vocab-prefix") || "";
   var ontologyVersion = container.getAttribute("data-ontology-version") || "";
+  var uri = container.getAttribute("data-uri") || "";
+  var sourceUrl = container.getAttribute("data-source-url") || "";
+  var version = container.getAttribute("data-version") || "v1.4.25";
 
   if (!prefix) {
     showUnavailable("WIDOCO documentation is not available yet.");
     return;
+  }
+
+  function generateAndShow(message) {
+    loadingHint.textContent = message || "Generating WIDOCO documentation. This may take a few minutes...";
+    return generateWidoco(uri, sourceUrl, prefix, ontologyVersion, version)
+      .then(showAvailable)
+      .catch(function (error) {
+        var details = error && error.body && error.body.error ? " " + error.body.error : "";
+        showUnavailable("WIDOCO generation failed." + details);
+      });
   }
 
   fetchWidocoLatest(prefix, ontologyVersion)
@@ -132,10 +178,10 @@ document.addEventListener("DOMContentLoaded", function () {
         fetchWidocoLatest(prefix, "")
           .then(showAvailable)
           .catch(function () {
-            showUnavailable("WIDOCO documentation is not available yet for this ontology version.");
+            generateAndShow("Generating WIDOCO documentation for this ontology version. This may take a few minutes...");
           });
       } else {
-        showUnavailable("WIDOCO documentation is not available yet for this ontology.");
+        generateAndShow("Generating WIDOCO documentation for this ontology. This may take a few minutes...");
       }
     });
 });
