@@ -1,0 +1,112 @@
+#posts_widoco {
+  max-width: 1800px;
+  margin: auto;
+}
+
+#posts_widoco #greenContainer {
+  width: 100%;
+  box-sizing: border-box;
+  border-right: 10px solid #5e9b9b;
+}
+
+#posts_widoco #greenContainer h2 {
+  color: white;
+  font-size: 1.3em;
+}
+
+#posts_widoco tr,
+#posts_widoco td {
+  width: 100%;
+  display: block;
+}
+
+#posts_widoco .widoco-metadata-frame {
+  width: 100%;
+}
+
+#posts_widoco .widoco-metadata-table {
+  width: 100%;
+}
+
+#posts_widoco .widoco-center-cell {
+  padding-top: 0;
+}
+
+#widoco-results.widoco-results {
+  display: none;
+  margin-top: 1rem;
+}
+
+#posts_widoco .widoco-meta {
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+#posts_widoco .widoco-command-caption {
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+#widocoOutput.widoco-output {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow: auto;
+  max-height: 12rem;
+}
+
+#posts_widoco .widoco-link-spacer {
+  display: inline-block;
+  width: 1rem;
+}
+
+#widocoDownloadLink.widoco-download-link {
+  display: none;
+}
+
+#widocoPreviewFrame {
+  display: block;
+  width: 100%;
+  height: 78vh;
+  min-height: 700px;
+  max-height: 980px;
+  overflow-x: auto;
+  overflow-y: auto;
+  border: 1px solid #cfd8dc;
+  background: #fff;
+  position: relative;
+  box-sizing: border-box;
+}
+
+#widocoPreviewPlaceholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 1rem;
+  background: #f8fafc;
+}
+
+#widocoPreview {
+  display: none;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+#posts_widoco .row.mt-3.ml-0.w-100 {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+#posts_widoco .row.mt-3.ml-0.w-100 > .col-12 {
+  box-sizing: border-box;
+  padding-left: 0;
+  padding-right: 0;
+}
