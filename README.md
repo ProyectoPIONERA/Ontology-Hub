@@ -64,7 +64,7 @@ Actively under development. The API and commands may change between minor versio
 - **Node.js 18+** (20 LTS recommended)
 - **npm** or **pnpm**
 - **MongoDB 6+**
-- **Elasticsearch 2.4+**
+- **Elasticsearch 9.2+**
 - **Apache Jena**
 - **Python 3**
 
@@ -98,7 +98,7 @@ BASE_URL=http://localhost:3000
 MONGO_URI=mongodb://localhost:27017/ontologyhub
 ES_NODE=http://localhost:9200
 ES_USERNAME=elastic
-ES_PASSWORD=changeme
+ES_PASSWORD=OntologyHub2026
 ES_INDEX=vocabs
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=please_change_me
