@@ -864,12 +864,11 @@ exports.create = function (req, res, scripts, lov, patterns, python_patterns) {
 
       // Fallback: descargar desde la URI
       var command =
-        scripts +
-        "/bin/downloadVersion " +
-        (vocab.isDefinedBy ? vocab.isDefinedBy : vocab.uri) +
+        shellEscapeArg(scripts + "/bin/downloadVersion") +
         " " +
-        scripts +
-        "/lov.config";
+        shellEscapeArg(vocab.isDefinedBy ? vocab.isDefinedBy : vocab.uri) +
+        " " +
+        shellEscapeArg(scripts + "/lov.config");
 
       var exec = require("child_process").exec;
       exec(command, function (error, stdout, stderr) {
@@ -1301,9 +1300,13 @@ exports.new = function (req, res, scripts) {
               } else {
                 req.flash("error", "The vocabulary URI is not available");
               }
+              var vocab = new Vocabulary({});
+              if (stdout && shouldPreserveAsDefinedBy(req.body.uri, stdout.uri)) {
+                vocab.isDefinedBy = req.body.uri;
+              }
               res.render("vocabularies/new", {
                 stdout: stdout,
-                vocab: new Vocabulary({}),
+                vocab: vocab,
                 langs: langs,
                 listTags: listTags,
                 profile: req.user,
@@ -1319,6 +1322,22 @@ exports.new = function (req, res, scripts) {
     });
   }
 };
+
+function shouldPreserveAsDefinedBy(inputUri, declaredUri) {
+  if (!inputUri || !declaredUri || inputUri === declaredUri) return false;
+  try {
+    var parsed = new URL(inputUri);
+    var rdfPath = (parsed.pathname || "").toLowerCase();
+    if (/\.(ttl|rdf|owl|xml|jsonld|nt|n3|nq)$/.test(rdfPath)) return true;
+    if (!/^https?:$/i.test(parsed.protocol)) return false;
+
+    var cleanInput = String(inputUri).replace(/[#/]+$/, "");
+    var cleanDeclared = String(declaredUri).replace(/[#/]+$/, "");
+    return cleanInput !== cleanDeclared;
+  } catch (e) {
+    return false;
+  }
+}
 
 exports.newRepository = function (req, res, scripts) {
   // Check that the ontology repository url is present

@@ -301,6 +301,12 @@ function callThemis(uri, tests, sourceUrl) {
   });
 }
 
+function getThemisErrorText(err) {
+  var raw = err && (err.body || err.message) ? (err.body || err.message) : String(err || "");
+  raw = raw.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return raw.substring(0, 500) || "Themis request failed.";
+}
+
 function runThemisFromToolbar(uri, sourceUrl) {
   if (typeof window.activateOntologyTab === "function") {
     window.activateOntologyTab("themis");
@@ -566,7 +572,7 @@ document.addEventListener("DOMContentLoaded", function () {
           setDownloadVisibility(true);
         })
         .catch(function (err) {
-          var errText = err.body || err.message || String(err);
+          var errText = getThemisErrorText(err);
           alert("Error running Themis: " + errText);
           setDownloadVisibility(false);
         })
@@ -588,7 +594,7 @@ document.addEventListener("DOMContentLoaded", function () {
           setDownloadVisibility(true);
         })
         .catch(function (err) {
-          var errText = err.body || err.message || String(err);
+          var errText = getThemisErrorText(err);
           alert("Error in automatic mode: " + errText);
           setDownloadVisibility(false);
         })
@@ -618,9 +624,24 @@ document.addEventListener("DOMContentLoaded", function () {
         setDownloadVisibility(true);
       })
       .catch(function (err) {
-        var errText = err.body || err.message || String(err);
-        alert("Error in automatic mode: " + errText);
-        setDownloadVisibility(false);
+        var exampleError = getThemisErrorText(err);
+        setLoading(true, "Themis could not generate example tests. Running direct validation...");
+        return callThemis(defaultUri, "", sourceUrl)
+          .then(function (text) {
+            var stats = getThemisStats(text);
+            latest = stats.raw;
+            autoLatest = stats.raw;
+            renderThemisVisual(latest, resultsBody);
+            results.style.display = "block";
+            setDownloadVisibility(true);
+          })
+          .catch(function (directErr) {
+            var directError = getThemisErrorText(directErr);
+            editorContainer.style.display = "block";
+            results.style.display = "none";
+            alert("Themis automatic mode failed. Example generation: " + exampleError + " Direct validation: " + directError);
+            setDownloadVisibility(false);
+          });
       })
       .finally(function () {
         setLoading(false, "Tests ready for editing.");
