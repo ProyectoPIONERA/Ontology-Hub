@@ -10,3 +10,5 @@ echo "Corriendo mongo2rdf"
 /app/scripts/bin/mongo2rdf /app/scripts/lov.config
 echo "Corriendo index-lov"
 /app/scripts/bin/index-lov /app/scripts/lov.config
+echo "Recargando Fuseki"
+FORCE_RELOAD=true /app/setup/jena.sh

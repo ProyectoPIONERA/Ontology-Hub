@@ -30,12 +30,18 @@ block content
               link(rel='stylesheet', href='https://unpkg.com/@triply/yasgui/build/yasgui.min.css', type="text/css")
               script(src='https://unpkg.com/@triply/yasgui/build/yasgui.min.js')
               script.
+                const defaultQuery = "PREFIX vann:<http://purl.org/vocab/vann/>\nPREFIX voaf:<http://purl.org/vocommons/voaf#>\n\n### Vocabularies contained in #{app_name_shorcut} and their prefix\nSELECT DISTINCT ?vocabPrefix ?vocabURI WHERE {\n\t?vocabURI a voaf:Vocabulary.\n\t?vocabURI vann:preferredNamespacePrefix ?vocabPrefix.\n} ORDER BY ?vocabPrefix";
                 const yasgui = new Yasgui(document.getElementById("yasgui"), {
                   requestConfig: { endpoint: "#{lov}/dataset/sparql" },
                   copyEndpointOnNewTab: false,
                   resizeable: true,
-                  yasqe: {value: "PREFIX vann:<http://purl.org/vocab/vann/>\n\PREFIX voaf:<http://purl.org/vocommons/voaf#>\n\ \n\### Vocabularies contained in #{app_name_shorcut} and their prefix\n\SELECT DISTINCT ?vocabPrefix ?vocabURI {\n\ \tGRAPH <#{lov}/dataset>{\n\ \t \t?vocabURI a voaf:Vocabulary.\n\ \t \t?vocabURI vann:preferredNamespacePrefix ?vocabPrefix.\n\}} ORDER BY ?vocabPrefix"},
+                  yasqe: {value: defaultQuery},
                 });
+                const currentTab = yasgui.getTab();
+                const savedQuery = currentTab && currentTab.getQuery ? currentTab.getQuery() : "";
+                if (savedQuery.includes("GRAPH <#{lov}/dataset>") || savedQuery.includes("GRAPH <#{lov}/dataset/lov>")) {
+                  currentTab.setQuery(defaultQuery);
+                }
                 $(document).ready(function() {
                   if(yasgui.getTab().yasr.results){
                     deleteStyle(yasgui.getTab().yasr);
