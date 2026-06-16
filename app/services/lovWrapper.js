@@ -22,9 +22,8 @@ exports.wrap = function(term, vocabDoc) {
         // prefixedName: 'prefix:localName' (Clave para visualización rápida)
         prefixedName: vocabDoc.prefix ? `${vocabDoc.prefix}:${term.localName}` : term.localName,
 
-        localName: {
-            ngram: term.localName // El mapeo 'ngram' se define en el index template de ES
-        },
+        // Elasticsearch generates localName.ngram from this text value.
+        localName: term.localName,
 
         // Metadata básica
         label: term.label,

@@ -14,7 +14,13 @@
       }
     },
     "localName": {
-      "properties": {
+      "type": "text",
+      "fields": {
+        "autocomplete": {
+          "type": "text",
+          "analyzer": "autocomplete_ngram_index",
+          "search_analyzer": "autocomplete_ngram_search"
+        },
         "ngram": {
           "type": "text",
           "analyzer": "ngram_analyzer_index",
