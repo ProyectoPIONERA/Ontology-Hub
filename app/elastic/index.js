@@ -193,9 +193,7 @@ const ElasticService = {
             }
 
 
-            if (type === 'property' && doc.localName && typeof doc.localName !== 'object') {
-                doc.localName = { ngram: doc.localName };
-            } else if (type !== 'property' && doc.localName && typeof doc.localName === 'object' && doc.localName.ngram) {
+            if (doc.localName && typeof doc.localName === 'object' && doc.localName.ngram) {
                 doc.localName = doc.localName.ngram;
             }
 

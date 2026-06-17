@@ -64,7 +64,7 @@ Actively under development. The API and commands may change between minor versio
 - **Node.js 18+** (20 LTS recommended)
 - **npm** or **pnpm**
 - **MongoDB 6+**
-- **Elasticsearch 2.4+**
+- **Elasticsearch 9.2+**
 - **Apache Jena**
 - **Python 3**
 
@@ -98,7 +98,7 @@ BASE_URL=http://localhost:3000
 MONGO_URI=mongodb://localhost:27017/ontologyhub
 ES_NODE=http://localhost:9200
 ES_USERNAME=elastic
-ES_PASSWORD=changeme
+ES_PASSWORD=OntologyHub2026
 ES_INDEX=vocabs
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=please_change_me
@@ -153,6 +153,70 @@ This will start:
 - **MongoDB**
 - **Elasticsearch**
 - Optional services like **Jena** if configured.
+
+### Linux Docker DNS Troubleshooting
+
+On some native Linux hosts, the Docker build container may fail to resolve
+external hosts while building the `lov_server` image. This is usually an
+environment-level Docker networking or DNS issue, not an application error.
+
+Typical symptoms include failures while cloning external repositories:
+
+```text
+fatal: unable to access 'https://github.com/ProyectoPIONERA/Ontology-Hub-Scripts.git/':
+Could not resolve host: github.com
+```
+
+or while downloading Apache Jena/Fuseki dependencies:
+
+```text
+Resolving archive.apache.org (archive.apache.org)... failed:
+Temporary failure in name resolution.
+wget: unable to resolve host address 'archive.apache.org'
+```
+
+The affected build steps are:
+
+- cloning `Ontology-Hub-Scripts` during the Maven build stage;
+- cloning `GrOwEr` during the final image stage;
+- downloading Apache Jena and Fuseki archives from `archive.apache.org` at
+  container startup if they are not already present in `/app/jena`.
+
+If this happens, first verify DNS from both the host and Docker:
+
+```bash
+docker run --rm alpine nslookup github.com
+docker run --rm alpine nslookup archive.apache.org
+```
+
+If Docker DNS is failing, check the Docker daemon DNS configuration,
+corporate VPN/proxy settings, firewall rules, or `/etc/resolv.conf`. After
+fixing DNS, rebuild the image:
+
+```bash
+docker compose build --no-cache lov_server
+docker compose up -d
+```
+
+If the image was already built successfully and only the runtime service is
+unstable, you can restart the app service manually with exposed ports:
+
+```bash
+docker compose ps
+docker compose stop lov_server
+docker compose run --rm --service-ports --entrypoint node lov_server server.js
+```
+
+Then return the service to normal Compose management:
+
+```bash
+docker compose ps -a
+docker compose up -d lov_server
+docker compose logs -f lov_server
+```
+
+Use this workaround only after the image exists locally. If the image build
+failed before completion, fix Docker networking first and rebuild.
 
 ---
 

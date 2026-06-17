@@ -127,6 +127,12 @@ if [[ "${LOAD_NEEDED}" == "true" ]]; then
   if [[ ! -f "${LOV_NQ}" ]]; then
     echo "⚠️  Input file not found: ${LOV_NQ} — skipping load"
   else
+    if [[ "${FORCE_RELOAD}" == "true" ]]; then
+      step "Stopping Fuseki before rebuilding TDB"
+      pkill -f "fuseki-server" || true
+      sleep 1
+      find "${TDB_DIR}" -mindepth 1 -maxdepth 1 -delete
+    fi
     if ! "${JENA_HOME}/bin/tdbloader2" --loc "${TDB_DIR}" "${LOV_NQ}"; then
       echo "⚠️  tdbloader2 failed — continuing"
     fi
@@ -177,5 +183,5 @@ for i in {1..20}; do
   sleep 1
 done
 
-echoecho "WARNING: Fuseki did not respond on http://localhost:3030 after 20s."
+echo "WARNING: Fuseki did not respond on http://localhost:3030 after 20s."
 echo "Check logs at ${FUSEKI_LOG}"
