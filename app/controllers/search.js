@@ -71,6 +71,19 @@ exports.search = function (req, res, esclient) {
       nbResults: results.total_results,
       results: arr + ""  });console.log(log);
     log.save(function (err){if(err)console.log(err)});*/
+      if (results.results.length == 0 && !req.query.q) {
+        return res.render("search/index", {
+          results: results,
+          resultsList: [],
+          suggestions: [],
+          placeholder:
+            placeholders[Math.floor(Math.random() * placeholders.length)],
+          utils: utils,
+          app_name_shorcut: app_name_shorcut,
+          app_name: app_name,
+        });
+      }
+
       if (results.results.length == 0) {
         /* case we have no result, then give some suggestions */
         return execSuggestTerms(
@@ -1233,6 +1246,16 @@ function execSuggestTerms(client, queryString, suggest_size, type, callback) {
   if (queryString == undefined) {
     queryString = "";
   }
+  if (!queryString) {
+    return callback(null, { suggestions: [] });
+  }
+
+  let indicesToSearch = [];
+  if (type.includes("class")) indicesToSearch.push("lov_class");
+  if (type.includes("property")) indicesToSearch.push("lov_property");
+  if (type.includes("datatype")) indicesToSearch.push("lov_datatype");
+  if (type.includes("instance") || type.includes("individual")) indicesToSearch.push("lov_individual");
+  const suggestIndexName = indicesToSearch.length > 0 ? indicesToSearch.join(",") : "lov_class,lov_property,lov_datatype,lov_individual";
 
   /* issue the suggestion on the rdfs:label@en field */
   var q = {
@@ -1252,8 +1275,8 @@ function execSuggestTerms(client, queryString, suggest_size, type, callback) {
     client
       //.search(indexName, type, q)
       .search({
-        index: indexName,
-        type: type,
+        index: suggestIndexName,
+        ignore_unavailable: true,
         body: q,
       })
       .then((data) => {

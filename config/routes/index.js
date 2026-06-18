@@ -1230,7 +1230,7 @@ function runWidocoGeneration(params, callback) {
   }
 
   if (/^https?:\/\//i.test(ontoFile)) {
-    return fetchTextFromUrlNoRedirect(ontoFile, function (err, sourceText) {
+    return fetchTextFromUrl(ontoFile, function (err, sourceText) {
       if (err) {
         return callback(err);
       }
@@ -1796,31 +1796,7 @@ router.post("/dataset/sparql", function (req, res, next) {
 });
 
 
-const { spawn } = require('child_process');
-const { hostname } = require("os");
-
-
-router.post('/edition/indexAll', auth.requiresLogin, auth.requiresAdmin, (req, res) => {
-
-  const repoDir = '/app';
-  const scriptPath = path.join(repoDir, 'setup', 'lovInitialization.sh');
-
-  const cmd = `cd "${path.join(repoDir, 'setup')}" && bash "${scriptPath}"`; //>> "${logPath}" 2>&1`;
-
-  const child = spawn('bash', ['-lc', cmd], {
-    env: process.env,
-    detached: true,
-    stdio: ['ignore', 'ignore', 'ignore'],
-  });
-
-  child.on('error', (err) => {
-    console.error('[IndexAll] spawn error:', err);
-  });
-
-  child.unref();
-
-  return res.redirect('/edition');
-});
+router.post('/edition/indexAll', auth.requiresLogin, auth.requiresAdmin, vocabularies.indexAll);
 
 function executeSPARQLQuery(
   res,

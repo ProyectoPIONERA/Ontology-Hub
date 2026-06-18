@@ -17,10 +17,13 @@ const ElasticService = {
         property: 'lov_property',
         class: 'lov_class',
         datatype: 'lov_datatype',
+        individual: 'lov_individual',
         instance: 'lov_instance',
         person: 'lov_person',
         organization: 'lov_organization'
     },
+
+    localNameMappingKinds: {},
 
     init: async function() {
         const mappingsDir = path.join(__dirname, 'mappings');
@@ -149,6 +152,26 @@ const ElasticService = {
         }
     },
 
+    getLocalNameMappingKind: async function(index) {
+        if (this.localNameMappingKinds[index]) {
+            return this.localNameMappingKinds[index];
+        }
+
+        try {
+            const mappings = await client.indices.getMapping({ index });
+            const indexMapping = mappings[index] || (mappings.body && mappings.body[index]);
+            const properties = indexMapping && indexMapping.mappings && indexMapping.mappings.properties;
+            const localName = properties && properties.localName;
+
+            this.localNameMappingKinds[index] =
+                localName && localName.properties && !localName.type ? 'object' : 'text';
+        } catch (err) {
+            this.localNameMappingKinds[index] = 'text';
+        }
+
+        return this.localNameMappingKinds[index];
+    },
+
     upsert: async function(type, id, data) {
         const index = this.indices[type] || `lov_${type.toLowerCase()}`;
         try {
@@ -199,6 +222,18 @@ const ElasticService = {
 
             delete doc._id;
             delete doc.__v;
+
+            if (doc.localName) {
+                const localNameValue =
+                    typeof doc.localName === 'object' && doc.localName.ngram
+                        ? doc.localName.ngram
+                        : doc.localName;
+                const mappingKind = await this.getLocalNameMappingKind(index);
+                doc.localName =
+                    mappingKind === 'object'
+                        ? { ngram: localNameValue }
+                        : localNameValue;
+            }
 
             return await client.index({
                 index,
