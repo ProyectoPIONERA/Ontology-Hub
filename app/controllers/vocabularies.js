@@ -12,7 +12,8 @@ var mongoose = require("mongoose"),
   fs = require("fs"),
   _ = require("underscore"),
   JSZip = require("jszip"),
-  path = require("path");
+  path = require("path"),
+  childProcess = require("child_process");
 
 const { Parser } = require('n3');
 const crypto = require('crypto');
@@ -814,6 +815,15 @@ exports.create = function (req, res, scripts, lov, patterns, python_patterns) {
   req.body.descriptions = normalizeLangValueArray(req.body.descriptions).filter(
     (item) => item && typeof item.value === "string" && item.value.trim().length > 0
   );
+
+  const ontologyPath = req.body.ontology_path || req.body.ontologyPath;
+  if (ontologyPath && !fs.existsSync(ontologyPath)) {
+    return res.status(400).send({
+      redirect: "/edition",
+      err: "The uploaded ontology file is no longer available. Please upload it again.",
+    });
+  }
+
   // Preserve artifact URLs from the form before creating the Mongoose document.
   // In some flows (repository-based creation), we rely on these values later.
   req._artifactUrls = {
@@ -845,7 +855,6 @@ exports.create = function (req, res, scripts, lov, patterns, python_patterns) {
     .save()
     .then(() => {
       // Si viene la ruta local (oculta en el form), saltamos la descarga
-      const ontologyPath = req.body.ontology_path || req.body.ontologyPath; // soporta ambos nombres
       if (ontologyPath) {
         // Usamos la ruta proporcionada como "stdout" y vaciamos "stderr"
         return createVocab(
@@ -1135,18 +1144,19 @@ exports.update = async function (req, res) {
         "lov_class",
         "lov_property",
         "lov_datatype",
+        "lov_individual",
         "lov_instance",
       ];
 
       await ElasticService.updateByQuery(
         termIndices,
         {
-          source: "ctx._source.vocabularyPrefix = params.newPrefix",
+          source: "if (ctx._source.vocabulary != null) { ctx._source.vocabulary.prefix = params.newPrefix }",
           lang: "painless",
           params: { newPrefix: newPrefix },
         },
         {
-          term: { "vocabularyPrefix.keyword": oldPrefix }
+          term: { "vocabulary.prefix": oldPrefix }
         }
       );
     }
@@ -1190,10 +1200,10 @@ exports.destroy = async function (req, res) {
 
       // 3b. Borrar todos los términos asociados (Clases, Propiedades, Datatypes)
       // Usamos deleteByQuery porque es más eficiente que borrar uno por uno
-      const termIndices = ['lov_class', 'lov_property', 'lov_datatype', 'lov_instance'];
+      const termIndices = ['lov_class', 'lov_property', 'lov_datatype', 'lov_individual', 'lov_instance'];
 
       await ElasticService.deleteByQuery(termIndices, {
-        term: { "vocabularyPrefix.keyword": prefix }
+        term: { "vocabulary.prefix": prefix }
       });
 
       console.log(`[Elastic] Limpieza completada para ${prefix}`);
@@ -1765,13 +1775,209 @@ function parseOntology(req, res, scripts, data, extension, requirements, concept
   });
 }
 
+async function cleanupFailedVocabulary(vocab) {
+  if (!vocab || !vocab._id) return;
+
+  try {
+    await Vocabulary.deleteOne({ _id: vocab._id });
+  } catch (err) {
+    console.warn(`[cleanup failed vocab] Mongo cleanup failed for ${vocab._id}: ${err.message}`);
+  }
+
+  try {
+    const versionsDir = path.resolve(__dirname, "..", "..", "versions", String(vocab._id));
+    if (fs.existsSync(versionsDir)) {
+      fs.rmSync(versionsDir, { recursive: true, force: true });
+    }
+  } catch (err) {
+    console.warn(`[cleanup failed vocab] File cleanup failed for ${vocab._id}: ${err.message}`);
+  }
+}
+
+function findOntologySourceFile(vocab) {
+  if (!vocab || !vocab._id) return null;
+
+  const versionsDir = path.resolve(__dirname, "..", "..", "versions", String(vocab._id));
+  if (!fs.existsSync(versionsDir)) return null;
+
+  const rdfExtensions = new Set([".n3", ".ttl", ".owl", ".rdf", ".nt"]);
+  const candidates = fs.readdirSync(versionsDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && rdfExtensions.has(path.extname(entry.name).toLowerCase()))
+    .map((entry) => {
+      const fullPath = path.join(versionsDir, entry.name);
+      return { fullPath, mtimeMs: fs.statSync(fullPath).mtimeMs };
+    })
+    .sort((a, b) => b.mtimeMs - a.mtimeMs);
+
+  return candidates.length ? candidates[0].fullPath : null;
+}
+
+function runLovScript(scriptName) {
+  return new Promise((resolve, reject) => {
+    const scriptsDir = path.resolve(__dirname, "..", "..", "scripts");
+    const scriptPath = path.join(scriptsDir, "bin", scriptName);
+    const configPath = path.join(scriptsDir, "lov.config");
+
+    if (!fs.existsSync(scriptPath)) {
+      return reject(new Error(`LOV script not found: ${scriptPath}`));
+    }
+    if (!fs.existsSync(configPath)) {
+      return reject(new Error(`LOV config not found: ${configPath}`));
+    }
+
+    console.log(`[IndexAll] Running ${scriptName}...`);
+    const child = childProcess.spawn(scriptPath, [configPath], {
+      cwd: scriptsDir,
+      env: process.env,
+      stdio: ["ignore", "pipe", "pipe"]
+    });
+
+    child.stdout.on("data", (chunk) => {
+      const text = chunk.toString().trim();
+      if (text) console.log(`[IndexAll:${scriptName}] ${text}`);
+    });
+
+    child.stderr.on("data", (chunk) => {
+      const text = chunk.toString().trim();
+      if (text) console.warn(`[IndexAll:${scriptName}] ${text}`);
+    });
+
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0) return resolve();
+      reject(new Error(`${scriptName} exited with code ${code}`));
+    });
+  });
+}
+
+async function refreshLovStats() {
+  await runLovScript("stats");
+  await runLovScript("mongo2rdf");
+}
+
+async function indexVocabularyInElastic(vocab, ontologyPath) {
+  if (!ontologyPath || !fs.existsSync(ontologyPath)) {
+    throw new Error(`Ontology source file not found for ${vocab.prefix || vocab._id}`);
+  }
+
+  const extractedLicense = extractLicenseFromRdfFile(ontologyPath);
+  if (extractedLicense.length) {
+    await Vocabulary.updateOne(
+      { _id: vocab._id },
+      { $set: { license: extractedLicense } }
+    ).catch(e => console.error("[save license error]", e));
+  }
+
+  const vocabDoc = vocab.toObject ? vocab.toObject() : vocab;
+  const vocabDocForEs = Object.assign({}, vocabDoc, { license: extractedLicense });
+  const extracted = await rdfExtractor.extractAllTerms(ontologyPath);
+
+  await ElasticService.upsert('vocabulary', vocab._id.toString(), vocabDocForEs);
+
+  const categoryMap = {
+    classes: 'class',
+    properties: 'property',
+    datatypes: 'datatype',
+    individuals: 'individual'
+  };
+
+  const counts = {
+    vocabularies: 1,
+    classes: extracted.classes.length,
+    properties: extracted.properties.length,
+    datatypes: extracted.datatypes.length,
+    individuals: extracted.individuals.length,
+    license: extractedLicense
+  };
+
+  for (const catPlural of Object.keys(categoryMap)) {
+    const terms = extracted[catPlural] || [];
+    const elasticType = categoryMap[catPlural];
+
+    for (const term of terms) {
+      const wrappedDoc = lovWrapper.wrap(term, vocabDoc);
+      const elasticId = Buffer.from(term.uri).toString('base64');
+      await ElasticService.upsert(elasticType, elasticId, wrappedDoc);
+    }
+  }
+
+  return counts;
+}
+
+async function reindexAllVocabularies() {
+  const indicesToClear = [
+    'lov_vocabulary',
+    'lov_class',
+    'lov_property',
+    'lov_datatype',
+    'lov_individual',
+    'lov_instance'
+  ];
+
+  console.log("[IndexAll] Refreshing LOV stats for homepage graph...");
+  await refreshLovStats();
+
+  console.log("[IndexAll] Clearing Elasticsearch LOV indices...");
+  await ElasticService.deleteByQuery(indicesToClear, { match_all: {} });
+
+  const vocabs = await Vocabulary.find({}).exec();
+  const totals = {
+    vocabularies: 0,
+    classes: 0,
+    properties: 0,
+    datatypes: 0,
+    individuals: 0,
+    skipped: 0,
+    failed: 0
+  };
+
+  for (const vocab of vocabs) {
+    const ontologyPath = findOntologySourceFile(vocab);
+    if (!ontologyPath) {
+      totals.skipped++;
+      console.warn(`[IndexAll] Skipping ${vocab.prefix || vocab._id}: no ontology source file found.`);
+      continue;
+    }
+
+    try {
+      console.log(`[IndexAll] Indexing ${vocab.prefix || vocab._id} from ${ontologyPath}`);
+      const counts = await indexVocabularyInElastic(vocab, ontologyPath);
+      totals.vocabularies += counts.vocabularies;
+      totals.classes += counts.classes;
+      totals.properties += counts.properties;
+      totals.datatypes += counts.datatypes;
+      totals.individuals += counts.individuals;
+    } catch (err) {
+      totals.failed++;
+      console.error(`[IndexAll] Failed indexing ${vocab.prefix || vocab._id}:`, err);
+    }
+  }
+
+  console.log(`[IndexAll] Completed: ${JSON.stringify(totals)}`);
+  return totals;
+}
+
+exports.indexAll = function (req, res) {
+  setImmediate(() => {
+    reindexAllVocabularies().catch((err) => {
+      console.error("[IndexAll] Reindex failed:", err);
+    });
+  });
+
+  return res.redirect('/edition');
+};
+
 async function createVocab(req, res, error, stdout, stderr, scripts, lov, patterns, python_patterns, vocab) {
   // Ya no dependemos de req.app.get('elasticService') para evitar el error de undefined
 
   if ((!stderr || !stderr.startsWith("ERROR")) && stdout && stdout.length > 0) {
     const tempPath = (stdout || "").toString().split("\n")[0].trim();
     if (!fs.existsSync(tempPath)) {
-      return res.status(500).send("Provided ontology path not found: " + tempPath);
+      await cleanupFailedVocabulary(vocab);
+      return res.status(400).send({
+        redirect: "/edition",
+        err: "The uploaded ontology file is no longer available. Please upload it again.",
+      });
     }
 
     const versionIssued = new Date();
@@ -1786,7 +1992,10 @@ async function createVocab(req, res, error, stdout, stderr, scripts, lov, patter
     const target_path = path.join(dir, `${vocab._id}_${issuedStr}.n3`);
 
     fs.rename(tempPath, target_path, async (err) => {
-      if (err) return res.status(500).send("Error moving ontology file.");
+      if (err) {
+        await cleanupFailedVocabulary(vocab);
+        return res.status(500).send("Error moving ontology file.");
+      }
 
       try {
         console.log(`[Indexer] Procesando ontología: ${target_path}`);
@@ -1895,7 +2104,11 @@ async function createVocab(req, res, error, stdout, stderr, scripts, lov, patter
         };
 
         Vocabulary.addVersion(vocab.prefix, versionData, (err) => {
-          if (err) return res.send({ redirect: "500" });
+          if (err) {
+            cleanupFailedVocabulary(vocab)
+              .finally(() => res.send({ redirect: "500" }));
+            return;
+          }
 
           exports.generateStructures(vocab.prefix, vocab, "not_flatten", "both", python_patterns, patterns, false)
               .then(() => {
@@ -1903,16 +2116,19 @@ async function createVocab(req, res, error, stdout, stderr, scripts, lov, patter
                   return res.send({ redirect: "/dataset/vocabs/" + vocab.prefix });
                 });
               }).catch(err => {
-            return res.send({ redirect: "/dataset/vocabs/" + vocab.prefix, err: "Structure failed" });
+            console.warn("[create vocab] Structure generation failed, continuing:", err.message);
+            return res.send({ redirect: "/dataset/vocabs/" + vocab.prefix });
           });
         });
 
       } catch (procError) {
         console.error("Error en el procesamiento nativo:", procError);
+        await cleanupFailedVocabulary(vocab);
         res.status(500).send({ error: procError.message });
       }
     });
   } else {
+    await cleanupFailedVocabulary(vocab);
     res.send({ redirect: "/dataset/vocabs/", err: "No ontology found." });
   }
 }
