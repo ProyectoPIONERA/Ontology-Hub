@@ -18,3 +18,10 @@ Patterns/*
 scripts/*
 public/backup/
 public/generated/widoco/
+
+# Local/generated LOV files
+public/lov.nq.BK
+public/lov.nq.bk_*
+public/lov_backup/
+output.log
+*.bak-*
