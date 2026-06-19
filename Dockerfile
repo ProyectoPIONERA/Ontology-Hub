@@ -104,6 +104,15 @@ ARG REPO_PATRONES
 #CLonar proyecto
 RUN git clone ${REPO_PATRONES} /app/Patterns/Patrones
 
+# Keep the single-pattern modes compatible with GrOwEr's current
+# generate_documentation signature (both image paths are required).
+RUN sed -i \
+      -e 's/images_path_name, images_path_name, images_path_type/images_path_name, images_path_type/' \
+      -e 's/generate_documentation(styles_path, patterns_type_path, inferred_blank_nodes_path, images_path_type, web_path, patterns_name_path, inferred_type_path)/generate_documentation(styles_path, patterns_type_path, inferred_blank_nodes_path, images_path_name, images_path_type, web_path, patterns_name_path, inferred_type_path)/' \
+      -e 's/generate_documentation(styles_path, patterns_type_path, inferred_blank_nodes_path, images_path_name, web_path, patterns_name_path, inferred_type_path)/generate_documentation(styles_path, patterns_type_path, inferred_blank_nodes_path, images_path_name, images_path_type, web_path, patterns_name_path, inferred_type_path)/' \
+      /app/Patterns/Patrones/generate_web_page.py \
+    && test "$(grep -c 'images_path_name, images_path_type, web_path, patterns_name_path' /app/Patterns/Patrones/generate_web_page.py)" -eq 3
+
 # Install Python dependencies
 RUN pip install -r /app/Patterns/Patrones/requirements.txt
 
