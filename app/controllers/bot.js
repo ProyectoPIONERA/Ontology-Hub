@@ -60,13 +60,19 @@ exports.isInLOV = function (req, res, scripts) {
           shellEscapeArg(scripts + "/lov.config");
         var exec = require("child_process").exec;
         child = exec(command, function (error, stdout, stderr) {
-          if (stderr.length < 4) stdout = JSON.parse(stdout);
-          if (error !== null) {
-            console.log("exec error: " + error);
-          } else {
-            stdout = JSON.parse(stdout);
-            stderr = "";
-          }
+
+	  if (error !== null) {
+ 	    console.log("exec error: " + error);
+	  } else {
+  	    try {
+    	      stdout = stdout && stdout.trim() ? JSON.parse(stdout) : [];
+    	      stderr = "";
+  	    } catch (e) {
+    	      console.log("JSON parse error in suggest:", e.message);
+    	      stdout = [];
+    	      stderr = "Invalid or empty JSON response from suggest script";
+  	    }
+	  }
           res.render("suggest/index", {
             suggestion: req.query.q,
             stdout: stdout,

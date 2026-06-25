@@ -366,6 +366,59 @@ router.post(
   }
 );
 
+
+// Legacy LOV routes: keep backward compatibility with old /dataset/lov/... URLs
+router.get("/dataset/lov/vocabs", function (req, res) {
+  return res.redirect(
+    301,
+    "/dataset/vocabs" + (req.url.includes("?") ? "?" + req.url.split("?")[1] : "")
+  );
+});
+
+router.get("/dataset/lov/vocabs/:vocabPx", function (req, res) {
+  return res.redirect(
+    301,
+    "/dataset/vocabs/" +
+      encodeURIComponent(req.params.vocabPx) +
+      (req.url.includes("?") ? "?" + req.url.split("?")[1] : "")
+  );
+});
+
+router.get("/dataset/lov/terms", function (req, res) {
+  return res.redirect(
+    301,
+    "/dataset/terms" + (req.url.includes("?") ? "?" + req.url.split("?")[1] : "")
+  );
+});
+
+router.get("/dataset/lov/agents", function (req, res) {
+  return res.redirect(
+    301,
+    "/dataset/agents" + (req.url.includes("?") ? "?" + req.url.split("?")[1] : "")
+  );
+});
+
+router.get("/dataset/lov/sparql", function (req, res) {
+  return res.redirect(
+    301,
+    "/dataset/sparql" + (req.url.includes("?") ? "?" + req.url.split("?")[1] : "")
+  );
+});
+
+router.get(
+  "/dataset/lov/vocabs/:vocabPx/versions/:date.n3",
+  function (req, res) {
+    return res.redirect(
+      301,
+      "/dataset/vocabs/" +
+        encodeURIComponent(req.params.vocabPx) +
+        "/versions/" +
+        encodeURIComponent(req.params.date) +
+        ".n3"
+    );
+  }
+);
+
 // agent
 router.get("/dataset/agents", function (req, res) {
   search.searchAgent(req, res, esclient);
@@ -395,6 +448,7 @@ router.get("/dataset/patterns", function (req, res) {
 router.get("/dataset/vocabs", function (req, res) {
   search.searchVocabulary(req, res, esclient);
 });
+
 
 router.get(
   "/dataset/vocabs/:vocabPx/versions/:date.n3",
@@ -1129,7 +1183,8 @@ function runWidocoGeneration(params, callback) {
       callback(err, payload);
     }
 
-    var runner = childProcess.execFile("java", args, { timeout: 180000 }, function (err, stdout, stderr) {
+    var widocoJava = "/usr/lib/jvm/java-11-openjdk-amd64/bin/java";
+    var runner = childProcess.execFile(widocoJava, args, { timeout: 180000 }, function (err, stdout, stderr) {
       if (err) {
         err.stdout = stdout;
         err.stderr = stderr;
@@ -1218,7 +1273,7 @@ function runWidocoGeneration(params, callback) {
         previewUrl: "/" + relPreviewPath,
         zipUrl: "/dataset/api/v2/docs/widoco/" + encodeURIComponent(runId) + ".zip",
         outputPath: htmlPath,
-        command: "java " + args.join(" "),
+        command: widocoJava + args.join(" "),
         stdout: stdout || "",
         stderr: stderr || "",
       });
@@ -1230,7 +1285,7 @@ function runWidocoGeneration(params, callback) {
   }
 
   if (/^https?:\/\//i.test(ontoFile)) {
-    return fetchTextFromUrlNoRedirect(ontoFile, function (err, sourceText) {
+    return fetchTextFromUrl(ontoFile, function (err, sourceText) {
       if (err) {
         return callback(err);
       }
@@ -1834,7 +1889,7 @@ function executeSPARQLQuery(
   }
 
   var sparqlExecTime = Date.now();
-  let sparqlPath = "/lov/sparql?query=" + encodeURIComponent(query);
+  let sparqlPath = "/lov/query?query=" + encodeURIComponent(query);
   if (defaultGraphUri)
     sparqlPath += "&default-graph-uri=" + encodeURIComponent(defaultGraphUri);
   if (namedGraphUri)
