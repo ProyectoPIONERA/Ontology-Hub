@@ -2,9 +2,9 @@
 
 A web application to **explore, search, and reuse RDF ontologies and vocabularies** (inspired by LOV), built with **Node.js**. It provides a catalog, advanced search, and integration with ingestion and metadata validation processes.
 
-## 🚧 Project Status
+## Project Status
 
-Actively under development. The API and commands may change between minor versions.
+Ontology Hub is a completed and stable web application. The main functionality has been implemented, including ontology exploration, search, reuse, ingestion support, metadata validation, and integration with complementary tools.
 
 ---
 
