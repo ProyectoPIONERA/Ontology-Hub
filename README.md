@@ -2,12 +2,6 @@
 
 A web application to **explore, search, and reuse RDF ontologies and vocabularies** (inspired by LOV), built with **Node.js**. It provides a catalog, advanced search, and integration with ingestion and metadata validation processes.
 
-## 🚧 Project Status
-
-Actively under development. The API and commands may change between minor versions.
-
----
-
 ## Table of Contents
 
 - [Context and Purpose](#context-and-purpose)
